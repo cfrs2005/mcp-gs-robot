@@ -13,13 +13,24 @@
 ## 安装
 
 ```bash
-npm install @your-org/mcp-gs-robot
+# 使用 npm
+npm install github:cfrs2005/mcp-gs-robot
+
+# 或者使用 yarn
+yarn add github:cfrs2005/mcp-gs-robot
+
+# 或者在 package.json 中添加依赖
+{
+  "dependencies": {
+    "mcp-gs-robot": "cfrs2005/mcp-gs-robot"
+  }
+}
 ```
 
 ## 使用方法
 
 ```typescript
-import { MCPGSRobot } from '@your-org/mcp-gs-robot';
+import { MCPGSRobot } from 'mcp-gs-robot';
 
 // 初始化
 MCPGSRobot.init({
