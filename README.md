@@ -2,6 +2,20 @@
 
 This project implements an MCP (Model Control Protocol) server that acts as a bridge to the Gausium OpenAPI, allowing AI models or other clients to interact with Gausium robots through a standardized interface.
 
+Repository: [https://github.com/cfrs2005/mcp-gs-robot](https://github.com/cfrs2005/mcp-gs-robot)
+
+## Architecture
+
+The server follows a layered architecture that separates concerns and promotes maintainability:
+
+![Architecture Diagram](docs/images/architecture.svg)
+
+### MCP Protocol Flow
+
+The diagram below shows how AI models interact with Gausium robots through the MCP protocol:
+
+![MCP Protocol Flow](docs/images/mcp-flow.svg)
+
 ## Features
 
 The server currently supports the following functionalities as MCP tools:
@@ -33,6 +47,8 @@ The project follows a structured layout based on Python best practices:
 │           ├── __init__.py
 │           └── gausium_mcp.py # GausiumMCP class extending FastMCP
 ├── .gitignore
+├── docs/
+│   └── images/            # Documentation images
 ├── main.py               # Main application entry point, tool registration, server run
 ├── README.md             # This file
 └── requirements.txt      # Project dependencies
@@ -48,19 +64,21 @@ The project follows a structured layout based on Python best practices:
 
 1.  **Clone the repository:**
     ```bash
-    git clone <repository-url>
-    cd <repository-directory>
+    git clone https://github.com/cfrs2005/mcp-gs-robot.git
+    cd mcp-gs-robot
     ```
 
-2.  **Create and activate a virtual environment:**
+2.  **Create and activate a virtual environment using `uv`:**
     ```bash
-    python -m venv .venv
+    uv venv
     source .venv/bin/activate  # On Windows use `.venv\Scripts\activate`
     ```
 
-3.  **Install dependencies:**
+3.  **Install dependencies using `uv`:**
     ```bash
-    pip install -r requirements.txt
+    uv pip install -r requirements.txt 
+    # Or, if you prefer adding specific core packages:
+    # uv add httpx "mcp[cli]"
     ```
 
 4.  **Configure Credentials:**
@@ -86,3 +104,17 @@ The project follows a structured layout based on Python best practices:
 ## Connecting an MCP Client
 
 Once the server is running, an MCP client (like Cursor or another compatible tool) can connect to it via the appropriate transport (SSE or stdio) to utilize the defined tools.
+
+### Usage with Cursor
+
+Below is an example of how Cursor interacts with this MCP server:
+
+![Cursor Usage Screenshot](docs/images/cursor_usage_screenshot.png)
+
+## Debugging
+
+You can monitor the server logs for debugging information. The basic logging configuration in `main.py` provides timestamps, levels, and source information.
+
+Below is an example of the server log output during operation:
+
+![MCP Debug Screenshot](docs/images/mcp_debug_screenshot.png)

@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="900" height="500" viewBox="0 0 900 500">
+  <style>
+    text {
+      font-family: 'Arial', sans-serif;
+    }
+    .title {
+      font-size: 22px;
+      font-weight: bold;
+    }
+    .subtitle {
+      font-size: 14px;
+      fill: #666;
+    }
+    .label {
+      font-size: 16px;
+      font-weight: bold;
+    }
+    .note {
+      font-size: 14px;
+      fill: #444;
+    }
+    .step {
+      font-size: 14px;
+      fill: #fff;
+      font-weight: bold;
+    }
+    .arrow {
+      fill: none;
+      stroke: #666;
+      stroke-width: 2;
+      marker-end: url(#arrowhead);
+    }
+    .dashed-arrow {
+      fill: none;
+      stroke: #666;
+      stroke-width: 2;
+      stroke-dasharray: 8 4;
+      marker-end: url(#arrowhead);
+    }
+    .entity-box {
+      fill: #fff;
+      stroke: #333;
+      stroke-width: 2;
+      rx: 8;
+      ry: 8;
+    }
+    .step-circle {
+      stroke: #333;
+      stroke-width: 2;
+    }
+    .code {
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      fill: #444;
+    }
+  </style>
+  
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#666" />
+    </marker>
+  </defs>
+  
+  <!-- Title -->
+  <text x="450" y="40" text-anchor="middle" class="title">MCP Request Flow for Gausium Robot Control</text>
+  <text x="450" y="65" text-anchor="middle" class="subtitle">How AI models interact with Gausium robots through the MCP server</text>
+  
+  <!-- Entities -->
+  <!-- AI Model / Client -->
+  <rect x="50" y="120" width="160" height="80" class="entity-box" fill="#e7f5ff" />
+  <text x="130" y="160" text-anchor="middle" class="label">AI Model / Client</text>
+  <text x="130" y="180" text-anchor="middle" class="note">(e.g., Claude)</text>
+  
+  <!-- MCP Server -->
+  <rect x="370" y="120" width="160" height="80" class="entity-box" fill="#f5eeff" />
+  <text x="450" y="160" text-anchor="middle" class="label">MCP Server</text>
+  <text x="450" y="180" text-anchor="middle" class="note">(gs-openapi)</text>
+  
+  <!-- Gausium OpenAPI -->
+  <rect x="690" y="120" width="160" height="80" class="entity-box" fill="#fff3e6" />
+  <text x="770" y="160" text-anchor="middle" class="label">Gausium OpenAPI</text>
+  <text x="770" y="180" text-anchor="middle" class="note">(Web Service)</text>
+  
+  <!-- Steps -->
+  <!-- Step 1: List Tools -->
+  <circle cx="130" cy="250" r="20" class="step-circle" fill="#007bff" />
+  <text x="130" y="255" text-anchor="middle" class="step">1</text>
+  <text x="130" y="290" text-anchor="middle" class="note">Request Available Tools</text>
+  
+  <path d="M 150 250 L 350 250" class="arrow" />
+  <text x="250" y="240" text-anchor="middle" class="code">list_tools</text>
+  
+  <circle cx="450" cy="250" r="20" class="step-circle" fill="#6f42c1" />
+  <text x="450" y="255" text-anchor="middle" class="step">2</text>
+  <text x="450" y="290" text-anchor="middle" class="note">Register &amp; Return Tools</text>
+  
+  <path d="M 430 250 L 150 250" class="dashed-arrow" />
+  <text x="250" y="270" text-anchor="middle" class="code">[list_robots, get_robot_status, ...]</text>
+  
+  <!-- Step 3: Call Tool -->
+  <circle cx="130" cy="350" r="20" class="step-circle" fill="#007bff" />
+  <text x="130" y="355" text-anchor="middle" class="step">3</text>
+  <text x="130" y="390" text-anchor="middle" class="note">Select &amp; Call Tool</text>
+  
+  <path d="M 150 350 L 350 350" class="arrow" />
+  <text x="250" y="340" text-anchor="middle" class="code">call_tool("list_robots", {})</text>
+  
+  <circle cx="450" cy="350" r="20" class="step-circle" fill="#6f42c1" />
+  <text x="450" y="355" text-anchor="middle" class="step">4</text>
+  <text x="450" y="390" text-anchor="middle" class="note">Handle API Auth &amp; Request</text>
+  
+  <path d="M 470 350 L 670 350" class="arrow" />
+  <text x="570" y="340" text-anchor="middle" class="code">GET /v1alpha1/robots</text>
+  
+  <circle cx="770" cy="350" r="20" class="step-circle" fill="#fd7e14" />
+  <text x="770" y="355" text-anchor="middle" class="step">5</text>
+  <text x="770" y="390" text-anchor="middle" class="note">Process Request</text>
+  
+  <path d="M 750 350 L 470 350" class="dashed-arrow" />
+  <text x="570" y="370" text-anchor="middle" class="code">{ "robots": [...] }</text>
+  
+  <path d="M 430 350 L 150 350" class="dashed-arrow" />
+  <text x="250" y="370" text-anchor="middle" class="code">Formatted Robot List</text>
+  
+  <!-- Step 6: AI Processes -->
+  <circle cx="130" cy="450" r="20" class="step-circle" fill="#007bff" />
+  <text x="130" y="455" text-anchor="middle" class="step">6</text>
+  <text x="130" y="490" text-anchor="middle" class="note">Process Response &amp;</text>
+  <text x="130" y="510" text-anchor="middle" class="note">Take Next Action</text>
+</svg> 

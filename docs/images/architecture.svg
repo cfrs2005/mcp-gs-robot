@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="900" height="600" viewBox="0 0 900 600">
+  <style>
+    text {
+      font-family: 'Arial', sans-serif;
+    }
+    .title {
+      font-size: 24px;
+      font-weight: bold;
+    }
+    .component {
+      font-size: 18px;
+      font-weight: bold;
+    }
+    .description {
+      font-size: 14px;
+    }
+    .arrow {
+      fill: none;
+      stroke: #666;
+      stroke-width: 2;
+      marker-end: url(#arrowhead);
+    }
+    .box {
+      fill: #fff;
+      stroke: #444;
+      stroke-width: 2;
+      rx: 8;
+      ry: 8;
+    }
+    .green-box {
+      fill: #e6f5e9;
+      stroke: #28a745;
+    }
+    .blue-box {
+      fill: #e7f5ff;
+      stroke: #007bff;
+    }
+    .orange-box {
+      fill: #fff3e6;
+      stroke: #fd7e14;
+    }
+    .purple-box {
+      fill: #f5eeff;
+      stroke: #6f42c1;
+    }
+  </style>
+  
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#666" />
+    </marker>
+  </defs>
+  
+  <!-- Title -->
+  <text x="450" y="40" text-anchor="middle" class="title">Gausium OpenAPI MCP Server Architecture</text>
+  
+  <!-- MCP Client Box -->
+  <rect x="350" y="70" width="200" height="60" class="box" fill="#f8f9fa" />
+  <text x="450" y="105" text-anchor="middle" class="component">MCP Client</text>
+  
+  <!-- Main.py Box -->
+  <rect x="300" y="160" width="300" height="80" class="box blue-box" />
+  <text x="450" y="190" text-anchor="middle" class="component">main.py</text>
+  <text x="450" y="215" text-anchor="middle" class="description">Tool Registration &amp; Server Initialization</text>
+  
+  <!-- GausiumMCP Box -->
+  <rect x="300" y="270" width="300" height="80" class="box purple-box" />
+  <text x="450" y="300" text-anchor="middle" class="component">GausiumMCP</text>
+  <text x="450" y="325" text-anchor="middle" class="description">MCP Server Implementation</text>
+  
+  <!-- API Module Box -->
+  <rect x="100" y="380" width="250" height="80" class="box green-box" />
+  <text x="225" y="410" text-anchor="middle" class="component">API Modules</text>
+  <text x="225" y="435" text-anchor="middle" class="description">robots.py, maps.py</text>
+  
+  <!-- TokenManager Box -->
+  <rect x="550" y="380" width="250" height="80" class="box orange-box" />
+  <text x="675" y="410" text-anchor="middle" class="component">TokenManager</text>
+  <text x="675" y="435" text-anchor="middle" class="description">OAuth Token Management</text>
+  
+  <!-- Config Box -->
+  <rect x="330" y="380" width="240" height="80" class="box" fill="#f8f9fa" />
+  <text x="450" y="410" text-anchor="middle" class="component">config.py</text>
+  <text x="450" y="435" text-anchor="middle" class="description">URLs, Env Vars, Paths</text>
+  
+  <!-- Gausium OpenAPI Box -->
+  <rect x="300" y="500" width="300" height="60" class="box" fill="#f8d7da" stroke="#dc3545" />
+  <text x="450" y="535" text-anchor="middle" class="component">Gausium OpenAPI</text>
+  
+  <!-- Arrows -->
+  <!-- Client to Main -->
+  <path d="M 450 130 L 450 160" class="arrow" />
+  
+  <!-- Main to GausiumMCP -->
+  <path d="M 450 240 L 450 270" class="arrow" />
+  
+  <!-- GausiumMCP to API -->
+  <path d="M 350 350 L 225 380" class="arrow" />
+  
+  <!-- GausiumMCP to TokenManager -->
+  <path d="M 550 350 L 675 380" class="arrow" />
+  
+  <!-- GausiumMCP to Config -->
+  <path d="M 450 350 L 450 380" class="arrow" />
+  
+  <!-- API to Gausium OpenAPI -->
+  <path d="M 225 460 L 225 530 L 300 530" class="arrow" />
+  
+  <!-- TokenManager to Gausium OpenAPI -->
+  <path d="M 675 460 L 675 530 L 600 530" class="arrow" />
+  
+  <!-- Config to API -->
+  <path d="M 350 420 L 350 420" class="arrow" />
+  
+  <!-- Config to TokenManager -->
+  <path d="M 550 420 L 550 420" class="arrow" />
+</svg> 

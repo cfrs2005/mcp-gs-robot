@@ -9,7 +9,7 @@ import os
 from urllib.parse import urljoin # Import urljoin
 
 # Base URL for Gausium OpenAPI (ensure trailing slash for urljoin)
-GAUSIUM_BASE_URL = "https://openapi.test.gs-robot.com/" 
+GAUSIUM_BASE_URL = "https://openapi.gs-robot.com/" 
 
 # API Paths
 TOKEN_PATH = "gas/api/v1alpha1/oauth/token" # Relative path
@@ -20,3 +20,4 @@ MAP_LIST_PATH = "openapi/v1/map/robotMap/list" # Path for listing maps
 ENV_VAR_CLIENT_ID = "GS_CLIENT_ID"
 ENV_VAR_CLIENT_SECRET = "GS_CLIENT_SECRET"
 ENV_VAR_OPEN_ACCESS_KEY = "GS_OPEN_ACCESS_KEY"
+
