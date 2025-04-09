@@ -1,0 +1,6 @@
+httpx
+mcp
+pydantic
+pydantic-settings
+anyio
+uvicorn 

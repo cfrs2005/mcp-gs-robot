@@ -1,139 +1,88 @@
-# MCP GS Robot
+# Gausium OpenAPI MCP Server
 
-高仙机器人 MCP (Model Control Protocol) 插件，用于控制高仙清洁机器人。
+This project implements an MCP (Model Control Protocol) server that acts as a bridge to the Gausium OpenAPI, allowing AI models or other clients to interact with Gausium robots through a standardized interface.
 
-## 功能特性
+## Features
 
-- 支持获取机器人列表
-- 支持获取机器人状态
-- 支持发送导航指令
-- 支持发送任务指令
-- 支持发送远程控制指令
+The server currently supports the following functionalities as MCP tools:
 
-## 配置方法
+*   **`list_robots`**: Lists robots accessible via the API key. (Based on: [List Robots API](https://developer.gs-robot.com/zh_CN/Robot%20Information%20Service/List%20Robots))
+*   **`get_robot_status`**: Fetches the detailed status of a specific robot by its serial number. (Based on: [Get Robot Status API](https://developer.gs-robot.com/zh_CN/Robot%20Information%20Service/V1%20Get%20Robot%20Status))
+*   **`list_robot_task_reports`**: Retrieves cleaning task reports for a specific robot, with optional time filtering. (Based on: [List Robot Task Reports API](https://developer.gs-robot.com/zh_CN/Robot%20Cleaning%20Data%20Service/V1%20List%20Robot%20Task%20Reports))
+*   **`list_robot_maps`**: Lists the maps associated with a specific robot. (Based on: [List Robot Maps API](https://developer.gs-robot.com/zh_CN/Robot%20Map%20Service/V1%20List%20Robot%20Map))
 
-在 `~/.cursor/mcp.json` 中添加以下配置：
+## Project Structure
 
-```json
-{
-  "mcp-gs-robot": {
-    "command": "npx",
-    "args": [
-      "-y",
-      "@mcp-gs-robot/mcp-server-gs-robot"
-    ],
-    "env": {
-      "GS_CLIENT_ID": "your-client-id",
-      "GS_CLIENT_SECRET": "your-client-secret",
-      "GS_OPEN_ACCESS_KEY": "your-open-access-key",
-      "GS_API_BASE_URL": "https://openapi.gs-robot.com"
-    }
-  }
-}
-```
-
-## 使用方法
-
-在 Cursor 中，可以直接使用以下命令：
-
-```typescript
-// 获取机器人列表
-@mcp-gs-robot listRobots
-
-// 获取机器人状态
-@mcp-gs-robot getRobotStatus "robot-serial-number"
-
-// 发送导航指令
-@mcp-gs-robot sendNavigationCommand "robot-serial" {
-  "type": "CROSS_NAVIGATE",
-  "map": "9-2",
-  "position": "Cd"
-}
-
-// 发送任务指令
-@mcp-gs-robot sendTaskCommand "robot-serial" {
-  "type": "START_TASK",
-  "taskConfig": {
-    "cleaningMode": "__middle_cleaning",
-    "task": {
-      "name": "execute_task_q",
-      "map": "9-2"
-    }
-  }
-}
-
-// 发送远程控制指令
-@mcp-gs-robot sendRemoteControlCommand "robot-serial" {
-  "type": "REMOTE_CONTROL_START"
-}
-```
-
-## API 文档
-
-### 获取机器人列表
+The project follows a structured layout based on Python best practices:
 
 ```
-@mcp-gs-robot listRobots [options]
-
-选项：
-  --page       页码，默认1
-  --pageSize   每页数量，默认10
-  --relation   关系类型：contract-合同客户, 空-终端客户, cugrup-集团
+. 
+├── .venv/                # Virtual environment directory
+├── src/
+│   └── gs_openapi/
+│       ├── __init__.py
+│       ├── api/            # Modules for direct API interactions
+│       │   ├── __init__.py
+│       │   ├── maps.py
+│       │   └── robots.py
+│       ├── auth/           # Authentication related modules
+│       │   ├── __init__.py
+│       │   └── token_manager.py # Handles OAuth token lifecycle
+│       ├── config.py       # Configuration (URLs, Env Vars)
+│       └── mcp/            # MCP server specific implementations
+│           ├── __init__.py
+│           └── gausium_mcp.py # GausiumMCP class extending FastMCP
+├── .gitignore
+├── main.py               # Main application entry point, tool registration, server run
+├── README.md             # This file
+└── requirements.txt      # Project dependencies
 ```
 
-### 获取机器人状态
+*   **`src/gs_openapi/config.py`**: Contains base URLs, API paths, and environment variable names.
+*   **`src/gs_openapi/auth/token_manager.py`**: Manages acquiring and refreshing OAuth tokens.
+*   **`src/gs_openapi/api/`**: Contains modules (`robots.py`, `maps.py`) with functions that directly call the Gausium OpenAPI endpoints using `httpx`.
+*   **`src/gs_openapi/mcp/gausium_mcp.py`**: Defines the `GausiumMCP` class which integrates the API calls and token management.
+*   **`main.py`**: Initializes `GausiumMCP`, registers the API functionalities as MCP tools using `@mcp.tool()`, configures basic logging, and starts the server using `mcp.run()`.
 
-```
-@mcp-gs-robot getRobotStatus <serialNumber>
-```
+## Setup and Running
 
-### 发送导航指令
+1.  **Clone the repository:**
+    ```bash
+    git clone <repository-url>
+    cd <repository-directory>
+    ```
 
-```
-@mcp-gs-robot sendNavigationCommand <serialNumber> <command>
+2.  **Create and activate a virtual environment:**
+    ```bash
+    python -m venv .venv
+    source .venv/bin/activate  # On Windows use `.venv\Scripts\activate`
+    ```
 
-命令类型：
-  - CROSS_NAVIGATE    导航到指定点位
-  - PAUSE_NAVIGATE    暂停导航
-  - RESUME_NAVIGATE   恢复导航
-  - STOP_NAVIGATE     停止导航
-```
+3.  **Install dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-### 发送任务指令
+4.  **Configure Credentials:**
+    The application expects Gausium API credentials to be set as environment variables:
+    *   `GS_CLIENT_ID`: Your Gausium Application Client ID.
+    *   `GS_CLIENT_SECRET`: Your Gausium Application Client Secret.
+    *   `GS_OPEN_ACCESS_KEY`: Your Gausium OpenAPI Access Key.
 
-```
-@mcp-gs-robot sendTaskCommand <serialNumber> <command>
+    You can set these directly in your shell:
+    ```bash
+    export GS_CLIENT_ID="your_client_id"
+    export GS_CLIENT_SECRET="your_client_secret"
+    export GS_OPEN_ACCESS_KEY="your_access_key"
+    ```
+    (Alternatively, modify `src/gs_openapi/config.py` for development, but **do not commit credentials**).
 
-命令类型：
-  - START_TASK    开始任务
-  - STOP_TASK     停止任务
-  - PAUSE_TASK    暂停任务
-  - RESUME_TASK   恢复任务
-```
+5.  **Run the server:**
+    ```bash
+    python main.py
+    ```
+    By default, this starts the server using SSE transport on `http://0.0.0.0:8000`. You can modify `main.py` to use `stdio` transport if needed.
 
-### 发送远程控制指令
+## Connecting an MCP Client
 
-```
-@mcp-gs-robot sendRemoteControlCommand <serialNumber> <command>
-
-命令类型：
-  - REMOTE_CONTROL_START   开启远程控制
-  - REMOTE_CONTROL_STOP    停止远程控制
-```
-
-## 开发
-
-```bash
-# 安装依赖
-npm install
-
-# 构建
-npm run build
-
-# 测试
-npm test
-```
-
-## License
-
-MIT 
+Once the server is running, an MCP client (like Cursor or another compatible tool) can connect to it via the appropriate transport (SSE or stdio) to utilize the defined tools.
