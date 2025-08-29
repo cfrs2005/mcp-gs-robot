@@ -56,9 +56,21 @@ coverage.xml
 
 # Cursor specific
 .cursor/
+.cursorindexingignore
 
 # Uv specific
 .uv/
+
+# Personal development files (should not be committed)
+.claude/
+.specstory/
+test_basic.py
+CLAUDE.md
+MCP-ASSISTANT-RULES.md
+
+# Development and testing files
+test_*.py
+!tests/
 
 # Specific project files that might contain sensitive data
 # Uncomment if needed
