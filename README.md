@@ -1,120 +1,374 @@
-# Gausium OpenAPI MCP Server
+# 🤖 Gausium OpenAPI MCP Server
 
-This project implements an MCP (Model Control Protocol) server that acts as a bridge to the Gausium OpenAPI, allowing AI models or other clients to interact with Gausium robots through a standardized interface.
+<div align="center">
 
-Repository: [https://github.com/cfrs2005/mcp-gs-robot](https://github.com/cfrs2005/mcp-gs-robot)
+[![Python Version](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![PyPI Version](https://img.shields.io/pypi/v/mcp-gs-robot.svg)](https://pypi.org/project/mcp-gs-robot/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![MCP Compatible](https://img.shields.io/badge/MCP-Compatible-purple.svg)](https://github.com/modelcontextprotocol)
+[![Claude Code](https://img.shields.io/badge/Claude_Code-Ready-orange.svg)](https://claude.ai/code)
 
-## Architecture
+**🔧 A powerful MCP server bridging AI models with Gausium robots**
+
+*Control and monitor Gausium cleaning robots through Claude, Cursor, and other AI assistants*
+
+[🚀 Quick Start](#-quick-start) • [📖 Documentation](#-documentation) • [🛠️ Installation](#️-installation) • [🎯 Examples](#-examples)
+
+</div>
+
+---
+
+## 🌟 What is this?
+
+This MCP (Model Control Protocol) server enables seamless interaction between AI models and Gausium cleaning robots through a standardized interface. Perfect for building intelligent automation workflows with Claude Code, Cursor, and other MCP-compatible AI tools.
+
+**🔗 Repository:** [https://github.com/cfrs2005/mcp-gs-robot](https://github.com/cfrs2005/mcp-gs-robot)
+
+### 🎯 Key Benefits
+
+- 🤖 **AI-First Design**: Built specifically for AI assistant integration
+- 🔄 **Real-time Control**: Monitor and command robots instantly
+- 📊 **Rich Data Access**: Get detailed status, maps, and task reports
+- 🛡️ **Secure**: OAuth-based authentication with environment variables
+- 🌐 **Universal**: Works with Claude, Cursor, and any MCP client
+
+## 🏗️ Architecture
 
 The server follows a layered architecture that separates concerns and promotes maintainability:
 
-![Architecture Diagram](docs/images/architecture.svg)
+![Architecture Diagram](https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/architecture.svg)
 
-### MCP Protocol Flow
+### 🔄 MCP Protocol Flow
 
 The diagram below shows how AI models interact with Gausium robots through the MCP protocol:
 
-![MCP Protocol Flow](docs/images/mcp-flow.svg)
+![MCP Protocol Flow](https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/mcp-flow.svg)
 
-## Features
+## ✨ Features
 
-The server currently supports the following functionalities as MCP tools:
+### 🛠️ Core MCP Tools
 
-*   **`list_robots`**: Lists robots accessible via the API key. (Based on: [List Robots API](https://developer.gs-robot.com/zh_CN/Robot%20Information%20Service/List%20Robots))
-*   **`get_robot_status`**: Fetches the detailed status of a specific robot by its serial number. (Based on: [Get Robot Status API](https://developer.gs-robot.com/zh_CN/Robot%20Information%20Service/V1%20Get%20Robot%20Status))
-*   **`list_robot_task_reports`**: Retrieves cleaning task reports for a specific robot, with optional time filtering. (Based on: [List Robot Task Reports API](https://developer.gs-robot.com/zh_CN/Robot%20Cleaning%20Data%20Service/V1%20List%20Robot%20Task%20Reports))
-*   **`list_robot_maps`**: Lists the maps associated with a specific robot. (Based on: [List Robot Maps API](https://developer.gs-robot.com/zh_CN/Robot%20Map%20Service/V1%20List%20Robot%20Map))
+| Tool | Description | Status |
+|------|-------------|--------|
+| 🤖 `list_robots` | List all accessible robots | ✅ Ready |
+| 📊 `get_robot_status` | Get detailed robot status and position | ✅ Ready |
+| 📋 `list_robot_task_reports` | Retrieve cleaning task reports with filtering | ✅ Ready |
+| 🗺️ `list_robot_maps` | Get available maps for robot navigation | ✅ Ready |
+| 🎯 `create_robot_command` | Send commands to robots (start/pause/stop) | ✅ Ready |
+| 🏢 `get_site_info` | Get building and floor information | ✅ Ready |
+| 📍 `get_map_subareas` | Get detailed area information for tasks | ✅ Ready |
+| 🚀 `submit_temp_task` | Submit temporary cleaning tasks | ✅ Ready |
 
-## Project Structure
+### 🔧 Advanced Workflows
 
-The project follows a structured layout based on Python best practices:
+- 🎛️ **Automated Task Execution**: Complete workflows from status → task selection → execution
+- 📈 **Batch Operations**: Handle multiple robots simultaneously
+- 🗺️ **Map Management**: Upload, download, and manage robot maps
+- 📊 **Report Generation**: Generate PNG maps from task reports
+- 🏗️ **Site-based Tasks**: Advanced task creation with building/floor context
+
+### 🤝 Supported Robot Lines
+
+- **M-line Robots** (40, 50, 75 series): Traditional cleaning robots
+- **S-line Robots**: Advanced robots with site information support
+- **SW-line Robots**: Next-generation smart cleaning systems
+
+## 📁 Project Structure
+
+The project follows a structured layout optimized for MCP development:
 
 ```
-. 
-├── .venv/                # Virtual environment directory
-├── src/
-│   └── gs_openapi/
-│       ├── __init__.py
-│       ├── api/            # Modules for direct API interactions
-│       │   ├── __init__.py
-│       │   ├── maps.py
-│       │   └── robots.py
-│       ├── auth/           # Authentication related modules
-│       │   ├── __init__.py
-│       │   └── token_manager.py # Handles OAuth token lifecycle
-│       ├── config.py       # Configuration (URLs, Env Vars)
-│       └── mcp/            # MCP server specific implementations
-│           ├── __init__.py
-│           └── gausium_mcp.py # GausiumMCP class extending FastMCP
-├── .gitignore
-├── docs/
-│   └── images/            # Documentation images
-├── main.py               # Main application entry point, tool registration, server run
-├── README.md             # This file
-└── requirements.txt      # Project dependencies
+🗂️ mcp-gs-robot/
+├── 📦 src/gs_openapi/           # Main package
+│   ├── 🔌 api/                  # Direct API integrations
+│   │   ├── 🤖 robots.py         # Robot management APIs
+│   │   └── 🗺️ maps.py           # Map management APIs
+│   ├── 🔐 auth/                 # Authentication layer
+│   │   └── 🎫 token_manager.py  # OAuth token lifecycle
+│   ├── ⚙️ config.py             # Configuration management
+│   ├── 🔧 core/                 # Core functionality
+│   │   ├── 📡 client.py         # HTTP client wrapper
+│   │   └── 🛣️ endpoints.py      # API endpoint definitions
+│   ├── 🔌 mcp/                  # MCP server implementation
+│   │   └── 🌉 gausium_mcp.py    # Main MCP bridge
+│   └── 🔄 workflows/            # Automated workflows
+│       └── 🎯 task_engine.py    # Task automation engine
+├── 📚 docs/                     # Documentation
+│   ├── 🖼️ images/               # Visual documentation
+│   ├── 📖 apis.md              # API documentation
+│   └── 🧪 TESTING_GUIDE.md     # Testing instructions
+├── 🚀 main.py                  # Application entry point
+└── 📋 pyproject.toml           # Package configuration
 ```
 
-*   **`src/gs_openapi/config.py`**: Contains base URLs, API paths, and environment variable names.
-*   **`src/gs_openapi/auth/token_manager.py`**: Manages acquiring and refreshing OAuth tokens.
-*   **`src/gs_openapi/api/`**: Contains modules (`robots.py`, `maps.py`) with functions that directly call the Gausium OpenAPI endpoints using `httpx`.
-*   **`src/gs_openapi/mcp/gausium_mcp.py`**: Defines the `GausiumMCP` class which integrates the API calls and token management.
-*   **`main.py`**: Initializes `GausiumMCP`, registers the API functionalities as MCP tools using `@mcp.tool()`, configures basic logging, and starts the server using `mcp.run()`.
+### 🔍 Key Components
 
-## Setup and Running
+| Component | Purpose | Icon |
+|-----------|---------|------|
+| **config.py** | Base URLs, API paths, environment variables | ⚙️ |
+| **token_manager.py** | OAuth token acquisition and refresh | 🔐 |
+| **api/robots.py** | Robot status, commands, task reports | 🤖 |
+| **api/maps.py** | Map listing, upload, download | 🗺️ |
+| **gausium_mcp.py** | MCP server integration layer | 🌉 |
+| **task_engine.py** | Automated workflow orchestration | 🎯 |
+| **main.py** | Server initialization and tool registration | 🚀 |
 
-1.  **Clone the repository:**
-    ```bash
-    git clone https://github.com/cfrs2005/mcp-gs-robot.git
-    cd mcp-gs-robot
-    ```
+## 🚀 Quick Start
 
-2.  **Create and activate a virtual environment using `uv`:**
-    ```bash
-    uv venv
-    source .venv/bin/activate  # On Windows use `.venv\Scripts\activate`
-    ```
+### 📦 Installation
 
-3.  **Install dependencies using `uv`:**
-    ```bash
-    uv pip install -r requirements.txt 
-    # Or, if you prefer adding specific core packages:
-    # uv add httpx "mcp[cli]"
-    ```
+#### Option 1: Install from PyPI (Recommended)
 
-4.  **Configure Credentials:**
-    The application expects Gausium API credentials to be set as environment variables:
-    *   `GS_CLIENT_ID`: Your Gausium Application Client ID.
-    *   `GS_CLIENT_SECRET`: Your Gausium Application Client Secret.
-    *   `GS_OPEN_ACCESS_KEY`: Your Gausium OpenAPI Access Key.
+```bash
+pip install mcp-gs-robot
+```
 
-    You can set these directly in your shell:
-    ```bash
-    export GS_CLIENT_ID="your_client_id"
-    export GS_CLIENT_SECRET="your_client_secret"
-    export GS_OPEN_ACCESS_KEY="your_access_key"
-    ```
-    (Alternatively, modify `src/gs_openapi/config.py` for development, but **do not commit credentials**).
+#### Option 2: Install from Source
 
-5.  **Run the server:**
-    ```bash
-    python main.py
-    ```
-    By default, this starts the server using SSE transport on `http://0.0.0.0:8000`. You can modify `main.py` to use `stdio` transport if needed.
+```bash
+# Clone repository
+git clone https://github.com/cfrs2005/mcp-gs-robot.git
+cd mcp-gs-robot
 
-## Connecting an MCP Client
+# Setup with uv (recommended)
+uv venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+uv pip install -e .
+```
 
-Once the server is running, an MCP client (like Cursor or another compatible tool) can connect to it via the appropriate transport (SSE or stdio) to utilize the defined tools.
+### 🔧 Configuration
 
-### Usage with Cursor
+**Set up your Gausium API credentials:**
 
-Below is an example of how Cursor interacts with this MCP server:
+```bash
+# Required environment variables
+export GS_CLIENT_ID="your_client_id"
+export GS_CLIENT_SECRET="your_client_secret" 
+export GS_OPEN_ACCESS_KEY="your_access_key"
+```
 
-![Cursor Usage Screenshot](docs/images/cursor_usage_screenshot.png)
+> 🔑 **Get credentials from [Gausium Developer Portal](https://developer.gs-robot.com/)**
 
-## Debugging
+### 🏃‍♂️ Running the Server
 
-You can monitor the server logs for debugging information. The basic logging configuration in `main.py` provides timestamps, levels, and source information.
+```bash
+# Start MCP server (stdio mode)
+python -m gs_openapi.main
+# or if installed via pip:
+mcp-gs-robot
+```
 
-Below is an example of the server log output during operation:
+✅ Server starts using `stdio` transport (perfect for Claude Code)
 
-![MCP Debug Screenshot](docs/images/mcp_debug_screenshot.png)
+### 🔌 Claude Code Integration
+
+**Method 1: Automatic installation with environment setup**
+
+```bash
+# Add MCP server with environment variables
+claude mcp add mcp-gs-robot \
+  --env GS_CLIENT_ID="your_client_id" \
+  --env GS_CLIENT_SECRET="your_client_secret" \
+  --env GS_OPEN_ACCESS_KEY="your_access_key"
+```
+
+**Method 2: Manual configuration**
+
+Add to your `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "mcp-gs-robot": {
+      "command": "mcp-gs-robot",
+      "env": {
+        "GS_CLIENT_ID": "your_client_id",
+        "GS_CLIENT_SECRET": "your_client_secret", 
+        "GS_OPEN_ACCESS_KEY": "your_access_key"
+      }
+    }
+  }
+}
+```
+
+**Method 3: Using environment file**
+
+If you prefer to use a `.env` file:
+
+```bash
+# Set global environment variables
+export GS_CLIENT_ID="your_client_id"
+export GS_CLIENT_SECRET="your_client_secret"
+export GS_OPEN_ACCESS_KEY="your_access_key"
+
+# Simple MCP installation
+claude mcp add mcp-gs-robot
+```
+
+> 💡 **Note**: This MCP server uses `stdio` transport (not SSE), which is perfect for Claude Code integration
+
+## 🎯 Examples
+
+### 📱 Claude Code Usage
+
+```python
+# In Claude Code, you can now use natural language:
+
+"List all my robots"
+# → Calls mcp__mcp-gs-robot__list_robots
+
+"Get status of robot GS101-0100-V1P-B001" 
+# → Calls mcp__mcp-gs-robot__get_robot_status
+
+"Start cleaning task for robot in building 5"
+# → Orchestrates site info → map selection → task creation
+```
+
+### 🖥️ IDE Integration
+
+**Cursor Configuration:**
+
+![Cursor Usage Screenshot](https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/cursor_usage_screenshot.png)
+
+**Cherry Studio Configuration:**
+
+![Cherry Studio Configuration](https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/cherrystudio.png)
+
+### 🐛 Debugging
+
+Monitor server logs for troubleshooting:
+
+![MCP Debug Screenshot](https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/mcp_debug_screenshot.png)
+
+## 📖 Documentation
+
+| Document | Purpose |
+|----------|----------|
+| 🎯 [Claude Code Integration](docs/CLAUDE_CODE_INTEGRATION.md) | Complete Claude Code setup guide |
+| 📋 [API Reference](docs/apis.md) | Complete API documentation |
+| 🧪 [Testing Guide](docs/TESTING_GUIDE.md) | How to test the MCP server |
+| 🔧 [Configuration](docs/README.md) | Detailed setup instructions |
+
+## 🤝 Contributing
+
+We welcome contributions! Please:
+
+1. 🍴 Fork the repository
+2. 🌿 Create a feature branch
+3. ✅ Add tests for your changes
+4. 📝 Update documentation
+5. 🔄 Submit a pull request
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+- 📝 [Issues](https://github.com/cfrs2005/mcp-gs-robot/issues)
+- 📧 [Email](mailto:cfrs2005@gmail.com)
+- 📚 [Gausium Developer Docs](https://developer.gs-robot.com/)
+
+---
+
+<div align="center">
+
+**Made with ❤️ for the Claude Code community**
+
+*Enabling AI-powered robot automation, one task at a time* 🤖✨
+
+</div>
+
+## 🌐 Language Support | 语言支持
+
+<details>
+<summary>🇨🇳 中文说明 (Chinese Documentation)</summary>
+
+# 🤖 高斯OpenAPI MCP服务器
+
+这是一个MCP（模型控制协议）服务器，作为高斯OpenAPI的桥梁，允许AI模型或其他客户端通过标准化接口与高斯机器人交互。
+
+## 🌟 主要功能
+
+- 🤖 **机器人管理**：列出、监控和控制高斯清洁机器人
+- 📊 **实时状态**：获取详细的机器人状态和位置信息
+- 🗺️ **地图管理**：上传、下载和管理机器人地图
+- 📋 **任务报告**：检索清洁任务报告和历史数据
+- 🎯 **任务创建**：提交临时清洁任务
+- 🔧 **自动化工作流**：完整的任务执行流程
+
+## 🚀 快速开始
+
+### 安装
+
+```bash
+pip install mcp-gs-robot
+```
+
+### 配置环境变量
+
+```bash
+export GS_CLIENT_ID="你的客户端ID"
+export GS_CLIENT_SECRET="你的客户端密钥"
+export GS_OPEN_ACCESS_KEY="你的访问密钥"
+```
+
+### 运行服务器
+
+```bash
+mcp-gs-robot
+```
+
+### Claude Code集成
+
+**推荐方法：带环境变量的自动安装**
+
+```bash
+claude mcp add mcp-gs-robot \
+  --env GS_CLIENT_ID="你的客户端ID" \
+  --env GS_CLIENT_SECRET="你的客户端密钥" \
+  --env GS_OPEN_ACCESS_KEY="你的访问密钥"
+```
+
+**手动配置方法：**
+
+在 `claude_desktop_config.json` 中添加：
+
+```json
+{
+  "mcpServers": {
+    "mcp-gs-robot": {
+      "command": "mcp-gs-robot",
+      "env": {
+        "GS_CLIENT_ID": "你的客户端ID",
+        "GS_CLIENT_SECRET": "你的客户端密钥",
+        "GS_OPEN_ACCESS_KEY": "你的访问密钥"
+      }
+    }
+  }
+}
+```
+
+**IDE集成支持：**
+- 🎯 Claude Code：原生支持，stdio传输
+- 🖥️ Cursor：JSON配置
+- 🍒 Cherry Studio：可视化配置界面
+
+现在你可以在这些AI助手中使用自然语言控制机器人：
+
+- "列出所有机器人"
+- "获取机器人状态"  
+- "开始清洁任务"
+
+### 支持的机器人系列
+
+- **M系列机器人** (40, 50, 75系列)：传统清洁机器人
+- **S系列机器人**：支持站点信息的高级机器人
+- **SW系列机器人**：下一代智能清洁系统
+
+### 获取帮助
+
+- 📝 [问题反馈](https://github.com/cfrs2005/mcp-gs-robot/issues)
+- 📚 [高斯开发者文档](https://developer.gs-robot.com/)
+
+</details>
