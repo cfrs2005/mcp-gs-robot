@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
-from src.gs_openapi.mcp.gausium_mcp import GausiumMCP
+from .mcp.gausium_mcp import GausiumMCP
 
 # --- Logging Configuration (Simplified) ---
 # Keep it simple for now to ensure basic functionality
