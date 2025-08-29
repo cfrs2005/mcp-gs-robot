@@ -1,6 +1,6 @@
 [project]
-name = "gs-openapi"
-version = "0.1.0"
+name = "mcp-gs-robot"
+version = "0.1.1"
 description = "Gausium OpenAPI MCP Server - Control Gausium robots through Claude"
 readme = "README.md"
 requires-python = ">=3.12"
