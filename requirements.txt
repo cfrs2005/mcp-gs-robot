@@ -2,5 +2,6 @@ httpx
 mcp
 pydantic
 pydantic-settings
+python-dotenv
 anyio
 uvicorn 

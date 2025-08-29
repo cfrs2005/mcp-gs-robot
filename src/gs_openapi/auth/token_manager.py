@@ -30,6 +30,7 @@ class TokenManager:
     def __init__(self):
         """Initialize the TokenManager."""
         self._access_token: Optional[str] = None
+        self._refresh_token: Optional[str] = None
         self._expires_at: float = 0
         # Buffer time (in seconds) before actual expiration to refresh token
         self._refresh_buffer: int = 300  # 5 minutes
@@ -50,17 +51,21 @@ class TokenManager:
             raise ValueError(f"Missing required environment variables: {', '.join(missing_vars)}")
     
     async def get_valid_token(self) -> str:
-        """Get a valid access token, refreshing if necessary.
+        """
+        获取有效的访问令牌，必要时刷新。
         
         Returns:
-            str: A valid access token.
+            str: 有效的访问令牌
             
         Raises:
-            httpx.HTTPStatusError: If token refresh fails due to API error
-            httpx.RequestError: If there are network connectivity issues
+            httpx.HTTPStatusError: 令牌刷新失败
+            httpx.RequestError: 网络连接问题
         """
         if not self._is_token_valid():
-            await self._refresh_token()
+            if self._refresh_token:
+                await self._refresh_access_token()
+            else:
+                await self._get_new_token()
         return self._access_token
     
     def _is_token_valid(self) -> bool:
@@ -70,15 +75,15 @@ class TokenManager:
         # Consider token invalid if it's within refresh buffer of expiration
         return time.time() < (self._expires_at - self._refresh_buffer)
     
-    async def _refresh_token(self) -> None:
-        """Refresh the access token.
+    async def _get_new_token(self) -> None:
+        """
+        获取新的访问令牌。
         
         Raises:
-            httpx.HTTPStatusError: If the API returns an error response
-            httpx.RequestError: If there are network connectivity issues
-            KeyError: If the API response is missing expected fields
+            httpx.HTTPStatusError: API返回错误响应
+            httpx.RequestError: 网络连接问题
+            KeyError: API响应缺少预期字段
         """
-        # Construct full URL using urljoin
         full_token_url = urljoin(GAUSIUM_BASE_URL, TOKEN_PATH)
         
         async with httpx.AsyncClient() as client:
@@ -98,9 +103,49 @@ class TokenManager:
                 token_data = response.json()
                 
                 self._access_token = token_data['access_token']
+                self._refresh_token = token_data.get('refresh_token')
                 # Convert expires_in to absolute timestamp
                 self._expires_at = time.time() + float(token_data['expires_in'])
                 
             except (httpx.HTTPStatusError, KeyError) as e:
-                print(f"Error refreshing token: {str(e)}")
+                print(f"Error getting new token: {str(e)}")
+                raise
+    
+    async def _refresh_access_token(self) -> None:
+        """
+        使用refresh token刷新访问令牌。
+        
+        Raises:
+            httpx.HTTPStatusError: API返回错误响应
+            httpx.RequestError: 网络连接问题
+            KeyError: API响应缺少预期字段
+        """
+        full_token_url = urljoin(GAUSIUM_BASE_URL, TOKEN_PATH)
+        
+        async with httpx.AsyncClient() as client:
+            try:
+                token_payload = {
+                    "grant_type": "refresh_token",
+                    "refresh_token": self._refresh_token
+                }
+                response = await client.post(
+                    full_token_url,
+                    json=token_payload,
+                    headers={'Content-Type': 'application/json'}
+                )
+                response.raise_for_status()
+                token_data = response.json()
+                
+                self._access_token = token_data['access_token']
+                # Update refresh token if provided
+                if 'refresh_token' in token_data:
+                    self._refresh_token = token_data['refresh_token']
+                # Convert expires_in to absolute timestamp  
+                self._expires_at = time.time() + float(token_data['expires_in'])
+                
+            except (httpx.HTTPStatusError, KeyError) as e:
+                print(f"Error refreshing access token: {str(e)}")
+                # If refresh fails, clear tokens to force new token acquisition
+                self._access_token = None
+                self._refresh_token = None
                 raise
