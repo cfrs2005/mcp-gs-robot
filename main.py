@@ -416,9 +416,13 @@ async def execute_s_line_no_site_task_workflow(
         task_parameters=task_parameters
     )
 
-if __name__ == "__main__":
+def main():
+    """Main entry point for the MCP server."""
     logging.info("Starting Gausium MCP server using mcp.run() with simplified logging...")
     # Run using mcp.run()
     mcp.run(transport='stdio')
     # mcp.run(transport='sse')
+
+if __name__ == "__main__":
+    main()
 

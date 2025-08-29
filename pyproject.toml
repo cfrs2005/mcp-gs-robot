@@ -1,6 +1,6 @@
 [project]
 name = "mcp-gs-robot"
-version = "0.1.2"
+version = "0.1.3"
 description = "Gausium OpenAPI MCP Server - Control Gausium robots through Claude"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -26,6 +26,9 @@ dependencies = [
 Homepage = "https://github.com/cfrs2005/mcp-gs-robot"
 Repository = "https://github.com/cfrs2005/mcp-gs-robot"
 Issues = "https://github.com/cfrs2005/mcp-gs-robot/issues"
+
+[project.scripts]
+mcp-gs-robot = "main:main"
 
 [build-system]
 requires = ["hatchling"]
