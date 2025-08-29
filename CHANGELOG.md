@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.7] - 2025-08-30
+
+### 🎨 Visual Improvements
+- Completely redesigned architecture diagram with improved layout and clarity
+- Fixed background layer alignment and proper component masking
+- Moved architecture diagram components 50px to the right for better spacing
+- Aligned all layer labels for consistent visual presentation
+- Removed all connection lines for cleaner, simplified diagram appearance
+- Enhanced layer visibility with proper background colors and opacity
+
 ## [0.1.6] - 2025-08-30
 
 ### 📝 Documentation

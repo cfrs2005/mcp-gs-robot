@@ -12,7 +12,7 @@
 
 *Control and monitor Gausium cleaning robots through Claude, Cursor, and other AI assistants*
 
-[🚀 Quick Start](#-quick-start) • [📖 Documentation](#-documentation) • [🛠️ Installation](#️-installation) • [🎯 Examples](#-examples)
+[🚀 Quick Start](#-quick-start) • [📖 Documentation](#-documentation) • [🛠️ Installation](#️-installation) • [🎯 Examples](#-examples) • [🇨🇳 中文文档](README_CN.md)
 
 </div>
 
@@ -69,9 +69,15 @@ The diagram below shows how AI models interact with Gausium robots through the M
 
 ### 🤝 Supported Robot Lines
 
-- **M-line Robots** (40, 50, 75 series): Traditional cleaning robots
-- **S-line Robots**: Advanced robots with site information support
-- **SW-line Robots**: Next-generation smart cleaning systems
+#### M-line Robots (Traditional Cleaning Robots)
+- **OMNIE** (OMNIE series) - Multi-purpose cleaning robot
+- **Vacuum 40** (40 series) - Vacuum cleaning robot
+- **Scrubber 50** (50 series) - Floor scrubbing robot
+- **Scrubber 75** (75 series) - Heavy-duty floor scrubbing robot
+
+#### S-line Robots (Advanced Smart Robots, including SW series)
+- **Phantas** (S series) - Phantom intelligent cleaning robot
+- **BEETLE** (SW series) - Beetle smart cleaning robot
 
 ## 📁 Project Structure
 
@@ -279,96 +285,3 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 </div>
 
-## 🌐 Language Support | 语言支持
-
-<details>
-<summary>🇨🇳 中文说明 (Chinese Documentation)</summary>
-
-# 🤖 高斯OpenAPI MCP服务器
-
-这是一个MCP（模型控制协议）服务器，作为高斯OpenAPI的桥梁，允许AI模型或其他客户端通过标准化接口与高斯机器人交互。
-
-## 🌟 主要功能
-
-- 🤖 **机器人管理**：列出、监控和控制高斯清洁机器人
-- 📊 **实时状态**：获取详细的机器人状态和位置信息
-- 🗺️ **地图管理**：上传、下载和管理机器人地图
-- 📋 **任务报告**：检索清洁任务报告和历史数据
-- 🎯 **任务创建**：提交临时清洁任务
-- 🔧 **自动化工作流**：完整的任务执行流程
-
-## 🚀 快速开始
-
-### 安装
-
-```bash
-pip install mcp-gs-robot
-```
-
-### 配置环境变量
-
-```bash
-export GS_CLIENT_ID="你的客户端ID"
-export GS_CLIENT_SECRET="你的客户端密钥"
-export GS_OPEN_ACCESS_KEY="你的访问密钥"
-```
-
-### 运行服务器
-
-```bash
-mcp-gs-robot
-```
-
-### Claude Code集成
-
-**推荐方法：带环境变量的自动安装**
-
-```bash
-claude mcp add mcp-gs-robot \
-  --env GS_CLIENT_ID="你的客户端ID" \
-  --env GS_CLIENT_SECRET="你的客户端密钥" \
-  --env GS_OPEN_ACCESS_KEY="你的访问密钥"
-```
-
-**手动配置方法：**
-
-在 `claude_desktop_config.json` 中添加：
-
-```json
-{
-  "mcpServers": {
-    "mcp-gs-robot": {
-      "command": "mcp-gs-robot",
-      "env": {
-        "GS_CLIENT_ID": "你的客户端ID",
-        "GS_CLIENT_SECRET": "你的客户端密钥",
-        "GS_OPEN_ACCESS_KEY": "你的访问密钥"
-      }
-    }
-  }
-}
-```
-
-**IDE集成支持：**
-- 🎯 Claude Code：原生支持，stdio传输
-- 🖥️ Cursor：JSON配置
-- 🍒 Cherry Studio：可视化配置界面
-
-现在你可以在这些AI助手中使用自然语言控制机器人：
-
-- "列出所有机器人"
-- "获取机器人状态"  
-- "开始清洁任务"
-
-### 支持的机器人系列
-
-- **M系列机器人** (40, 50, 75系列)：传统清洁机器人
-- **S系列机器人**：支持站点信息的高级机器人
-- **SW系列机器人**：下一代智能清洁系统
-
-### 获取帮助
-
-- 📝 [问题反馈](https://github.com/cfrs2005/mcp-gs-robot/issues)
-- 📚 [高斯开发者文档](https://developer.gs-robot.com/)
-
-</details>

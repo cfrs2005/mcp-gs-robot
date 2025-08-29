@@ -1,83 +1,98 @@
-获取token
-https://developer.gs-robot.com/zh_CN/Openapi%20Oauth%20Service/Get%20OAuth%20Token
+# 📋 API Documentation
 
+This document provides comprehensive information about the Gausium Robot OpenAPI endpoints used by this MCP server.
 
-刷新token
-https://developer.gs-robot.com/zh_CN/Openapi%20Oauth%20Service/Refresh%20OAuth%20Token
+## 🔐 Authentication APIs
 
-机器人列表
+| API | Description | Chinese Docs | English Docs |
+|-----|-------------|--------------|---------------|
+| Get OAuth Token | Obtain authentication token | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Openapi%20Oauth%20Service/Get%20OAuth%20Token) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Openapi%20Oauth%20Service/Get%20OAuth%20Token) |
+| Refresh OAuth Token | Refresh expired token | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Openapi%20Oauth%20Service/Refresh%20OAuth%20Token) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Openapi%20Oauth%20Service/Refresh%20OAuth%20Token) |
 
-https://developer.gs-robot.com/zh_CN/Robot%20Information%20Service/List%20Robots
+## 🤖 Robot Information APIs
 
-机器人状态
+| API | Robot Series | Description | Chinese Docs | English Docs |
+|-----|--------------|-------------|--------------|---------------|
+| List Robots | All | List accessible robots | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Information%20Service/List%20Robots) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Information%20Service/List%20Robots) |
+| Get Robot Status (V1) | M-line (OMNIE, 40, 50, 75) | Get detailed robot status | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Information%20Service/V1%20Get%20Robot%20Status) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Information%20Service/V1%20Get%20Robot%20Status) |
+| Batch Get Robot Status (V1) | M-line (OMNIE, 40, 50, 75) | Batch status query | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Information%20Service/V1%20Batch%20Get%20Robot%20Statuses) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Information%20Service/V1%20Batch%20Get%20Robot%20Statuses) |
+| Get S Robot Status (V2) | S-line (Phantas, BEETLE) | Get S/SW robot status | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Information%20Service/V2%20Get%20S%20Robot%20Status) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Information%20Service/V2%20Get%20S%20Robot%20Status) |
+| Batch Get S Robot Status (V2) | S-line (Phantas, BEETLE) | Batch S/SW status query | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Information%20Service/V2%20Batch%20Get%20S%20Robot%20Status) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Information%20Service/V2%20Batch%20Get%20S%20Robot%20Status) |
 
-https://developer.gs-robot.com/zh_CN/Robot%20Information%20Service/List%20Robot%20Status%20Reports
+## 🎯 Robot Command APIs
 
-m线 V1 获取机器人状态 （40，50，75）
+| API | Robot Series | Description | Chinese Docs | English Docs |
+|-----|--------------|-------------|--------------|---------------|
+| Create Robot Command | M-line | Send commands (start/pause/stop) | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Command%20Service/Create%20Robot%20Command) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Command%20Service/Create%20Robot%20Command) |
+| Get Robot Command | All | Get command execution result | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Command%20Service/Get%20Robot%20Command) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Command%20Service/Get%20Robot%20Command) |
+| List Robot Commands | All | Get command history | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Command%20Service/List%20Robot%20Commands) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Command%20Service/List%20Robot%20Commands) |
 
-https://developer.gs-robot.com/zh_CN/Robot%20Information%20Service/V1%20Get%20Robot%20Status
+## 🗺️ Map Management APIs
 
-m线 V1 批量获取机器人状态 （40，50，75）
+| API | Version | Description | Chinese Docs | English Docs |
+|-----|---------|-------------|--------------|---------------|
+| List Robot Maps | V2 | Get available robot maps | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Map%20Service/V2%20List%20Robot%20Map) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Map%20Service/V2%20List%20Robot%20Map) |
+| Get Map Subareas | V2 | Get map area divisions | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Map%20Service/V2%20Get%20Subareas) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Map%20Service/V2%20Get%20Subareas) |
+| Upload Robot Map | V1 | Upload new map | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Map%20Service/V1%20Upload%20Robot%20Map) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Map%20Service/V1%20Upload%20Robot%20Map) |
+| Get Upload Record | V1 | Check upload status | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Map%20Service/V1%20Get%20Robot%20Record) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Map%20Service/V1%20Get%20Robot%20Record) |
+| Download Map | V1 | Download map (legacy) | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Map%20Service/V1%20Get%20Robot%20Map) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Map%20Service/V1%20Get%20Robot%20Map) |
+| Download Map | V2 | Download map (recommended) | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Map%20Service/V2%20Get%20Robot%20Map) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Map%20Service/V2%20Get%20Robot%20Map) |
 
+## 🎯 Task Management APIs
 
-https://developer.gs-robot.com/zh_CN/Robot%20Information%20Service/V1%20Batch%20Get%20Robot%20Statuses
+### S-line Robot Tasks
 
+| API | Description | Chinese Docs | English Docs |
+|-----|-------------|--------------|---------------|
+| Submit Temporary Site Task | Create task with site info | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Task%20Service/Submit%20Temporary%20Site%20Task) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Task%20Service/Submit%20Temporary%20Site%20Task) |
+| Submit Temporary No Site Task | Create task without site info | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Task%20Service/Submit%20Temporary%20No%20Site%20Task) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Task%20Service/Submit%20Temporary%20No%20Site%20Task) |
 
-s线 V2 获取 S,sw 机器人状态
-https://developer.gs-robot.com/zh_CN/Robot%20Information%20Service/V2%20Get%20S%20Robot%20Status
+### Task Reports
 
-s线 V2 批量获取 S,sw 机器人状态
+| API | Robot Series | Description | Chinese Docs | English Docs |
+|-----|--------------|-------------|--------------|---------------|
+| List Task Reports (V1) | M-line | Get M-line task reports | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Cleaning%20Data%20Service/V1%20List%20Robot%20Task%20Reports) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Cleaning%20Data%20Service/V1%20List%20Robot%20Task%20Reports) |
+| List Task Reports (V2) | S-line | Get S-line task reports | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Cleaning%20Data%20Service/V2%20List%20Robot%20Task%20Reports) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Cleaning%20Data%20Service/V2%20List%20Robot%20Task%20Reports) |
+| Generate Task Report PNG | M-line | Generate map visualization | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Cleaning%20Data%20Service/Generate%20Robot%20Task%20Report%20Png) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Cleaning%20Data%20Service/Generate%20Robot%20Task%20Report%20Png) |
 
-https://developer.gs-robot.com/zh_CN/Robot%20Information%20Service/V2%20Batch%20Get%20S%20Robot%20Status
+## 🏢 Site Information APIs
 
-s线 有站点临时任务下发
+| API | Robot Series | Description | Chinese Docs | English Docs |
+|-----|--------------|-------------|--------------|---------------|
+| Get Site Info | S-line | Get building and floor info | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Task%20Service/Get%20Site%20Info) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Task%20Service/Get%20Site%20Info) |
 
-https://developer.gs-robot.com/zh_CN/Robot%20Task%20Service/Submit%20Temporary%20Site%20Task
+## 🤖 Robot Series Support
 
+### M-line Robots (Traditional Cleaning)
+- **OMNIE** (OMNIE series) - Multi-purpose cleaning robot
+- **Vacuum 40** (40 series) - Vacuum cleaning robot  
+- **Scrubber 50** (50 series) - Floor scrubbing robot
+- **Scrubber 75** (75 series) - Heavy-duty floor scrubbing robot
 
-s线 无站点临时任务下发
+**Supported APIs**: V1 Status, Commands, Task Reports, Map Management
 
-https://developer.gs-robot.com/zh_CN/Robot%20Task%20Service/Submit%20Temporary%20No%20Site%20Task
+### S-line Robots (Smart Cleaning, including SW)
+- **Phantas** (S series) - Phantom intelligent cleaning robot
+- **BEETLE** (SW series) - Beetle smart cleaning robot
 
-m线机器人任务指令，除了任务下发不适用，其他都可以
+**Supported APIs**: V2 Status, Site Tasks, Advanced Task Reports, Full Map Management
 
-https://developer.gs-robot.com/zh_CN/Robot%20Command%20Service/Create%20Robot%20Command
+## 📝 API Usage Notes
 
-获取单条指令结果
+### Version Recommendations
+- **Map APIs**: Prefer V2 over V1 for new implementations
+- **Status APIs**: Use V1 for M-line, V2 for S-line robots
+- **Task APIs**: S-line robots support advanced site-based tasks
 
-https://developer.gs-robot.com/zh_CN/Robot%20Command%20Service/Get%20Robot%20Command
+### Authentication
+All APIs require OAuth authentication using the token endpoints. The MCP server handles this automatically using environment variables.
 
-获取机器人历史发出指令
+### Rate Limiting
+Please refer to the official Gausium developer documentation for current rate limiting policies.
 
-https://developer.gs-robot.com/zh_CN/Robot%20Command%20Service/List%20Robot%20Commands
+---
 
-获取机器人地图列表
-https://developer.gs-robot.com/zh_CN/Robot%20Map%20Service/V2%20List%20Robot%20Map
+## 🔗 Official Documentation
 
-查询机器人地图分区
-
-https://developer.gs-robot.com/zh_CN/Robot%20Map%20Service/V2%20Get%20Subareas
-
-v1 地图上传
-https://developer.gs-robot.com/zh_CN/Robot%20Map%20Service/V1%20Upload%20Robot%20Map
-
-v1地图上传状态检查
-https://developer.gs-robot.com/zh_CN/Robot%20Map%20Service/V1%20Get%20Robot%20Record
-
-v1地图获取下载
-
-https://developer.gs-robot.com/zh_CN/Robot%20Map%20Service/V1%20Get%20Robot%20Map
-
-v2 地图下载 ，地图相关基本上已经不需要使用v1了
-
-https://developer.gs-robot.com/zh_CN/Robot%20Map%20Service/V2%20Get%20Robot%20Map
-
-m线任务报告 
-https://developer.gs-robot.com/zh_CN/Robot%20Cleaning%20Data%20Service/V1%20List%20Robot%20Task%20Reports
-
-m线任务报告单独获取地图
-
-https://developer.gs-robot.com/zh_CN/Robot%20Cleaning%20Data%20Service/Generate%20Robot%20Task%20Report%20Png
-
-s线任务报告
-https://developer.gs-robot.com/zh_CN/Robot%20Cleaning%20Data%20Service/V2%20List%20Robot%20Task%20Reports
+- 🇨🇳 **Chinese**: [https://developer.gs-robot.com/zh_CN/](https://developer.gs-robot.com/zh_CN/)
+- 🇺🇸 **English**: [https://developer.gs-robot.com/en_US/](https://developer.gs-robot.com/en_US/)
