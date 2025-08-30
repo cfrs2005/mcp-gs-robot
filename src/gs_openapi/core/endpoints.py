@@ -169,15 +169,15 @@ ROBOT_MAP_ENDPOINTS = {
     'list_maps': APIEndpoint(
         name="list_robot_maps",
         path="map/robotMap/list",
-        method=HTTPMethod.GET,
-        version=APIVersion.OPENAPI_V1,
+        method=HTTPMethod.POST,
+        version=APIVersion.OPENAPI_V2_ALPHA1,
         description="V2列出机器人地图"
     ),
     'get_map_subareas': APIEndpoint(
         name="get_map_subareas",
         path="map/{map_id}/subareas",
         method=HTTPMethod.GET,
-        version=APIVersion.OPENAPI_V1,
+        version=APIVersion.OPENAPI_V2_ALPHA1,
         description="查询机器人地图分区"
     ),
     'upload_map_v1': APIEndpoint(
@@ -205,7 +205,7 @@ ROBOT_MAP_ENDPOINTS = {
         name="download_robot_map_v2",
         path="map/{map_id}/download",
         method=HTTPMethod.GET,
-        version=APIVersion.OPENAPI_V1,
+        version=APIVersion.OPENAPI_V2_ALPHA1,
         description="V2地图下载"
     )
 }

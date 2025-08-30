@@ -12,6 +12,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from .mcp.gausium_mcp import GausiumMCP
+from .utils.robot_router import RobotAPIRouter
 
 # --- Logging Configuration (Simplified) ---
 # Keep it simple for now to ensure basic functionality
@@ -24,6 +25,7 @@ logging.basicConfig(level=logging.INFO, format=LOG_FORMAT, datefmt=DATE_FORMAT)
 
 # Create MCP instance
 mcp = GausiumMCP("gs-openapi")
+router = RobotAPIRouter(mcp)
 
 # Define list_robots tool
 @mcp.tool()
@@ -415,6 +417,61 @@ async def execute_s_line_no_site_task_workflow(
         robot_sn=robot_sn,
         task_parameters=task_parameters
     )
+
+# --- 智能路由工具 ---
+
+@mcp.tool()
+async def get_robot_status_smart(serial_number: str):
+    """智能获取机器人状态。
+    
+    自动根据机器人系列选择V1 (M-line) 或V2 (S-line) API。
+    
+    Args:
+        serial_number: 机器人序列号
+        
+    Returns:
+        机器人状态信息字典
+    """
+    return await router.get_robot_status_smart(serial_number)
+
+@mcp.tool()
+async def get_task_reports_smart(serial_number: str, page: int = 1, page_size: int = 10, 
+                                start_time_utc_floor: str = None, start_time_utc_upper: str = None):
+    """智能获取任务报告。
+    
+    自动根据机器人系列选择M-line或S-line任务报告API。
+    
+    Args:
+        serial_number: 机器人序列号
+        page: 页码
+        page_size: 每页大小
+        start_time_utc_floor: 开始时间过滤
+        start_time_utc_upper: 结束时间过滤
+        
+    Returns:
+        任务报告数据字典
+    """
+    kwargs = {"page": page, "page_size": page_size}
+    if start_time_utc_floor:
+        kwargs["start_time_utc_floor"] = start_time_utc_floor
+    if start_time_utc_upper:
+        kwargs["start_time_utc_upper"] = start_time_utc_upper
+    
+    return await router.get_task_reports_smart(serial_number, **kwargs)
+
+@mcp.tool()
+async def get_robot_capabilities(serial_number: str):
+    """获取机器人支持的API能力。
+    
+    显示该机器人支持哪些API端点和功能。
+    
+    Args:
+        serial_number: 机器人序列号
+        
+    Returns:
+        机器人能力信息字典
+    """
+    return await router.get_capabilities(serial_number)
 
 def main():
     """Main entry point for the MCP server."""

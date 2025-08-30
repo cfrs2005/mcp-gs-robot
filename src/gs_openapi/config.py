@@ -13,7 +13,7 @@ GAUSIUM_BASE_URL = "https://openapi.gs-robot.com/"
 # API Paths
 TOKEN_PATH = "gas/api/v1alpha1/oauth/token" # Relative path
 ROBOTS_PATH = "v1alpha1/robots"             # Relative path
-MAP_LIST_PATH = "openapi/v1/map/robotMap/list" # Path for listing maps
+MAP_LIST_PATH = "openapi/v2alpha1/map/robotMap/list" # Path for listing maps (V2)
 
 # Environment Variables
 ENV_VAR_CLIENT_ID = "GS_CLIENT_ID"
