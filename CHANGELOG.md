@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.8] - 2025-08-30
+
+### 🔧 API Fixes
+- Fixed map API endpoints from V1 to V2alpha1 version for proper compatibility
+- Corrected map list API method from GET to POST according to API specification
+- Fixed API version constant name (OPENAPI_V2ALPHA1 → OPENAPI_V2_ALPHA1)
+- Updated robot list API to use relation=bound parameter for better filtering
+
+### 🚀 New Features
+- Added intelligent robot routing system for automatic API version selection
+- Implemented RobotAPIRouter class to distinguish M-line vs S-line robots
+- Added smart routing MCP tools: get_robot_status_smart, get_task_reports_smart, get_robot_capabilities
+- Enhanced robot series detection (M-line: 40/50/75/OMNIE, S-line: S/SW)
+
+### 🧹 Cleanup
+- Updated .gitignore to exclude documentation templates and development files
+- Improved project file organization
+
 ## [0.1.7] - 2025-08-30
 
 ### 🎨 Visual Improvements

@@ -76,6 +76,12 @@ test_*.py
 # Uncomment if needed
 # src/gs_openapi/config.py
 
+# Documentation templates and development files
+docs/CONTEXT-*.md
+docs/ai-context/
+docs/open-issues/
+docs/specs/
+
 # Distribution / packaging
 share/python-wheels/
 MANIFEST

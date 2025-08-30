@@ -59,6 +59,14 @@ The diagram below shows how AI models interact with Gausium robots through the M
 | 📍 `get_map_subareas` | Get detailed area information for tasks | ✅ Ready |
 | 🚀 `submit_temp_task` | Submit temporary cleaning tasks | ✅ Ready |
 
+### 🧠 Smart Routing Tools (New in v0.1.8)
+
+| Tool | Description | Status |
+|------|-------------|--------|
+| 🎯 `get_robot_status_smart` | Auto-select V1/V2 API based on robot series | ✅ Ready |
+| 📊 `get_task_reports_smart` | Intelligent task report API routing | ✅ Ready |
+| 🔍 `get_robot_capabilities` | Show supported APIs for specific robot | ✅ Ready |
+
 ### 🔧 Advanced Workflows
 
 - 🎛️ **Automated Task Execution**: Complete workflows from status → task selection → execution
