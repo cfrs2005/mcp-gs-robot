@@ -175,9 +175,9 @@ ROBOT_MAP_ENDPOINTS = {
     ),
     'get_map_subareas': APIEndpoint(
         name="get_map_subareas",
-        path="map/{map_id}/subareas",
-        method=HTTPMethod.GET,
-        version=APIVersion.OPENAPI_V2_ALPHA1,
+        path="map/subareas/get",
+        method=HTTPMethod.POST,
+        version=APIVersion.OPENAPI_V1,
         description="查询机器人地图分区"
     ),
     'upload_map_v1': APIEndpoint(

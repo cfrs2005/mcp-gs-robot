@@ -228,12 +228,13 @@ class GausiumMCP(FastMCP):
                 path_params={'robot_id': robot_id}
             )
 
-    async def get_map_subareas(self, map_id: str) -> Dict[str, Any]:
+    async def get_map_subareas(self, map_id: str, robot_sn: str = None) -> Dict[str, Any]:
         """
         获取地图分区信息。
 
         Args:
             map_id: 地图ID
+            robot_sn: 机器人序列号 (某些API版本需要)
 
         Returns:
             地图分区详细信息
@@ -246,10 +247,15 @@ class GausiumMCP(FastMCP):
         if not map_id:
             raise ValueError("Map ID cannot be empty")
 
+        # 构建请求体
+        request_data = {"mapId": map_id}
+        if robot_sn:
+            request_data["robotSn"] = robot_sn
+
         async with GausiumAPIClient() as client:
             return await client.call_endpoint(
                 'get_map_subareas',
-                path_params={'map_id': map_id}
+                json_data=request_data
             )
 
     async def submit_temp_site_task(

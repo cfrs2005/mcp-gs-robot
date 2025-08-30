@@ -1,6 +1,6 @@
 [project]
 name = "mcp-gs-robot"
-version = "0.1.9"
+version = "0.1.10"
 description = "MCP Server for Gausium Robot OpenAPI - Control and monitor Gausium cleaning robots through AI assistants"
 readme = "README.md"
 requires-python = ">=3.12"

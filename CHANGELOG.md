@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.10] - 2025-08-30
+
+### 🔧 Map Subareas API Fix
+- Fixed map subareas API path from `/map/{map_id}/subareas` to `/map/subareas/get`
+- Corrected method from GET to POST according to official documentation
+- Updated API version from V2alpha1 to V1 (matches official curl examples)
+- Fixed request format to use JSON body with mapId and robotSn parameters
+
 ## [0.1.9] - 2025-08-30
 
 ### 🔧 Critical API Path Fixes
