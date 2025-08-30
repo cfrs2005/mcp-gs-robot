@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.11] - 2025-08-30
+
+### 🧹 Major Interface Cleanup
+- Removed redundant MCP tools to eliminate confusion for AI models
+- Consolidated robot status tools: removed get_robot_status, get_robot_status_v1, get_robot_status_v2
+- Consolidated batch status tools: removed batch_get_robot_statuses_v1, batch_get_robot_statuses_v2
+- Consolidated task reports: removed list_robot_task_reports, list_robot_task_reports_s
+- Added batch_get_robot_statuses_smart for intelligent batch status queries
+
+### 🎯 Simplified Tool Set
+- Reduced from 21 tools to 16 tools (23% reduction)
+- All remaining tools use smart routing (automatic M-line/S-line detection)
+- Users only need to use `_smart` versions - no need to know robot series details
+
 ## [0.1.10] - 2025-08-30
 
 ### 🔧 Map Subareas API Fix

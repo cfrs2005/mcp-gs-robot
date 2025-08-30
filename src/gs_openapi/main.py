@@ -44,52 +44,7 @@ async def list_robots(page: int = 1, page_size: int = 10, relation: str = None):
     """
     return await mcp.list_robots(page=page, page_size=page_size, relation=relation)
 
-# Define get_robot_status tool
-@mcp.tool()
-async def get_robot_status(serial_number: str):
-    """Fetches the status of a specific robot by its serial number.
-    
-    Based on: https://developer.gs-robot.com/zh_CN/Robot%20Information%20Service/V1%20Get%20Robot%20Status
 
-    Args:
-        serial_number: The serial number of the target robot (e.g., 'TEST00-0000-000-S003').
-
-    Returns:
-        A dictionary containing the detailed status of the robot.
-    """
-    return await mcp.get_robot_status(serial_number=serial_number)
-
-# Define list_robot_task_reports tool
-@mcp.tool(name="list_robot_task_reports")
-async def list_robot_task_reports_tool(
-    serial_number: str,
-    page: int = 1,
-    page_size: int = 100,
-    start_time_utc_floor: Optional[str] = None,
-    start_time_utc_upper: Optional[str] = None
-):
-    """Fetches the task reports for a specific robot.
-    
-    Allows filtering by time range (optional).
-    Based on: https://developer.gs-robot.com/zh_CN/Robot%20Cleaning%20Data%20Service/V1%20List%20Robot%20Task%20Reports
-
-    Args:
-        serial_number: The serial number of the target robot.
-        page: The page number to retrieve (default: 1).
-        page_size: The number of items per page (default: 100).
-        start_time_utc_floor: Optional start time filter (ISO 8601 format string, e.g., '2024-09-11T00:00:00Z').
-        start_time_utc_upper: Optional end time filter (ISO 8601 format string, e.g., '2024-09-12T00:00:00Z').
-
-    Returns:
-        A dictionary containing the robot task reports data.
-    """
-    return await mcp.list_robot_task_reports(
-        serial_number=serial_number,
-        page=page,
-        page_size=page_size,
-        start_time_utc_floor=start_time_utc_floor,
-        start_time_utc_upper=start_time_utc_upper
-    )
 
 # Define list_robot_maps tool
 @mcp.tool()
@@ -186,54 +141,6 @@ async def submit_temp_no_site_task(task_data: dict):
     """
     return await mcp.submit_temp_no_site_task(task_data=task_data)
 
-# Define batch robot status tools
-@mcp.tool()
-async def get_robot_status_v1(serial_number: str):
-    """Gets V1 robot status for M-line robots (40, 50, 75 series).
-
-    Args:
-        serial_number: The serial number of the target robot.
-
-    Returns:
-        A dictionary containing V1 robot status information.
-    """
-    return await mcp.get_robot_status_v1(serial_number=serial_number)
-
-@mcp.tool()
-async def batch_get_robot_statuses_v1(serial_numbers: list):
-    """Batch gets V1 robot statuses for multiple M-line robots.
-
-    Args:
-        serial_numbers: List of robot serial numbers.
-
-    Returns:
-        A dictionary containing batch status query results.
-    """
-    return await mcp.batch_get_robot_statuses_v1(serial_numbers=serial_numbers)
-
-@mcp.tool()
-async def get_robot_status_v2(serial_number: str):
-    """Gets V2 robot status for S-line and SW-line robots.
-
-    Args:
-        serial_number: The serial number of the target robot.
-
-    Returns:
-        A dictionary containing V2 robot status information.
-    """
-    return await mcp.get_robot_status_v2(serial_number=serial_number)
-
-@mcp.tool()
-async def batch_get_robot_statuses_v2(serial_numbers: list):
-    """Batch gets V2 robot statuses for multiple S-line and SW-line robots.
-
-    Args:
-        serial_numbers: List of robot serial numbers.
-
-    Returns:
-        A dictionary containing batch status query results.
-    """
-    return await mcp.batch_get_robot_statuses_v2(serial_numbers=serial_numbers)
 
 # Define command query tools
 @mcp.tool()
@@ -313,33 +220,6 @@ async def download_robot_map_v2(map_id: str):
     return await mcp.download_robot_map_v2(map_id=map_id)
 
 # Define task report tools
-@mcp.tool()
-async def list_robot_task_reports_s(
-    serial_number: str,
-    page: int = 1,
-    page_size: int = 100,
-    start_time_utc_floor: Optional[str] = None,
-    start_time_utc_upper: Optional[str] = None
-):
-    """Lists S-line robot task reports.
-
-    Args:
-        serial_number: The serial number of the target robot.
-        page: Page number (default: 1).
-        page_size: Number of items per page (default: 100).
-        start_time_utc_floor: Optional start time filter (ISO 8601 format).
-        start_time_utc_upper: Optional end time filter (ISO 8601 format).
-
-    Returns:
-        A dictionary containing S-line task reports data.
-    """
-    return await mcp.list_robot_task_reports_s(
-        serial_number=serial_number,
-        page=page,
-        page_size=page_size,
-        start_time_utc_floor=start_time_utc_floor,
-        start_time_utc_upper=start_time_utc_upper
-    )
 
 @mcp.tool()
 async def generate_task_report_png(serial_number: str, report_id: str):
@@ -458,6 +338,21 @@ async def get_task_reports_smart(serial_number: str, page: int = 1, page_size: i
         kwargs["start_time_utc_upper"] = start_time_utc_upper
     
     return await router.get_task_reports_smart(serial_number, **kwargs)
+
+@mcp.tool()
+async def batch_get_robot_statuses_smart(serial_numbers: list):
+    """智能批量获取机器人状态。
+    
+    自动根据机器人系列分组并选择正确的批量API。
+    支持混合查询M-line和S-line机器人。
+    
+    Args:
+        serial_numbers: 机器人序列号列表
+        
+    Returns:
+        批量状态查询结果字典
+    """
+    return await router.batch_get_robot_statuses_smart(serial_numbers)
 
 @mcp.tool()
 async def get_robot_capabilities(serial_number: str):

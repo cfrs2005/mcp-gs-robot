@@ -86,12 +86,77 @@ class RobotAPIRouter:
         model_family = robot_info.get("modelFamilyCode", "")
         
         if self.is_m_line_robot(model_family):
-            # M-line使用基础任务报告API（需要实现）
-            raise NotImplementedError("M-line task reports API not implemented yet")
+            # M-line使用基础任务报告API
+            return await self.mcp.list_robot_task_reports(serial_number, **kwargs)
         elif self.is_s_line_robot(model_family):
             return await self.mcp.list_robot_task_reports_s(serial_number, **kwargs)
         else:
             raise ValueError(f"Unknown robot family: {model_family} for robot {serial_number}")
+
+    async def batch_get_robot_statuses_smart(self, serial_numbers: List[str]) -> Dict[str, Any]:
+        """智能批量获取机器人状态。
+        
+        自动根据机器人系列分组并选择正确的批量API。
+        """
+        if not serial_numbers:
+            return {"results": []}
+        
+        # 按机器人系列分组
+        m_line_robots = []
+        s_line_robots = []
+        unknown_robots = []
+        
+        for serial_number in serial_numbers:
+            robot_info = await self.get_robot_info(serial_number)
+            if not robot_info:
+                unknown_robots.append(serial_number)
+                continue
+            
+            model_family = robot_info.get("modelFamilyCode", "")
+            if self.is_m_line_robot(model_family):
+                m_line_robots.append(serial_number)
+            elif self.is_s_line_robot(model_family):
+                s_line_robots.append(serial_number)
+            else:
+                unknown_robots.append(serial_number)
+        
+        results = []
+        
+        # 批量查询M-line机器人状态
+        if m_line_robots:
+            try:
+                m_results = await self.mcp.batch_get_robot_statuses_v1(m_line_robots)
+                if isinstance(m_results, dict) and "results" in m_results:
+                    results.extend(m_results["results"])
+                else:
+                    results.extend(m_results if isinstance(m_results, list) else [m_results])
+            except Exception as e:
+                for sn in m_line_robots:
+                    results.append({"serialNumber": sn, "error": str(e), "robotType": "M-line"})
+        
+        # 批量查询S-line机器人状态
+        if s_line_robots:
+            try:
+                s_results = await self.mcp.batch_get_robot_statuses_v2(s_line_robots)
+                if isinstance(s_results, dict) and "results" in s_results:
+                    results.extend(s_results["results"])
+                else:
+                    results.extend(s_results if isinstance(s_results, list) else [s_results])
+            except Exception as e:
+                for sn in s_line_robots:
+                    results.append({"serialNumber": sn, "error": str(e), "robotType": "S-line"})
+        
+        # 处理未知机器人
+        for sn in unknown_robots:
+            results.append({"serialNumber": sn, "error": "Robot not found or unknown series", "robotType": "Unknown"})
+        
+        return {
+            "total": len(serial_numbers),
+            "m_line_count": len(m_line_robots),
+            "s_line_count": len(s_line_robots),
+            "unknown_count": len(unknown_robots),
+            "results": results
+        }
     
     async def get_capabilities(self, serial_number: str) -> Dict[str, bool]:
         """获取机器人支持的API能力。"""
