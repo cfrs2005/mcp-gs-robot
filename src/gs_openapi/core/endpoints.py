@@ -100,14 +100,14 @@ ROBOT_INFO_ENDPOINTS = {
     ),
     'get_robot_status_v2': APIEndpoint(
         name="get_robot_status_v2",
-        path="robots/{serial_number}/status",
+        path="s/robots/{serial_number}/status",
         method=HTTPMethod.GET,
         version=APIVersion.OPENAPI_V2_ALPHA1,
         description="V2获取S,SW机器人状态"
     ),
     'batch_get_robot_statuses_v2': APIEndpoint(
         name="batch_get_robot_statuses_v2",
-        path="robots/batch/status", 
+        path="s/robots/batch/status", 
         method=HTTPMethod.POST,
         version=APIVersion.OPENAPI_V2_ALPHA1,
         description="V2批量获取S,SW机器人状态"
@@ -170,8 +170,8 @@ ROBOT_MAP_ENDPOINTS = {
         name="list_robot_maps",
         path="map/robotMap/list",
         method=HTTPMethod.POST,
-        version=APIVersion.OPENAPI_V2_ALPHA1,
-        description="V2列出机器人地图"
+        version=APIVersion.OPENAPI_V1,
+        description="V1列出机器人地图"
     ),
     'get_map_subareas': APIEndpoint(
         name="get_map_subareas",

@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.9] - 2025-08-30
+
+### 🔧 Critical API Path Fixes
+- Fixed V2 S-line robot status API paths to include required `/s/` prefix
+- Corrected map API version from V2alpha1 back to V1 (per official documentation)
+- Fixed README navigation links to use GitHub absolute URLs for PyPI compatibility
+- Updated batch S-line status API path with proper `/s/` prefix
+
+### 📚 Documentation  
+- Enhanced navigation links for better PyPI page experience
+- Verified all API endpoints against official Gausium documentation
+
 ## [0.1.8] - 2025-08-30
 
 ### 🔧 API Fixes
