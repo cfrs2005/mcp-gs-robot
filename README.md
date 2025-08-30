@@ -12,7 +12,7 @@
 
 *Control and monitor Gausium cleaning robots through Claude, Cursor, and other AI assistants*
 
-[🚀 Quick Start](#-quick-start) • [📖 Documentation](#-documentation) • [🛠️ Installation](#️-installation) • [🎯 Examples](#-examples) • [🇨🇳 中文文档](README_CN.md)
+[🚀 Quick Start](https://github.com/cfrs2005/mcp-gs-robot#-quick-start) • [📖 Documentation](https://github.com/cfrs2005/mcp-gs-robot#-documentation) • [🛠️ Installation](https://github.com/cfrs2005/mcp-gs-robot#-installation-1) • [🎯 Examples](https://github.com/cfrs2005/mcp-gs-robot#-examples) • [🇨🇳 中文文档](https://github.com/cfrs2005/mcp-gs-robot/blob/main/README_CN.md)
 
 </div>
 
