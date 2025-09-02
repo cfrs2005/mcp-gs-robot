@@ -59,7 +59,7 @@ The diagram below shows how AI models interact with Gausium robots through the M
 | 📍 `get_map_subareas` | Get detailed area information for tasks | ✅ Ready |
 | 🚀 `submit_temp_task` | Submit temporary cleaning tasks | ✅ Ready |
 
-### 🧠 Smart Routing Tools (New in v0.1.8)
+### 🧠 Smart Routing Tools (Enhanced in v0.1.12)
 
 | Tool | Description | Status |
 |------|-------------|--------|

@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.12] - 2025-09-02
+
+### 🎯 Smart Routing Enhancement
+- Enhanced smart routing strategy to use serial number prefix detection
+- Improved robot series identification performance by eliminating API dependency
+- Updated automatic routing detection to handle additional robot series prefixes
+- Optimized intelligent routing for better reliability and faster response times
+
+### 🔧 Technical Improvements
+- Streamlined robot series detection logic in RobotAPIRouter
+- Enhanced prefix-based routing mapping for comprehensive robot coverage
+- Improved error handling and fallback strategies for unknown robot types
+- Added comprehensive test coverage for prefix-based routing functionality
+
 ## [0.1.11] - 2025-08-30
 
 ### 🧹 Major Interface Cleanup
