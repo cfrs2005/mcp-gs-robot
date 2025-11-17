@@ -24,6 +24,10 @@ This MCP (Model Control Protocol) server enables seamless interaction between AI
 
 **🔗 Repository:** [https://github.com/cfrs2005/mcp-gs-robot](https://github.com/cfrs2005/mcp-gs-robot)
 
+<a href="https://glama.ai/mcp/servers/@cfrs2005/mcp-gs-robot">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@cfrs2005/mcp-gs-robot/badge" alt="GS Robot Server MCP server" />
+</a>
+
 ### 🎯 Key Benefits
 
 - 🤖 **AI-First Design**: Built specifically for AI assistant integration
@@ -292,4 +296,3 @@ MIT License - see [LICENSE](LICENSE) file for details.
 *Enabling AI-powered robot automation, one task at a time* 🤖✨
 
 </div>
-
