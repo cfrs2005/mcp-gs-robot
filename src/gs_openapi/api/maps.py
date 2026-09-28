@@ -4,14 +4,16 @@ Map API module for Gausium OpenAPI.
 This module provides functions for interacting with the Gausium Map Service API.
 """
 
-from typing import Any, Dict, List
-import httpx
+from typing import Any
 from urllib.parse import urljoin
 
-from ..config import GAUSIUM_BASE_URL, MAP_LIST_PATH
-from ..auth.token_manager import TokenManager
+import httpx
 
-async def list_robot_maps(token_manager: TokenManager, robot_sn: str) -> List[Dict[str, Any]]:
+from ..auth.token_manager import TokenManager
+from ..config import GAUSIUM_BASE_URL, MAP_LIST_PATH
+
+
+async def list_robot_maps(token_manager: TokenManager, robot_sn: str) -> list[dict[str, Any]]:
     """Fetches the list of maps associated with a specific robot.
 
     Args:
@@ -67,11 +69,11 @@ async def list_robot_maps(token_manager: TokenManager, robot_sn: str) -> List[Di
 
     except httpx.HTTPStatusError as e:
         # Log the error already raised or the one we raised based on 'code'
-        print(f"Error listing maps for robot {robot_sn}: {str(e)}")
+        print(f"Error listing maps for robot {robot_sn}: {e!s}")
         raise
     except httpx.RequestError as e:
         print(f"Network error listing maps for robot {robot_sn}: {e}")
         raise
     except KeyError as e:
-         print(f"API response format error for robot {robot_sn}: {str(e)}")
+         print(f"API response format error for robot {robot_sn}: {e!s}")
          raise # Re-raise the KeyError

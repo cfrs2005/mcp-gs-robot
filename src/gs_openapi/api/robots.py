@@ -4,19 +4,21 @@ Robot API module for Gausium OpenAPI.
 This module provides functions for interacting with the Gausium Robots API.
 """
 
-from typing import Any, Dict, Optional
-import httpx
+from typing import Any
 from urllib.parse import urljoin
 
-from ..config import GAUSIUM_BASE_URL, ROBOTS_PATH
+import httpx
+
 from ..auth.token_manager import TokenManager
+from ..config import GAUSIUM_BASE_URL, ROBOTS_PATH
+
 
 async def list_robots(
     token_manager: TokenManager,
     page: int = 1,
     page_size: int = 10,
-    relation: Optional[str] = None
-) -> Dict[str, Any]:
+    relation: str | None = None
+) -> dict[str, Any]:
     """Fetches the list of robots from the Gausium OpenAPI.
 
     Args:
@@ -65,7 +67,7 @@ async def list_robots(
         print(f"Network error listing robots: {e}")
         raise
 
-async def get_robot_status(token_manager: TokenManager, serial_number: str) -> Dict[str, Any]:
+async def get_robot_status(token_manager: TokenManager, serial_number: str) -> dict[str, Any]:
     """Fetches the status of a specific robot from the Gausium OpenAPI.
 
     Args:
@@ -117,9 +119,9 @@ async def list_robot_task_reports(
     serial_number: str,
     page: int = 1,
     page_size: int = 100, # Default page size from curl example
-    start_time_utc_floor: Optional[str] = None,
-    start_time_utc_upper: Optional[str] = None
-) -> Dict[str, Any]:
+    start_time_utc_floor: str | None = None,
+    start_time_utc_upper: str | None = None
+) -> dict[str, Any]:
     """Fetches the task reports for a specific robot.
 
     Args:

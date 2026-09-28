@@ -4,8 +4,7 @@ Main entry point for the Gausium OpenAPI application.
 This module initializes and runs the MCP server with Gausium API support.
 """
 import logging
-import sys
-from typing import Optional
+
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -67,7 +66,7 @@ async def list_robot_maps(robot_sn: str):
 async def create_robot_command(
     serial_number: str, 
     command_type: str,
-    command_parameter: Optional[dict] = None
+    command_parameter: dict | None = None
 ):
     """Creates a robot command.
 
@@ -238,7 +237,7 @@ async def generate_task_report_png(serial_number: str, report_id: str):
 @mcp.tool()
 async def execute_m_line_task_workflow(
     serial_number: str,
-    task_selection_criteria: Optional[dict] = None
+    task_selection_criteria: dict | None = None
 ):
     """Executes complete M-line robot task workflow.
     

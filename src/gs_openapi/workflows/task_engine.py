@@ -5,8 +5,8 @@
 """
 
 import logging
-from typing import Dict, Any, List, Optional
 from enum import Enum
+from typing import Any
 
 from ..core.client import GausiumAPIClient
 
@@ -29,13 +29,12 @@ class TaskExecutionEngine:
     
     def __init__(self):
         """初始化任务执行引擎。"""
-        pass
     
     async def execute_m_line_task(
         self,
         serial_number: str,
-        task_selection_criteria: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        task_selection_criteria: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """
         执行M线机器人任务。
         
@@ -90,14 +89,14 @@ class TaskExecutionEngine:
                 return command_result
                 
             except Exception as e:
-                logger.error(f"M-line task execution failed: {str(e)}")
+                logger.error(f"M-line task execution failed: {e!s}")
                 raise
 
     async def execute_s_line_site_task(
         self,
         robot_id: str,
-        task_parameters: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        task_parameters: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         执行S线有站点任务。
         
@@ -158,14 +157,14 @@ class TaskExecutionEngine:
                 return task_result
                 
             except Exception as e:
-                logger.error(f"S-line site task execution failed: {str(e)}")
+                logger.error(f"S-line site task execution failed: {e!s}")
                 raise
 
     async def execute_s_line_no_site_task(
         self,
         robot_sn: str,
-        task_parameters: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        task_parameters: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         执行S线无站点任务。
         
@@ -228,10 +227,10 @@ class TaskExecutionEngine:
                 return task_result
                 
             except Exception as e:
-                logger.error(f"S-line no-site task execution failed: {str(e)}")
+                logger.error(f"S-line no-site task execution failed: {e!s}")
                 raise
 
-    def _extract_m_line_tasks(self, robot_status: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _extract_m_line_tasks(self, robot_status: dict[str, Any]) -> list[dict[str, Any]]:
         """
         从M线机器人状态中提取可执行任务列表。
         
@@ -253,9 +252,9 @@ class TaskExecutionEngine:
 
     def _select_m_line_task(
         self, 
-        available_tasks: List[Dict[str, Any]], 
-        criteria: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        available_tasks: list[dict[str, Any]], 
+        criteria: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         根据条件选择M线任务。
         
@@ -279,7 +278,7 @@ class TaskExecutionEngine:
         # 如果没有匹配的任务，返回第一个
         return available_tasks[0]
 
-    def _extract_maps_from_site(self, site_info: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _extract_maps_from_site(self, site_info: dict[str, Any]) -> list[dict[str, Any]]:
         """
         从站点信息中提取地图列表。
         
@@ -303,8 +302,8 @@ class TaskExecutionEngine:
 
     def _select_map(
         self, 
-        available_maps: List[Dict[str, Any]], 
-        criteria: Dict[str, Any]
+        available_maps: list[dict[str, Any]], 
+        criteria: dict[str, Any]
     ) -> str:
         """
         选择目标地图。
@@ -329,8 +328,8 @@ class TaskExecutionEngine:
 
     def _select_map_from_list(
         self,
-        available_maps: List[Dict[str, Any]],
-        criteria: Dict[str, Any]
+        available_maps: list[dict[str, Any]],
+        criteria: dict[str, Any]
     ) -> str:
         """
         从地图列表中选择目标地图。
@@ -355,9 +354,9 @@ class TaskExecutionEngine:
     def _build_site_task_data(
         self,
         map_id: str,
-        subareas: Dict[str, Any],
-        task_parameters: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        subareas: dict[str, Any],
+        task_parameters: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         构建有站点任务数据。
         
@@ -383,9 +382,9 @@ class TaskExecutionEngine:
     def _build_no_site_task_data(
         self,
         map_id: str,
-        subareas: Dict[str, Any],
-        task_parameters: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        subareas: dict[str, Any],
+        task_parameters: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         构建无站点任务数据。
         
@@ -410,8 +409,8 @@ class TaskExecutionEngine:
 
     def _matches_criteria(
         self, 
-        item: Dict[str, Any], 
-        criteria: Dict[str, Any]
+        item: dict[str, Any], 
+        criteria: dict[str, Any]
     ) -> bool:
         """
         检查项目是否匹配选择条件。

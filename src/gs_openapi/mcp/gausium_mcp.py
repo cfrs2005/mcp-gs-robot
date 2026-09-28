@@ -4,11 +4,13 @@ Gausium MCP implementation module.
 This module provides the main MCP implementation for the Gausium OpenAPI.
 """
 
-from typing import Any, Dict, Optional, List
+from typing import Any
+
 from mcp.server.fastmcp import FastMCP
 
 from ..core.client import GausiumAPIClient
 from ..workflows.task_engine import TaskExecutionEngine
+
 
 class GausiumMCP(FastMCP):
     """
@@ -32,8 +34,8 @@ class GausiumMCP(FastMCP):
         self,
         page: int = 1,
         page_size: int = 10,
-        relation: Optional[str] = None
-    ) -> Dict[str, Any]:
+        relation: str | None = None
+    ) -> dict[str, Any]:
         """
         获取机器人列表。
 
@@ -62,7 +64,7 @@ class GausiumMCP(FastMCP):
                 query_params=query_params
             )
 
-    async def get_robot_status(self, serial_number: str) -> Dict[str, Any]:
+    async def get_robot_status(self, serial_number: str) -> dict[str, Any]:
         """
         获取特定机器人的状态。
 
@@ -91,9 +93,9 @@ class GausiumMCP(FastMCP):
         serial_number: str,
         page: int = 1,
         page_size: int = 100,
-        start_time_utc_floor: Optional[str] = None,
-        start_time_utc_upper: Optional[str] = None
-    ) -> Dict[str, Any]:
+        start_time_utc_floor: str | None = None,
+        start_time_utc_upper: str | None = None
+    ) -> dict[str, Any]:
         """
         获取特定机器人的任务报告。
 
@@ -131,7 +133,7 @@ class GausiumMCP(FastMCP):
                 query_params=query_params
             )
 
-    async def list_robot_maps(self, robot_sn: str) -> List[Dict[str, Any]]:
+    async def list_robot_maps(self, robot_sn: str) -> list[dict[str, Any]]:
         """
         获取与特定机器人关联的地图列表。
 
@@ -166,8 +168,8 @@ class GausiumMCP(FastMCP):
         self,
         serial_number: str,
         command_type: str,
-        command_parameter: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        command_parameter: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """
         创建机器人指令。
 
@@ -204,7 +206,7 @@ class GausiumMCP(FastMCP):
                 json_data=request_data
             )
 
-    async def get_site_info(self, robot_id: str) -> Dict[str, Any]:
+    async def get_site_info(self, robot_id: str) -> dict[str, Any]:
         """
         获取站点信息。
 
@@ -228,7 +230,7 @@ class GausiumMCP(FastMCP):
                 path_params={'robot_id': robot_id}
             )
 
-    async def get_map_subareas(self, map_id: str, robot_sn: str = None) -> Dict[str, Any]:
+    async def get_map_subareas(self, map_id: str, robot_sn: str = None) -> dict[str, Any]:
         """
         获取地图分区信息。
 
@@ -260,8 +262,8 @@ class GausiumMCP(FastMCP):
 
     async def submit_temp_site_task(
         self,
-        task_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        task_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         S线有站点临时任务下发。
 
@@ -287,8 +289,8 @@ class GausiumMCP(FastMCP):
 
     async def submit_temp_no_site_task(
         self,
-        task_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        task_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         S线无站点临时任务下发。
 
@@ -312,7 +314,7 @@ class GausiumMCP(FastMCP):
                 json_data=task_data
             )
 
-    async def get_robot_status_v1(self, serial_number: str) -> Dict[str, Any]:
+    async def get_robot_status_v1(self, serial_number: str) -> dict[str, Any]:
         """
         V1获取机器人状态 (40,50,75系列)。
 
@@ -338,8 +340,8 @@ class GausiumMCP(FastMCP):
 
     async def batch_get_robot_statuses_v1(
         self, 
-        serial_numbers: List[str]
-    ) -> Dict[str, Any]:
+        serial_numbers: list[str]
+    ) -> dict[str, Any]:
         """
         V1批量获取机器人状态。
 
@@ -363,7 +365,7 @@ class GausiumMCP(FastMCP):
                 json_data={'serialNumbers': serial_numbers}
             )
 
-    async def get_robot_status_v2(self, serial_number: str) -> Dict[str, Any]:
+    async def get_robot_status_v2(self, serial_number: str) -> dict[str, Any]:
         """
         V2获取S,SW机器人状态。
 
@@ -389,8 +391,8 @@ class GausiumMCP(FastMCP):
 
     async def batch_get_robot_statuses_v2(
         self, 
-        serial_numbers: List[str]
-    ) -> Dict[str, Any]:
+        serial_numbers: list[str]
+    ) -> dict[str, Any]:
         """
         V2批量获取S,SW机器人状态。
 
@@ -418,7 +420,7 @@ class GausiumMCP(FastMCP):
         self, 
         serial_number: str, 
         command_id: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         获取单条指令结果。
 
@@ -453,7 +455,7 @@ class GausiumMCP(FastMCP):
         serial_number: str,
         page: int = 1,
         page_size: int = 10
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         获取机器人历史发出指令。
 
@@ -485,8 +487,8 @@ class GausiumMCP(FastMCP):
 
     async def upload_robot_map_v1(
         self,
-        map_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        map_data: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         V1地图上传。
 
@@ -510,7 +512,7 @@ class GausiumMCP(FastMCP):
                 json_data=map_data
             )
 
-    async def get_upload_record_v1(self, record_id: str) -> Dict[str, Any]:
+    async def get_upload_record_v1(self, record_id: str) -> dict[str, Any]:
         """
         V1地图上传状态检查。
 
@@ -534,7 +536,7 @@ class GausiumMCP(FastMCP):
                 path_params={'record_id': record_id}
             )
 
-    async def download_robot_map_v1(self, map_id: str) -> Dict[str, Any]:
+    async def download_robot_map_v1(self, map_id: str) -> dict[str, Any]:
         """
         V1获取地图下载。
 
@@ -558,7 +560,7 @@ class GausiumMCP(FastMCP):
                 path_params={'map_id': map_id}
             )
 
-    async def download_robot_map_v2(self, map_id: str) -> Dict[str, Any]:
+    async def download_robot_map_v2(self, map_id: str) -> dict[str, Any]:
         """
         V2地图下载。
 
@@ -587,9 +589,9 @@ class GausiumMCP(FastMCP):
         serial_number: str,
         page: int = 1,
         page_size: int = 100,
-        start_time_utc_floor: Optional[str] = None,
-        start_time_utc_upper: Optional[str] = None
-    ) -> Dict[str, Any]:
+        start_time_utc_floor: str | None = None,
+        start_time_utc_upper: str | None = None
+    ) -> dict[str, Any]:
         """
         S线任务报告查询。
 
@@ -631,7 +633,7 @@ class GausiumMCP(FastMCP):
         self,
         serial_number: str,
         report_id: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         M线任务报告地图生成。
 
@@ -665,8 +667,8 @@ class GausiumMCP(FastMCP):
     async def execute_m_line_task_workflow(
         self,
         serial_number: str,
-        task_selection_criteria: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+        task_selection_criteria: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """
         执行M线机器人完整任务工作流。
         
@@ -687,8 +689,8 @@ class GausiumMCP(FastMCP):
     async def execute_s_line_site_task_workflow(
         self,
         robot_id: str,
-        task_parameters: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        task_parameters: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         执行S线有站点任务完整工作流。
         
@@ -709,8 +711,8 @@ class GausiumMCP(FastMCP):
     async def execute_s_line_no_site_task_workflow(
         self,
         robot_sn: str,
-        task_parameters: Dict[str, Any]
-    ) -> Dict[str, Any]:
+        task_parameters: dict[str, Any]
+    ) -> dict[str, Any]:
         """
         执行S线无站点任务完整工作流。
         

@@ -5,7 +5,6 @@ API端点配置定义。
 遵循Linus原则：用数据结构解决问题，而不是代码逻辑。
 """
 
-from typing import Dict, Any, Optional
 from dataclasses import dataclass
 from enum import Enum
 
@@ -21,11 +20,12 @@ class HTTPMethod(Enum):
 class APIVersion(Enum):
     """API版本枚举。"""
     V1_ALPHA1 = "v1alpha1"
-    V2_ALPHA1 = "v2alpha1" 
+    V2_ALPHA1 = "v2alpha1"
     V1 = "v1"
     GAS_V1_ALPHA1 = "gas/api/v1alpha1"
     OPENAPI_V1 = "openapi/v1"
     OPENAPI_V2_ALPHA1 = "openapi/v2alpha1"
+    OPENAPI_V3 = "openapi/v3"
 
 
 @dataclass(frozen=True)
@@ -235,14 +235,168 @@ ROBOT_CLEANING_ENDPOINTS = {
     )
 }
 
+# ---------------------------------------------------------------------------
+# OpenAPI V3 business endpoints.
+#
+# All V3 business endpoints are POST with a JSON body under /openapi/v3/...
+# and return the unified envelope {code, msg, traceId, data}. Each entry below
+# uses the OPENAPI_V3 version so that ``full_path`` resolves to the exact
+# path documented in docs/openapi-v3/*.md. Endpoint names follow the
+# ``v3_<domain>_<...>`` convention.
+# ---------------------------------------------------------------------------
+def _v3(path: str, description: str = "") -> APIEndpoint:
+    """Helper to build a V3 POST endpoint that requires auth."""
+    return APIEndpoint(
+        name=path,
+        path=path,
+        method=HTTPMethod.POST,
+        version=APIVersion.OPENAPI_V3,
+        requires_auth=True,
+        description=description,
+    )
+
+
+V3_ENDPOINTS: dict[str, APIEndpoint] = {
+    # Base Info
+    "v3_robots_status_get": _v3(
+        "robots/status/get",
+        "Get robot status snapshots (up to 100 robots)",
+    ),
+    # Map Data
+    "v3_robots_maps_list": _v3("robots/maps/list", "List robot maps"),
+    "v3_robots_maps_canvas_get": _v3(
+        "robots/maps/canvas/get", "Get robot map canvas PNG and metadata"
+    ),
+    "v3_maps_charging_positions_list": _v3(
+        "maps/charging-positions/list", "List charging positions on a robot map"
+    ),
+    "v3_maps_resources_list": _v3(
+        "maps/map-resources/list",
+        "List map resources (regions/paths/positions) without work modes",
+    ),
+    "v3_maps_schedule_resources_list": _v3(
+        "maps/schedule-resources/list",
+        "List task resources (work modes + maps) for schedules",
+    ),
+    # Tasks and Scheduling - capabilities and work modes
+    "v3_tasks_capabilities_get": _v3(
+        "tasks/fusion/robot-capabilities/get",
+        "Get robot combined task capabilities",
+    ),
+    "v3_tasks_work_modes_list": _v3(
+        "tasks/fusion/work-modes/list", "List robot work modes"
+    ),
+    # Tasks and Scheduling - persistent combined task definitions
+    "v3_tasks_definitions_create": _v3(
+        "tasks/persistence/create",
+        "Create a persistent combined task definition",
+    ),
+    "v3_tasks_definitions_update": _v3(
+        "tasks/persistence/update",
+        "Update a persistent combined task definition",
+    ),
+    "v3_tasks_definitions_delete": _v3(
+        "tasks/persistence/delete",
+        "Delete a persistent combined task definition",
+    ),
+    "v3_tasks_definitions_get": _v3(
+        "tasks/persistence/get",
+        "Get a persistent combined task definition",
+    ),
+    "v3_tasks_definitions_page": _v3(
+        "tasks/persistence/page",
+        "Page persistent combined task definitions",
+    ),
+    # Temporary task commands
+    "v3_tasks_start": _v3(
+        "robots/commands/tasks/start", "Start a combined task by definition id"
+    ),
+    "v3_tasks_pause": _v3(
+        "robots/commands/tasks/pause", "Pause the current task"
+    ),
+    "v3_tasks_resume": _v3(
+        "robots/commands/tasks/resume", "Resume the current task"
+    ),
+    "v3_tasks_stop": _v3(
+        "robots/commands/tasks/stop", "Stop the current task"
+    ),
+    "v3_tasks_skip": _v3(
+        "robots/commands/tasks/skip", "Skip the current task item"
+    ),
+    # Simple schedule plans
+    "v3_schedules_simple_create": _v3(
+        "schedules/plans/simple/create",
+        "Create a simple schedule plan (returns planUuid)",
+    ),
+    "v3_schedules_simple_update": _v3(
+        "schedules/plans/simple/update", "Update a simple schedule plan"
+    ),
+    "v3_schedules_simple_delete": _v3(
+        "schedules/plans/simple/delete", "Delete a simple schedule plan"
+    ),
+    # Standard schedule plans
+    "v3_schedules_create": _v3(
+        "schedules/plans/create", "Create a standard schedule plan"
+    ),
+    "v3_schedules_update": _v3(
+        "schedules/plans/update", "Update a standard schedule plan"
+    ),
+    "v3_schedules_delete": _v3(
+        "schedules/plans/delete", "Delete a standard schedule plan"
+    ),
+    "v3_schedules_list": _v3(
+        "schedules/plans/list", "List all schedule plans for a robot"
+    ),
+    "v3_schedules_get": _v3(
+        "schedules/plans/get", "Get a schedule plan detail by date and planUuid"
+    ),
+    "v3_schedules_pre_tasks_day_list": _v3(
+        "schedules/plans/pre-tasks/day/list",
+        "List schedule pre-tasks for a specific day",
+    ),
+    "v3_schedules_calendar_month_get": _v3(
+        "schedules/plans/calendar/month/get", "Get monthly schedule calendar"
+    ),
+    # Command operation
+    "v3_commands_status_get": _v3(
+        "robots/commands/status/get", "Get command delivery status by requestId"
+    ),
+    "v3_commands_history_page": _v3(
+        "robots/commands/status/page", "Page command delivery history"
+    ),
+    # Navigation commands
+    "v3_commands_navigation_go_home": _v3(
+        "robots/commands/navigation/go-home",
+        "Navigate robot back to a charging position",
+    ),
+    "v3_commands_navigation_pause": _v3(
+        "robots/commands/navigation/pause", "Pause the current navigation"
+    ),
+    "v3_commands_navigation_resume": _v3(
+        "robots/commands/navigation/resume", "Resume the current navigation"
+    ),
+    "v3_commands_navigation_stop": _v3(
+        "robots/commands/navigation/stop", "Stop the current navigation"
+    ),
+    # Task reports
+    "v3_reports_page": _v3(
+        "taskreports/page", "Page task reports with optional end-time range"
+    ),
+    "v3_reports_map_images_query": _v3(
+        "taskreports/map-images/query", "Query task report map image URLs"
+    ),
+}
+
+
 # 所有端点的统一注册表
-ALL_ENDPOINTS: Dict[str, APIEndpoint] = {
+ALL_ENDPOINTS: dict[str, APIEndpoint] = {
     **AUTH_ENDPOINTS,
     **ROBOT_INFO_ENDPOINTS,
     **ROBOT_TASK_ENDPOINTS,
     **ROBOT_COMMAND_ENDPOINTS,
     **ROBOT_MAP_ENDPOINTS,
-    **ROBOT_CLEANING_ENDPOINTS
+    **ROBOT_CLEANING_ENDPOINTS,
+    **V3_ENDPOINTS,
 }
 
 
