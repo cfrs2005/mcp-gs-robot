@@ -10,7 +10,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
+from typing import Any, Self
 from urllib.parse import urljoin
 
 import httpx
@@ -67,7 +67,7 @@ class GausiumAPIClient:
             self._owns_http_client = True
         return self._client
 
-    async def __aenter__(self) -> GausiumAPIClient:
+    async def __aenter__(self) -> Self:
         """异步上下文管理器入口。"""
         await self._ensure_client()
         return self

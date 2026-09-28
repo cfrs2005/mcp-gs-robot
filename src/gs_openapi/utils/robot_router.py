@@ -4,7 +4,7 @@
 根据机器人系列自动选择正确的API版本和端点。
 """
 
-from typing import Any
+from typing import Any, ClassVar
 
 from ..mcp.gausium_mcp import GausiumMCP
 
@@ -19,7 +19,7 @@ class RobotAPIRouter:
     """
     
     # 机器人系列前缀映射
-    ROBOT_SERIES_MAPPING = {
+    ROBOT_SERIES_MAPPING: ClassVar[dict[str, str]] = {
         # M-line 机器人
         "GS100": "75",    # 75系列
         "GS400": "75",    # 75系列 (新发现)
@@ -63,7 +63,7 @@ class RobotAPIRouter:
                     if robot["serialNumber"] == serial_number:
                         self._robot_cache[serial_number] = robot
                         return robot
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - Lookup failures leave the cache empty.
             print(f"Failed to get robot info for {serial_number}: {e}")
         
         return None
@@ -173,7 +173,7 @@ class RobotAPIRouter:
                     results.extend(v1_results["results"])
                 else:
                     results.extend(v1_results if isinstance(v1_results, list) else [v1_results])
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - Return per-robot errors for batch failures.
                 for sn in v1_robots:
                     results.append({
                         "serialNumber": sn, 
@@ -193,7 +193,7 @@ class RobotAPIRouter:
                     results.extend(s_results["results"])
                 else:
                     results.extend(s_results if isinstance(s_results, list) else [s_results])
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - Return per-robot errors for batch failures.
                 for sn in s_line_robots:
                     results.append({
                         "serialNumber": sn, 

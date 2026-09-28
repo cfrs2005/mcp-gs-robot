@@ -230,7 +230,7 @@ class GausiumMCP(FastMCP):
                 path_params={'robot_id': robot_id}
             )
 
-    async def get_map_subareas(self, map_id: str, robot_sn: str = None) -> dict[str, Any]:
+    async def get_map_subareas(self, map_id: str, robot_sn: str | None = None) -> dict[str, Any]:
         """
         获取地图分区信息。
 
