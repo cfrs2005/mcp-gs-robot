@@ -69,7 +69,6 @@ CLAUDE.md
 MCP-ASSISTANT-RULES.md
 
 # Development and testing files
-test_*.py
 !tests/
 
 # Specific project files that might contain sensitive data
