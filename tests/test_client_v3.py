@@ -103,7 +103,6 @@ async def test_envelope_unwrap_success_returns_data():
 
 
 async def test_nonzero_code_raises_api_error_with_fields():
-    handler = _record_handler({}, [])
     # Override: return a non-zero envelope for this endpoint.
     async def h(request):
         if request.url.path.endswith("oauth/token"):

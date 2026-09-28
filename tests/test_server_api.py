@@ -212,8 +212,11 @@ async def test_static_and_missing_static(client, app, tmp_path: Path, monkeypatc
     assert (await client.get("/index.html")).content == index.content
     assert (await client.get("/robots/SN")).content == index.content
     assert (await client.get("/api/v1/this-does-not-exist")).status_code == 404
-    for filename, content_type in (("index-BwvNKZcc.css", "text/css"),
-                                   ("index-Dclmnhvp.js", "text/javascript")):
+    assets_dir = Path(__file__).parents[1] / "src/gs_openapi/server/static/assets"
+    assets = [(f.name, "text/css" if f.suffix == ".css" else "text/javascript")
+              for f in sorted(assets_dir.iterdir()) if f.suffix in {".css", ".js"}]
+    assert assets, "H5 build output missing: run `npm run build` in h5/"
+    for filename, content_type in assets:
         asset = await client.get(f"/assets/{filename}")
         assert asset.status_code == 200
         assert asset.headers["content-type"].startswith(content_type)

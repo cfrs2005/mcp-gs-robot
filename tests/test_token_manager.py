@@ -18,9 +18,7 @@ from gs_openapi.core.errors import GausiumAuthError
 
 def _token_handler(token_payload):
     async def handler(request):
-        import json
 
-        body = json.loads(request.content)
         return httpx.Response(
             200,
             json={
