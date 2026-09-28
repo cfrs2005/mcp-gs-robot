@@ -6,6 +6,8 @@ import time
 from fastapi import APIRouter, Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
+from gs_openapi import __version__
+
 from .deps import require_api_key
 from .errors import register_error_handlers
 from .routes import agent, health, robots, tools
@@ -15,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 def create_app() -> FastAPI:
-    application = FastAPI(title="GS Robot API", version="0.2.0")
+    application = FastAPI(title="GS Robot API", version=__version__)
     application.add_middleware(
         CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"],
     )

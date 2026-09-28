@@ -14,6 +14,11 @@ const router = useRouter()
 const sn = String(route.params.sn)
 const tab = ref('overview')
 const status = ref<RobotStatus | null>(null)
+const goHome = () => {
+  const mapId = status.value?.currentMapId
+  if (!mapId) { showFailToast('机器人当前未定位到地图，无法回充'); return }
+  return action('回充', () => navigateHome(sn, mapId))
+}
 const maps = ref<RobotMap[]>([])
 const canvas = ref<MapCanvas | null>(null)
 const selectedMap = ref('')
@@ -108,7 +113,7 @@ onMounted(async () => {
             <Button size="small" :disabled="busy" @click="action('暂停任务', () => pauseTask(sn))">暂停</Button>
             <Button size="small" :disabled="busy" @click="action('继续任务', () => resumeTask(sn))">继续</Button>
             <Button size="small" type="danger" plain :disabled="busy" @click="action('停止任务', () => stopTask(sn))">停止</Button>
-            <Button size="small" :disabled="busy" @click="action('回充', () => navigateHome(sn))">回充</Button>
+            <Button size="small" :disabled="busy" @click="goHome()">回充</Button>
           </div></div>
         </div>
       </Tab>
