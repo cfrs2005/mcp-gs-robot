@@ -50,6 +50,7 @@ build-backend = "hatchling.build"
 include = [
     "/src",
     "/README.md",
+    "/LICENSE",
     "/pyproject.toml"
 ]
 
