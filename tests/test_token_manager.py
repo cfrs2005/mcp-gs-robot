@@ -132,7 +132,6 @@ async def test_invalidate_forces_reacquisition():
     state = {"call": 0}
 
     async def handler(request):
-        import json
 
         state["call"] += 1
         return httpx.Response(
@@ -175,7 +174,6 @@ async def test_concurrent_callers_serialised_by_lock():
 
     async def handler(request):
         import asyncio
-        import json
 
         state["call"] += 1
         await asyncio.sleep(0.01)

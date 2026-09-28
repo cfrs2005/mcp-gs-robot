@@ -3,7 +3,6 @@ Tests for gs_openapi.v3.models — parsing the response examples from the docs
 for RobotStatusSnapshot, MapResourceBundle, and TaskReportPage.
 """
 
-import pytest
 
 from gs_openapi.v3.models import (
     MapResourceBundle,
@@ -11,7 +10,6 @@ from gs_openapi.v3.models import (
     RobotStatusSnapshot,
     TaskReportPage,
 )
-
 
 ROBOT_STATUS_EXAMPLE = {
     "list": [

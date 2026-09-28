@@ -5,8 +5,7 @@ request path/body exactness for 6 endpoints. All HTTP via MockTransport.
 """
 
 import json
-import time
-from typing import Any, Dict, List
+from typing import Any
 
 import httpx
 import pytest
@@ -17,7 +16,7 @@ from gs_openapi.core.errors import GausiumAPIError
 from gs_openapi.v3 import GausiumV3
 
 
-def _oauth_response() -> Dict[str, Any]:
+def _oauth_response() -> dict[str, Any]:
     return {
         "token_type": "bearer",
         "access_token": "bearer-token-xyz",
@@ -48,8 +47,8 @@ def _envelope(data: Any, *, code: int = 0, msg: str = "success",
 
 
 def _record_handler(
-    envelope_map: Dict[str, Any],
-    recorded: List[Dict[str, Any]],
+    envelope_map: dict[str, Any],
+    recorded: list[dict[str, Any]],
     *,
     first_401_paths: set | None = None,
 ):
@@ -86,7 +85,7 @@ _NOT_FOUND = object()
 
 
 async def test_envelope_unwrap_success_returns_data():
-    recorded: List[Dict[str, Any]] = []
+    recorded: list[dict[str, Any]] = []
     handler = _record_handler(
         {"openapi/v3/robots/status/get": {"list": []}}, recorded
     )
@@ -151,7 +150,7 @@ async def test_http_error_raises_api_error():
 
 
 async def test_401_invalidates_token_and_retries_once():
-    recorded: List[Dict[str, Any]] = []
+    recorded: list[dict[str, Any]] = []
     handler = _record_handler(
         {"openapi/v3/robots/status/get": {"list": []}},
         recorded,
@@ -199,7 +198,7 @@ async def test_401_not_retried_twice():
 # Path/body exactness for 6 endpoints (via the GausiumV3 facade).
 # ---------------------------------------------------------------------------
 async def test_facade_six_endpoints_path_and_body():
-    recorded: List[Dict[str, Any]] = []
+    recorded: list[dict[str, Any]] = []
     envelope_map = {
         "openapi/v3/robots/status/get": {
             "list": [
@@ -264,7 +263,7 @@ async def test_facade_six_endpoints_path_and_body():
 
 
 async def test_facade_returns_typed_models():
-    recorded: List[Dict[str, Any]] = []
+    recorded: list[dict[str, Any]] = []
     envelope_map = {
         "openapi/v3/robots/status/get": {
             "list": [
