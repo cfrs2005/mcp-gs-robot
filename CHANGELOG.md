@@ -1,6 +1,26 @@
-# 📝 Changelog
+# Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to this project are documented here.
+
+## [0.2.0] - 2026-09-28
+
+### 🚀 Added
+- OpenAPI V3 client covering 36 robot/task endpoint tools plus OAuth token operations, with typed models and reference tables (38 archived endpoint pages).
+- Shared 40-tool registry: 36 V3 endpoint tools, legacy robot listing, local work-state lookup, and two workflow tools; MCP, Pi Agent, and REST share the definitions.
+- Pi Agent CLI and HTTP chat with Anthropic and OpenAI-compatible providers, streaming SSE and confirmation gates.
+- FastAPI REST server, robot routes, API-key option, and Vue/Vite H5 interface.
+- Cross-client gs-robot Skill, archived `docs/openapi-v3/` documentation, automated tests, CI, and container packaging.
+
+### 🔧 Changed
+- V3 tools are the MCP default; package now exposes `mcp-gs-robot`, `gs-robot-server`, and `pi-agent`.
+- Tool inputs use snake_case; agent dangerous operations require explicit confirmation by default.
+
+### 🐛 Fixed
+- OAuth token handling uses the returned `expires_in` lifetime correctly.
+- Updated V3 endpoint mapping and documentation to match the archived public reference.
+
+### ⚠️ Breaking
+- Old 0.1.x MCP tool names and smart-routing tools are no longer registered by default. Set `GS_ENABLE_LEGACY_TOOLS=1` to expose them under `legacy_`-prefixed names; migrate clients to the [V3 tool list](https://github.com/cfrs2005/mcp-gs-robot/blob/main/README.md).
 
 ## [0.1.12] - 2025-09-02
 
@@ -44,9 +64,9 @@ All notable changes to this project will be documented in this file.
 - Fixed V2 S-line robot status API paths to include required `/s/` prefix
 - Corrected map API version from V2alpha1 back to V1 (per official documentation)
 - Fixed README navigation links to use GitHub absolute URLs for PyPI compatibility
-- Updated batch S-line status API path with proper `/s/` prefix
+- Updated API version constant name (OPENAPI_V2ALPHA1 → OPENAPI_V2_ALPHA1)
 
-### 📚 Documentation  
+### 📚 Documentation
 - Enhanced navigation links for better PyPI page experience
 - Verified all API endpoints against official Gausium documentation
 
@@ -54,7 +74,7 @@ All notable changes to this project will be documented in this file.
 
 ### 🔧 API Fixes
 - Fixed map API endpoints from V1 to V2alpha1 version for proper compatibility
-- Corrected map list API method from GET to POST according to API specification
+- Corrected map API method from GET to POST according to API specification
 - Fixed API version constant name (OPENAPI_V2ALPHA1 → OPENAPI_V2_ALPHA1)
 - Updated robot list API to use relation=bound parameter for better filtering
 
@@ -83,12 +103,10 @@ All notable changes to this project will be documented in this file.
 ### 📝 Documentation
 - Enhanced README with comprehensive badges, icons, and professional layout
 - Added detailed Claude Code integration with environment variable configuration
-- Added Cherry Studio configuration guide with screenshot
 - Fixed PyPI image display using absolute GitHub raw URLs
 - Added bilingual support (English/Chinese) with collapsible sections
 - Created dedicated Claude Code integration guide
-- Updated project structure with emoji visualization
-- Added comprehensive feature tables and IDE support matrix
+- Added comprehensive IDE support matrix
 
 ### 🔧 Improvements
 - Corrected stdio transport mode documentation (removed incorrect SSE references)
@@ -102,24 +120,11 @@ All notable changes to this project will be documented in this file.
 - Corrected executable entry point configuration in pyproject.toml
 - Fixed PyPI publishing GitHub Secret naming convention
 
-### 📝 Documentation
-- Enhanced README with comprehensive badges and icons
-- Added detailed Claude Code integration instructions with environment variables
-- Added Cherry Studio configuration guide with screenshot
-- Fixed PyPI image display by converting relative paths to absolute GitHub raw URLs
-- Added bilingual support (English/Chinese) in documentation
-- Created comprehensive Claude Code integration guide
-
 ## [0.1.4] - 2025-08-29
 
 ### 🚀 Features
-- Renamed package to `mcp-gs-robot` for better PyPI distribution
+- Renamed package to `mcp-gs-robot` for PyPI distribution
 - Configured PyPI publishing with stdio transport mode
-
-### 🔧 Infrastructure  
-- Removed .cursor configuration directory from git tracking
-- Removed personal configuration files from git tracking
-- Properly configured gitignore to exclude personal files
 
 ## [0.1.3] - 2025-08-29
 
@@ -134,15 +139,10 @@ All notable changes to this project will be documented in this file.
 
 ## [0.1.1] - 2025-08-29
 
-### 📝 Documentation  
-- Updated to correct MCP plugin usage approach
+### 📝 Documentation
 - Updated installation instructions using GitHub installation method
 
 ## [0.1.0] - 2025-04-30
 
 ### 🎉 Initial Release
-- Initial commit: Added Gausium robot MCP plugin basic functionality
-
----
-
-*Based on actual git commit history*
+- Initial commit: basic Gausium robot MCP plugin

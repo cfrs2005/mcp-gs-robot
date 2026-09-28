@@ -1,0 +1,7 @@
+services:
+  gs-robot-server:
+    build: .
+    env_file: .env
+    ports:
+      - "${GS_SERVER_PORT:-8000}:${GS_SERVER_PORT:-8000}"
+    command: gs-robot-server

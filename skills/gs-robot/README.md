@@ -1,5 +1,7 @@
 # gs-robot Agent Skill 安装说明
 
+> 免责声明：本项目是非官方、个人研究用途的开源项目，与高仙（Gausium）无隶属、认可或支持关系；使用风险自负。
+
 本 Skill 教会 AI 助手通过 `mcp-gs-robot` MCP 工具运维高仙（Gausium）清洁机器人。适用于 Claude Code、Codex CLI、WorkBuddy。
 
 ## 前置依赖

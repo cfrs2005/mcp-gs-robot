@@ -1,98 +1,48 @@
-# 📋 API Documentation
+# OpenAPI V3 endpoint index
 
-This document provides comprehensive information about the Gausium Robot OpenAPI endpoints used by this MCP server.
+The [archived public V3 reference](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/overview.md) contains **38 endpoint pages**, including two OAuth operations on the same URL, and six reference/overview pages. The 40 **MCP tools** are a separate count: 36 V3 endpoint tools plus legacy `list_robots`, local `describe_work_state`, and two workflows. Supported versions below reproduce the archive's “Supported Versions” labels; paths are upstream OpenAPI URLs, not local FastAPI REST paths. Official links come from each archive page's `# SOURCE:` line.
 
-## 🔐 Authentication APIs
+| Domain | Name | Method + path | Supported versions | Local reference | Official page |
+|---|---|---|---|---|---|
+| Authentication | Get OAuth Token | `POST /gas/api/v1alpha1/oauth/token` | All AIO versions | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/authentication--get-oauth-token.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/authentication/Get%20OAuth%20Token) |
+| Authentication | Refresh OAuth Token | `POST /gas/api/v1alpha1/oauth/token` | All AIO versions | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/authentication--refresh-oauth-token.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/authentication/Refresh%20OAuth%20Token) |
+| Commands | Get Command Status | `POST /openapi/v3/robots/commands/status/get` | 全AIO版本 | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/command-operation--get-command-delivery-status.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/command-operation/Get%20Command%20Delivery%20Status) |
+| Commands | Navigate to a Charging Position | `POST /openapi/v3/robots/commands/navigation/go-home` | A5+ | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/command-operation--navigate-to-a-charging-position.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/command-operation/Navigate%20To%20A%20Charging%20Position) |
+| Commands | List Command Records | `POST /openapi/v3/robots/commands/status/page` | 全AIO版本 | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/command-operation--page-command-delivery-history.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/command-operation/Page%20Command%20Delivery%20History) |
+| Commands | Pause Navigation | `POST /openapi/v3/robots/commands/navigation/pause` | 全AIO版本 | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/command-operation--pause-the-current-navigation.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/command-operation/Pause%20The%20Current%20Navigation) |
+| Commands | Resume Navigation | `POST /openapi/v3/robots/commands/navigation/resume` | 全AIO版本 | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/command-operation--resume-the-current-navigation.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/command-operation/Resume%20The%20Current%20Navigation) |
+| Commands | Stop Navigation | `POST /openapi/v3/robots/commands/navigation/stop` | 全AIO版本 | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/command-operation--stop-the-current-navigation.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/command-operation/Stop%20The%20Current%20Navigation) |
+| Maps | Get Robot Map Canvas | `POST /openapi/v3/robots/maps/canvas/get` | A5+ | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/robot-maps--get-robot-map-canvas.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/robot-maps/Get%20Robot%20Map%20Canvas) |
+| Maps | List Charging Positions | `POST /openapi/v3/maps/charging-positions/list` | A5+ | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/robot-maps--list-charging-positions.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/robot-maps/List%20Charging%20Positions) |
+| Maps | List Map Resources | `POST /openapi/v3/maps/map-resources/list` | A5+ | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/robot-maps--list-map-resources-without-work-modes.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/robot-maps/List%20Map%20Resources%20Without%20Work%20Modes) |
+| Maps | List Robot Maps | `POST /openapi/v3/robots/maps/list` | A5+ | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/robot-maps--list-robot-maps.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/robot-maps/List%20Robot%20Maps) |
+| Robots | Get Robot Status Snapshot | `POST /openapi/v3/robots/status/get` | 全AIO版本 | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/robots--get-robot-status-snapshot.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/robots/Get%20Robot%20Status%20Snapshot) |
+| Simple schedules | Create Schedule Plan | `POST /openapi/v3/schedules/plans/simple/create` | A6+ | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/schedule-task--simple-schedule--create-simple-schedule-plan.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/schedule-task/simple-schedule/Create%20Simple%20Schedule%20Plan) |
+| Simple schedules | Delete Schedule Plan | `POST /openapi/v3/schedules/plans/simple/delete` | A6+ | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/schedule-task--simple-schedule--delete-simple-schedule-plan.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/schedule-task/simple-schedule/Delete%20Simple%20Schedule%20Plan) |
+| Simple schedules | Update Schedule Plan | `POST /openapi/v3/schedules/plans/simple/update` | A6+ | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/schedule-task--simple-schedule--update-simple-schedule-plan.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/schedule-task/simple-schedule/Update%20Simple%20Schedule%20Plan) |
+| Standard schedules | Create Schedule Plan | `POST /openapi/v3/schedules/plans/create` | A6+ | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/schedule-task--standard-schedule--create-schedule-plan.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/schedule-task/standard-schedule/Create%20Schedule%20Plan) |
+| Standard schedules | Delete Schedule Plan | `POST /openapi/v3/schedules/plans/delete` | A6+ | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/schedule-task--standard-schedule--delete-schedule-plan.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/schedule-task/standard-schedule/Delete%20Schedule%20Plan) |
+| Standard schedules | List Schedule Plans | `POST /openapi/v3/schedules/plans/list` | A6+ | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/schedule-task--standard-schedule--list-schedule-plans.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/schedule-task/standard-schedule/List%20Schedule%20Plans) |
+| Standard schedules | List Schedule Pre-tasks by Date | `POST /openapi/v3/schedules/plans/pre-tasks/day/list` | A6+ | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/schedule-task--standard-schedule--list-schedule-pre-tasks-by-day.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/schedule-task/standard-schedule/List%20Schedule%20Pre%20Tasks%20By%20Day) |
+| Standard schedules | Get Monthly Schedule Calendar | `POST /openapi/v3/schedules/plans/calendar/month/get` | A6+ | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/schedule-task--standard-schedule--query-schedule-calendar-by-month.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/schedule-task/standard-schedule/Query%20Schedule%20Calendar%20By%20Month) |
+| Standard schedules | Get Schedule Plan Details | `POST /openapi/v3/schedules/plans/get` | A6+ | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/schedule-task--standard-schedule--query-schedule-plan-detail.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/schedule-task/standard-schedule/Query%20Schedule%20Plan%20Detail) |
+| Standard schedules | Update Schedule Plan | `POST /openapi/v3/schedules/plans/update` | A6+ | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/schedule-task--standard-schedule--update-schedule-plan.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/schedule-task/standard-schedule/Update%20Schedule%20Plan) |
+| Task capabilities | Get Robot Task Capabilities | `POST /openapi/v3/tasks/fusion/robot-capabilities/get` | 全AIO版本 | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/task-capability--capability-and-work-mode--get-robot-combined-task-capabilities.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/task-capability/capability-and-work-mode/Get%20Robot%20Combined%20Task%20Capabilities) |
+| Task capabilities | List Task Resources | `POST /openapi/v3/maps/schedule-resources/list` | A5+ | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/task-capability--capability-and-work-mode--list-schedule-map-resources.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/task-capability/capability-and-work-mode/List%20Schedule%20Map%20Resources) |
+| Task capabilities | List Robot Work Modes | `POST /openapi/v3/tasks/fusion/work-modes/list` | A6+ | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/task-capability--capability-and-work-mode--query-robot-work-modes.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/task-capability/capability-and-work-mode/Query%20Robot%20Work%20Modes) |
+| Task reports | Page Task Reports | `POST /openapi/v3/taskreports/page` | 全AIO版本 | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/task-capability--page-task-reports.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/task-capability/Page%20Task%20Reports) |
+| Task reports | Query Task Report Map Images | `POST /openapi/v3/taskreports/map-images/query` | 全AIO版本 | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/task-capability--query-task-report-map-images.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/task-capability/Query%20Task%20Report%20Map%20Images) |
+| Task definitions | Create Combined Task | `POST /openapi/v3/tasks/persistence/create` | A6+ | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/task-capability--task-definition--create-persistent-combined-task-definition.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/task-capability/task-definition/Create%20Persistent%20Combined%20Task%20Definition) |
+| Task definitions | Delete Combined Task | `POST /openapi/v3/tasks/persistence/delete` | A6+ | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/task-capability--task-definition--delete-persistent-combined-task-definition.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/task-capability/task-definition/Delete%20Persistent%20Combined%20Task%20Definition) |
+| Task definitions | Get Combined Task Details | `POST /openapi/v3/tasks/persistence/get` | A6+ | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/task-capability--task-definition--get-persistent-combined-task-definition.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/task-capability/task-definition/Get%20Persistent%20Combined%20Task%20Definition) |
+| Task definitions | List Combined Tasks | `POST /openapi/v3/tasks/persistence/page` | A6+ | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/task-capability--task-definition--page-persistent-combined-task-definitions.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/task-capability/task-definition/Page%20Persistent%20Combined%20Task%20Definitions) |
+| Task definitions | Update Combined Task | `POST /openapi/v3/tasks/persistence/update` | A6+ | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/task-capability--task-definition--update-persistent-combined-task-definition.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/task-capability/task-definition/Update%20Persistent%20Combined%20Task%20Definition) |
+| Task commands | Pause Task | `POST /openapi/v3/robots/commands/tasks/pause` | 全AIO版本 | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/temporary-task--pause-the-current-task.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/temporary-task/Pause%20The%20Current%20Task) |
+| Task commands | Resume Task | `POST /openapi/v3/robots/commands/tasks/resume` | 全AIO版本 | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/temporary-task--resume-the-current-task.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/temporary-task/Resume%20The%20Current%20Task) |
+| Task commands | Skip Current Task Item | `POST /openapi/v3/robots/commands/tasks/skip` | 全AIO版本 | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/temporary-task--skip-the-current-task-item.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/temporary-task/Skip%20The%20Current%20Task%20Item) |
+| Task commands | Start a Combined Task | `POST /openapi/v3/robots/commands/tasks/start` | A6+ | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/temporary-task--start-a-combined-task.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/temporary-task/Start%20A%20Combined%20Task) |
+| Task commands | Stop Task | `POST /openapi/v3/robots/commands/tasks/stop` | 全AIO版本 | [Local](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/openapi-v3/temporary-task--stop-the-current-task.md) | [Official](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/temporary-task/Stop%20The%20Current%20Task) |
 
-| API | Description | Chinese Docs | English Docs |
-|-----|-------------|--------------|---------------|
-| Get OAuth Token | Obtain authentication token | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Openapi%20Oauth%20Service/Get%20OAuth%20Token) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Openapi%20Oauth%20Service/Get%20OAuth%20Token) |
-| Refresh OAuth Token | Refresh expired token | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Openapi%20Oauth%20Service/Refresh%20OAuth%20Token) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Openapi%20Oauth%20Service/Refresh%20OAuth%20Token) |
+## Legacy (v1alpha1/v2alpha1)
 
-## 🤖 Robot Information APIs
-
-| API | Robot Series | Description | Chinese Docs | English Docs |
-|-----|--------------|-------------|--------------|---------------|
-| List Robots | All | List accessible robots | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Information%20Service/List%20Robots) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Information%20Service/List%20Robots) |
-| Get Robot Status (V1) | M-line (OMNIE, 40, 50, 75) | Get detailed robot status | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Information%20Service/V1%20Get%20Robot%20Status) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Information%20Service/V1%20Get%20Robot%20Status) |
-| Batch Get Robot Status (V1) | M-line (OMNIE, 40, 50, 75) | Batch status query | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Information%20Service/V1%20Batch%20Get%20Robot%20Statuses) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Information%20Service/V1%20Batch%20Get%20Robot%20Statuses) |
-| Get S Robot Status (V2) | S-line (Phantas, BEETLE) | Get S/SW robot status | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Information%20Service/V2%20Get%20S%20Robot%20Status) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Information%20Service/V2%20Get%20S%20Robot%20Status) |
-| Batch Get S Robot Status (V2) | S-line (Phantas, BEETLE) | Batch S/SW status query | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Information%20Service/V2%20Batch%20Get%20S%20Robot%20Status) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Information%20Service/V2%20Batch%20Get%20S%20Robot%20Status) |
-
-## 🎯 Robot Command APIs
-
-| API | Robot Series | Description | Chinese Docs | English Docs |
-|-----|--------------|-------------|--------------|---------------|
-| Create Robot Command | M-line | Send commands (start/pause/stop) | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Command%20Service/Create%20Robot%20Command) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Command%20Service/Create%20Robot%20Command) |
-| Get Robot Command | All | Get command execution result | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Command%20Service/Get%20Robot%20Command) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Command%20Service/Get%20Robot%20Command) |
-| List Robot Commands | All | Get command history | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Command%20Service/List%20Robot%20Commands) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Command%20Service/List%20Robot%20Commands) |
-
-## 🗺️ Map Management APIs
-
-| API | Version | Description | Chinese Docs | English Docs |
-|-----|---------|-------------|--------------|---------------|
-| List Robot Maps | V2 | Get available robot maps | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Map%20Service/V2%20List%20Robot%20Map) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Map%20Service/V2%20List%20Robot%20Map) |
-| Get Map Subareas | V2 | Get map area divisions | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Map%20Service/V2%20Get%20Subareas) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Map%20Service/V2%20Get%20Subareas) |
-| Upload Robot Map | V1 | Upload new map | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Map%20Service/V1%20Upload%20Robot%20Map) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Map%20Service/V1%20Upload%20Robot%20Map) |
-| Get Upload Record | V1 | Check upload status | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Map%20Service/V1%20Get%20Robot%20Record) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Map%20Service/V1%20Get%20Robot%20Record) |
-| Download Map | V1 | Download map (legacy) | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Map%20Service/V1%20Get%20Robot%20Map) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Map%20Service/V1%20Get%20Robot%20Map) |
-| Download Map | V2 | Download map (recommended) | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Map%20Service/V2%20Get%20Robot%20Map) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Map%20Service/V2%20Get%20Robot%20Map) |
-
-## 🎯 Task Management APIs
-
-### S-line Robot Tasks
-
-| API | Description | Chinese Docs | English Docs |
-|-----|-------------|--------------|---------------|
-| Submit Temporary Site Task | Create task with site info | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Task%20Service/Submit%20Temporary%20Site%20Task) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Task%20Service/Submit%20Temporary%20Site%20Task) |
-| Submit Temporary No Site Task | Create task without site info | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Task%20Service/Submit%20Temporary%20No%20Site%20Task) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Task%20Service/Submit%20Temporary%20No%20Site%20Task) |
-
-### Task Reports
-
-| API | Robot Series | Description | Chinese Docs | English Docs |
-|-----|--------------|-------------|--------------|---------------|
-| List Task Reports (V1) | M-line | Get M-line task reports | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Cleaning%20Data%20Service/V1%20List%20Robot%20Task%20Reports) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Cleaning%20Data%20Service/V1%20List%20Robot%20Task%20Reports) |
-| List Task Reports (V2) | S-line | Get S-line task reports | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Cleaning%20Data%20Service/V2%20List%20Robot%20Task%20Reports) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Cleaning%20Data%20Service/V2%20List%20Robot%20Task%20Reports) |
-| Generate Task Report PNG | M-line | Generate map visualization | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Cleaning%20Data%20Service/Generate%20Robot%20Task%20Report%20Png) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Cleaning%20Data%20Service/Generate%20Robot%20Task%20Report%20Png) |
-
-## 🏢 Site Information APIs
-
-| API | Robot Series | Description | Chinese Docs | English Docs |
-|-----|--------------|-------------|--------------|---------------|
-| Get Site Info | S-line | Get building and floor info | [🇨🇳 zh_CN](https://developer.gs-robot.com/zh_CN/Robot%20Task%20Service/Get%20Site%20Info) | [🇺🇸 en_US](https://developer.gs-robot.com/en_US/Robot%20Task%20Service/Get%20Site%20Info) |
-
-## 🤖 Robot Series Support
-
-### M-line Robots (Traditional Cleaning)
-- **OMNIE** (OMNIE series) - Multi-purpose cleaning robot
-- **Vacuum 40** (40 series) - Vacuum cleaning robot  
-- **Scrubber 50** (50 series) - Floor scrubbing robot
-- **Scrubber 75** (75 series) - Heavy-duty floor scrubbing robot
-
-**Supported APIs**: V1 Status, Commands, Task Reports, Map Management
-
-### S-line Robots (Smart Cleaning, including SW)
-- **Phantas** (S series) - Phantom intelligent cleaning robot
-- **BEETLE** (SW series) - Beetle smart cleaning robot
-
-**Supported APIs**: V2 Status, Site Tasks, Advanced Task Reports, Full Map Management
-
-## 📝 API Usage Notes
-
-### Version Recommendations
-- **Map APIs**: Prefer V2 over V1 for new implementations
-- **Status APIs**: Use V1 for M-line, V2 for S-line robots
-- **Task APIs**: S-line robots support advanced site-based tasks
-
-### Authentication
-All APIs require OAuth authentication using the token endpoints. The MCP server handles this automatically using environment variables.
-
-### Rate Limiting
-Please refer to the official Gausium developer documentation for current rate limiting policies.
-
----
-
-## 🔗 Official Documentation
-
-- 🇨🇳 **Chinese**: [https://developer.gs-robot.com/zh_CN/](https://developer.gs-robot.com/zh_CN/)
-- 🇺🇸 **English**: [https://developer.gs-robot.com/en_US/](https://developer.gs-robot.com/en_US/)
+V3 has no robot-list endpoint, so `list_robots` calls `GET v1alpha1/robots`. OAuth token acquisition/refresh remains on `/gas/api/v1alpha1/oauth/token` even for V3 requests. Other 0.1.x v1alpha1/v2alpha1 MCP tools are opt-in using `GS_ENABLE_LEGACY_TOOLS=1` and receive `legacy_` prefixes; new integrations should use the V3 tools above and the [registry-derived tool table](https://github.com/cfrs2005/mcp-gs-robot/blob/main/README.md).

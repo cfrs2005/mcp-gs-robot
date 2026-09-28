@@ -1,280 +1,58 @@
-# Gausium OpenAPI MCP 测试指南
+# V3 testing guide
 
-## 🎯 测试现状
+## Unit tests and checks
 
-**✅ 代码完成度**: 100% - 所有22个API + 3个工作流已实现  
-**✅ 基础测试**: 通过 - 模块导入、端点配置、引擎初始化正常  
-**⚠️ 实际调用**: 需要Gausium API凭证
-
-## 📋 测试步骤
-
-### 1. 环境准备
-
-#### 1.1 安装依赖
-```bash
-# 确保使用正确的Python环境
-uv pip install -r requirements.txt
+```sh
+uv sync --extra dev
+uv run ruff check src tests
+uv run pytest -q
 ```
 
-#### 1.2 设置API凭证
-```bash
-# 设置环境变量
-export GS_CLIENT_ID="你的客户端ID"
-export GS_CLIENT_SECRET="你的客户端密钥"  
-export GS_OPEN_ACCESS_KEY="你的访问密钥"
+Tests use in-process ASGI requests and `httpx.MockTransport`, overriding `gs_openapi.server.deps.get_v3` and `get_agent` (see [test_server_api.py](https://github.com/cfrs2005/mcp-gs-robot/blob/main/tests/test_server_api.py)). No live Gausium or LLM credentials are needed. The server static-route tests expect a built H5 (`cd h5 && npm ci && npm run build` if missing). `uv build` packages the compiled static files.
+
+## HTTP server with a mock upstream
+
+For a local manual walkthrough, run your own mock HTTP server implementing the endpoints you will call: `GET /v1alpha1/robots` for robot listing, `POST /openapi/v3/robots/status/get` for status, plus `POST /gas/api/v1alpha1/oauth/token` if testing the real token manager. Set `GS_BASE_URL=http://127.0.0.1:<mock-port>/` (trailing slash), and set `GS_CLIENT_ID`, `GS_CLIENT_SECRET`, `GS_OPEN_ACCESS_KEY` to **dummy** values. These env vars redirect upstream traffic; they do not automatically create a mock backend. Match the envelope expected by the V3 client, e.g. status `{"code":0,"data":{"list":[{"robotSn":"TEST-SN","onlineStatus":"ONLINE","batteryPercent":78,"workState":0,"currentMapName":"Main"}]}}`. For an executable credential-free mocked backend, use the in-process test fixture above rather than a live server.
+
+```sh
+export GS_BASE_URL="http://127.0.0.1:<mock-port>/"
+export GS_CLIENT_ID="dummy" GS_CLIENT_SECRET="dummy" GS_OPEN_ACCESS_KEY="dummy"
+export GS_SERVER_API_KEY="local-test-key"
+export PI_AGENT_PROVIDER="anthropic"
+export ANTHROPIC_API_KEY="dummy"  # only for health/session setup; no live chat with this value
+uv run gs-robot-server
 ```
 
-或者创建 `.env` 文件：
-```bash
-cat > .env << EOF
-GS_CLIENT_ID=你的客户端ID
-GS_CLIENT_SECRET=你的客户端密钥
-GS_OPEN_ACCESS_KEY=你的访问密钥
-EOF
+`GET /api/v1/health` is public. Other `/api/v1/` routes require `X-API-Key` when `GS_SERVER_API_KEY` is set. To test **chat SSE** without calling a real model, override `deps.get_agent` with a fake event generator as in `test_agent_sse_and_confirm` in the test file; `GS_BASE_URL` alone mocks only the robot API, not the LLM provider. For manual live Agent chat, supply your own valid LLM key; never send robot-motion requests on live equipment while testing.
+
+## curl walkthrough
+
+With the mock upstream/server above running (substitute a serial number returned by your mock):
+
+```sh
+curl http://localhost:8000/api/v1/health
+curl -H 'X-API-Key: local-test-key' 'http://localhost:8000/api/v1/robots?page=1&page_size=20'
+curl -H 'X-API-Key: local-test-key' -H 'Content-Type: application/json' \
+  -d '{"robot_sn_list":["TEST-SN"]}' http://localhost:8000/api/v1/robots/status
+curl -H 'X-API-Key: local-test-key' -H 'Content-Type: application/json' \
+  -d '{"robot_sn_list":["TEST-SN"]}' http://localhost:8000/api/v1/tools/get_robot_status
+curl -H 'X-API-Key: local-test-key' -H 'Content-Type: application/json' \
+  -d '{}' http://localhost:8000/api/v1/agent/sessions
+# Copy session_id from the previous response into the next request:
+curl -N -H 'X-API-Key: local-test-key' -H 'Content-Type: application/json' \
+  -d '{"content":"Describe the available tools"}' \
+  'http://localhost:8000/api/v1/agent/sessions/<session_id>/messages'
 ```
 
-### 2. 基础功能测试
+The last request returns `data: {"type":...}` SSE lines (`text_delta`, `tool_call`, `tool_result`, `confirm_required`, `done`, `error`). It needs a valid LLM key or the test's fake agent override. If a dangerous tool emits `confirm_required`, review its arguments before sending `POST /api/v1/agent/sessions/<session_id>/confirm` with `{"confirm_id":"<id>","approve":false}` (use `true` only after deliberate approval). Direct `POST /api/v1/tools/{tool_name}` calls execute dangerous commands without Agent confirmation.
 
-#### 2.1 运行结构测试
-```bash
-python test_basic.py
+See interactive REST schemas at `http://localhost:8000/docs`. No legacy `/mcp/call` HTTP route exists.
+
+## MCP inspector
+
+```sh
+# In the repository root with dummy credentials + a mock upstream (or real credentials in a safe environment):
+npx @modelcontextprotocol/inspector uv run mcp-gs-robot
 ```
 
-**预期结果**:
-- ✅ 所有模块导入成功
-- ✅ 23个端点配置正确
-- ✅ 任务引擎初始化成功
-
-#### 2.2 启动MCP服务器
-```bash
-python main.py
-```
-
-**预期结果**:
-- 服务器在 `http://0.0.0.0:8000` 启动
-- 显示 "Starting Gausium MCP server..." 日志
-- 无错误信息
-
-### 3. API功能测试
-
-#### 3.1 认证测试
-使用任何API工具（如curl）测试：
-
-```bash
-# 测试OAuth令牌获取（内部调用）
-curl -X POST http://localhost:8000/api/test-auth
-```
-
-#### 3.2 基础API测试
-```bash
-# 测试机器人列表
-curl -X POST http://localhost:8000/mcp/call \
-  -H "Content-Type: application/json" \
-  -d '{
-    "method": "list_robots",
-    "params": {"page": 1, "page_size": 10}
-  }'
-```
-
-### 4. 产品线专用测试
-
-#### 4.1 M线机器人测试
-```bash
-# 测试M线状态查询
-curl -X POST http://localhost:8000/mcp/call \
-  -H "Content-Type: application/json" \
-  -d '{
-    "method": "get_robot_status_v1", 
-    "params": {"serial_number": "你的M线机器人序列号"}
-  }'
-
-# 测试M线工作流
-curl -X POST http://localhost:8000/mcp/call \
-  -H "Content-Type: application/json" \
-  -d '{
-    "method": "execute_m_line_task_workflow",
-    "params": {
-      "serial_number": "你的M线机器人序列号",
-      "task_selection_criteria": {"cleaning_mode": "__middle_cleaning"}
-    }
-  }'
-```
-
-#### 4.2 S线机器人测试
-```bash
-# 测试S线状态查询
-curl -X POST http://localhost:8000/mcp/call \
-  -H "Content-Type: application/json" \
-  -d '{
-    "method": "get_robot_status_v2",
-    "params": {"serial_number": "你的S线机器人序列号"}
-  }'
-
-# 测试站点信息获取
-curl -X POST http://localhost:8000/mcp/call \
-  -H "Content-Type: application/json" \
-  -d '{
-    "method": "get_site_info",
-    "params": {"robot_id": "你的S线机器人ID"}
-  }'
-
-# 测试S线有站点工作流
-curl -X POST http://localhost:8000/mcp/call \
-  -H "Content-Type: application/json" \
-  -d '{
-    "method": "execute_s_line_site_task_workflow",
-    "params": {
-      "robot_id": "你的S线机器人ID",
-      "task_parameters": {
-        "cleaning_mode": "__middle_cleaning",
-        "target_areas": ["lobby", "corridor"]
-      }
-    }
-  }'
-```
-
-### 5. 高级功能测试
-
-#### 5.1 批量操作测试
-```bash
-# 测试批量状态查询
-curl -X POST http://localhost:8000/mcp/call \
-  -H "Content-Type: application/json" \
-  -d '{
-    "method": "batch_get_robot_statuses_v1",
-    "params": {
-      "serial_numbers": ["机器人1", "机器人2", "机器人3"]
-    }
-  }'
-```
-
-#### 5.2 地图管理测试
-```bash
-# 测试地图列表
-curl -X POST http://localhost:8000/mcp/call \
-  -H "Content-Type: application/json" \
-  -d '{
-    "method": "list_robot_maps",
-    "params": {"robot_sn": "你的机器人序列号"}
-  }'
-
-# 测试地图分区查询
-curl -X POST http://localhost:8000/mcp/call \
-  -H "Content-Type: application/json" \
-  -d '{
-    "method": "get_map_subareas", 
-    "params": {"map_id": "地图ID"}
-  }'
-```
-
-#### 5.3 指令管理测试
-```bash
-# 创建指令
-curl -X POST http://localhost:8000/mcp/call \
-  -H "Content-Type: application/json" \
-  -d '{
-    "method": "create_robot_command",
-    "params": {
-      "serial_number": "机器人序列号",
-      "command_type": "START_TASK",
-      "command_parameter": {
-        "startTaskParameter": {
-          "cleaningMode": "__middle_cleaning"
-        }
-      }
-    }
-  }'
-
-# 查询指令历史
-curl -X POST http://localhost:8000/mcp/call \
-  -H "Content-Type: application/json" \
-  -d '{
-    "method": "list_robot_commands",
-    "params": {"serial_number": "机器人序列号"}
-  }'
-```
-
-## 🔍 问题排查
-
-### 常见错误及解决方案
-
-#### 1. "Missing required environment variables"
-**原因**: 未设置API凭证  
-**解决**: 设置正确的环境变量或.env文件
-
-#### 2. "No module named 'mcp'"
-**原因**: 依赖未安装  
-**解决**: 运行 `uv pip install -r requirements.txt`
-
-#### 3. "API returned error: PERMISSION_DENIED"
-**原因**: API凭证无效或权限不足  
-**解决**: 检查凭证有效性，确认API权限
-
-#### 4. "Robot serial number not found"
-**原因**: 机器人序列号不存在  
-**解决**: 先调用 `list_robots` 获取有效的序列号
-
-### 调试技巧
-
-#### 1. 启用详细日志
-```python
-# 在main.py中修改日志级别
-logging.basicConfig(level=logging.DEBUG, format=LOG_FORMAT, datefmt=DATE_FORMAT)
-```
-
-#### 2. 检查API响应
-```bash
-# 查看完整的API响应
-curl -v -X POST http://localhost:8000/mcp/call \
-  -H "Content-Type: application/json" \
-  -d '{"method": "list_robots", "params": {}}'
-```
-
-#### 3. 验证端点配置
-```python
-# 运行端点检查
-python -c "
-from src.gs_openapi.core.endpoints import ALL_ENDPOINTS
-for name, endpoint in ALL_ENDPOINTS.items():
-    print(f'{name}: {endpoint.method.value} {endpoint.full_path}')
-"
-```
-
-## 🎯 测试检查清单
-
-### 基础功能 ✅
-- [ ] 环境变量设置正确
-- [ ] MCP服务器正常启动
-- [ ] 认证token获取成功
-- [ ] 基础API调用成功
-
-### M线机器人 🟦
-- [ ] V1状态查询正常
-- [ ] 批量状态查询正常  
-- [ ] 指令创建和查询正常
-- [ ] M线任务工作流正常
-- [ ] 任务报告查询正常
-
-### S线机器人 🟩
-- [ ] V2状态查询正常
-- [ ] 站点信息获取正常
-- [ ] 地图分区查询正常
-- [ ] 临时任务下发正常
-- [ ] S线工作流正常
-
-### 高级功能 ⭐
-- [ ] 批量操作正常
-- [ ] 地图管理功能正常
-- [ ] 指令历史查询正常
-- [ ] 任务报告生成正常
-- [ ] 错误处理正常
-
-## 📊 预期测试结果
-
-**成功标准**:
-- 所有基础API返回正常响应（非错误状态码）
-- M线和S线工作流能够完成多步操作
-- 批量操作能够处理多个机器人
-- 错误情况下返回有意义的错误信息
-
-**如果所有测试通过，说明Gausium OpenAPI MCP服务器已经可以投入生产使用！** 🚀
+Use the inspector to list tool schemas, then invoke only read-only tools against the mock. MCP uses stdio; SSE above belongs to the HTTP Agent. Never paste credentials into screenshots or logs.

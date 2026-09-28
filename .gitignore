@@ -23,6 +23,9 @@ wheels/
 # Virtual Environment
 .env
 .venv
+.venv/
+h5/node_modules/
+h5/dist/
 env/
 venv/
 ENV/
@@ -65,7 +68,6 @@ coverage.xml
 .claude/
 .specstory/
 test_basic.py
-CLAUDE.md
 MCP-ASSISTANT-RULES.md
 
 # Development and testing files
