@@ -13,7 +13,7 @@ description: Operate and monitor Gausium cleaning robots (OpenAPI V3) through th
 - 用户要求：查状态、看地图/资源、建任务定义、启动/暂停/继续/停止任务、排班计划、回充导航、读任务报告。
 - 用户提到 `mcp-gs-robot` 服务、Pi Agent、或本仓库的 MCP/HTTP 入口。
 
-不适用：仅查询开放平台账号申请、OAuth 凭据获取流程（引导用户看 `docs/openapi-v3/quick-start.md`）。
+不适用：仅查询开放平台账号申请、OAuth 凭据获取流程（引导用户看 https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/Quick%20Start）。
 
 ## 前置条件
 
@@ -43,7 +43,7 @@ token 自动刷新由 `gs_openapi.auth.token_manager` 处理；调用方无需�
 
 ### 2. 查能力与工作模式
 - `get_robot_capabilities`（robot_sn）→ 该机器人支持的组合任务能力（`tasks/fusion/robot-capabilities/get`）。
-- `list_work_modes`（robot_sn）→ 工作模式列表（mode/subType/type/configType/strengthOptions）。详见 `docs/openapi-v3/task-work-mode-reference.md`。
+- `list_work_modes`（robot_sn）→ 工作模式列表（mode/subType/type/configType/strengthOptions）。详见 https://developer.gs-robot.com/v3docs/en_US/Task%20Work%20Mode%20Reference。
 
 ### 3. 查地图与任务资源
 - `list_robot_maps`（robot_sn）→ 地图列表，拿 `map_id`。
@@ -98,7 +98,7 @@ token 自动刷新由 `gs_openapi.auth.token_manager` 处理；调用方无需�
   - `2100101001` 机器人丢失定位 → 提示用户确认机器人位置/重新建图。
 - **401 鉴权失败**：token 过期，由 `token_manager` 自动用 refresh_token 刷新；若 refresh 也失败，提示用户检查 `GS_CLIENT_ID/SECRET/OPEN_ACCESS_KEY`。
 - **422/400 参数错误**：检查必填字段、snake_case 拼写、`map_resource_type` 取值（region/path/position）。
-- **任务启动失败码表**：完整列表见 `references/error-codes.md` 与 `docs/openapi-v3/task-startup-failure-error-codes.md`。
+- **任务启动失败码表**：完整列表见 `references/error-codes.md` 与 https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/Task%20Startup%20Failure%20Error%20Codes。
 
 ## 输出规范
 
@@ -113,4 +113,4 @@ token 自动刷新由 `gs_openapi.auth.token_manager` 处理；调用方无需�
 - `references/work-states.md` — workState 码表 + 运维含义/建议动作。
 - `references/error-codes.md` — 任务启动失败错误码 + 常见 HTTP/OAuth 错误。
 - `references/workflows.md` — 3 个端到端示例对话脚本。
-- 源文档：`docs/ARCHITECTURE_V3.md`（契约）、`docs/openapi-v3/`（V3 端点参考）。
+- 源文档：`docs/ARCHITECTURE_V3.md`（契约）、高仙 OpenAPI V3 官方文档（端点参考，索引见 `docs/apis.md`）。

@@ -2,7 +2,7 @@
 
 ## 一、任务启动失败错误码
 
-来源：`docs/openapi-v3/task-startup-failure-error-codes.md`。业务响应 `code != 0` 为六位错误码，`msg` 为描述。下表为任务启动失败相关错误码全集。
+来源：https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/Task%20Startup%20Failure%20Error%20Codes。业务响应 `code != 0` 为六位错误码，`msg` 为描述。下表为任务启动失败相关错误码全集。
 
 | 错误码 | 描述 |
 |---|---|

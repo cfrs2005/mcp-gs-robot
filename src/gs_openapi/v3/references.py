@@ -2,7 +2,7 @@
 Reference tables and helpers for Gausium OpenAPI V3.
 
 The data below is transcribed from the authoritative reference documents in
-``docs/openapi-v3``:
+the official Gausium OpenAPI V3 documentation:
 
 * ``robot-work-state-reference.md`` → :data:`WORK_STATES`
 * ``command-type-reference.md`` → :data:`COMMAND_TYPES`

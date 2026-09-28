@@ -4,7 +4,7 @@ Pydantic v2 models for Gausium OpenAPI V3 responses.
 All models use ``populate_by_name=True`` and ``extra="allow"`` so that they
 parse the camelCase JSON returned by the API (via aliases) while exposing
 snake_case Python attribute names. Field aliases match the exact field names
-in the response examples of ``docs/openapi-v3/*.md``.
+in the response examples of the official Gausium OpenAPI V3 documentation.
 """
 
 from __future__ import annotations

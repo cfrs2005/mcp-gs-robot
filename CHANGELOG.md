@@ -9,7 +9,7 @@ All notable changes to this project are documented here.
 - Shared 40-tool registry: 36 V3 endpoint tools, legacy robot listing, local work-state lookup, and two workflow tools; MCP, Pi Agent, and REST share the definitions.
 - Pi Agent CLI and HTTP chat with Anthropic and OpenAI-compatible providers, streaming SSE and confirmation gates.
 - FastAPI REST server, robot routes, API-key option, and Vue/Vite H5 interface.
-- Cross-client gs-robot Skill, archived `docs/openapi-v3/` documentation, automated tests, CI, and container packaging.
+- Cross-client gs-robot Skill, V3 endpoint index (`docs/apis.md`) linking to the official documentation, automated tests, CI, and container packaging.
 
 ### 🔧 Changed
 - V3 tools are the MCP default; package now exposes `mcp-gs-robot`, `gs-robot-server`, and `pi-agent`.
@@ -17,7 +17,7 @@ All notable changes to this project are documented here.
 
 ### 🐛 Fixed
 - OAuth token handling uses the returned `expires_in` lifetime correctly.
-- Updated V3 endpoint mapping and documentation to match the archived public reference.
+- Updated V3 endpoint mapping and documentation to match the official public reference.
 
 ### ⚠️ Breaking
 - Old 0.1.x MCP tool names and smart-routing tools are no longer registered by default. Set `GS_ENABLE_LEGACY_TOOLS=1` to expose them under `legacy_`-prefixed names; migrate clients to the [V3 tool list](https://github.com/cfrs2005/mcp-gs-robot/blob/main/README.md).

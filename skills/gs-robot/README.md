@@ -85,5 +85,5 @@ skills/gs-robot/
 
 ## 维护
 - 工具名与端点契约唯一来源为 `docs/ARCHITECTURE_V3.md §3`；若仓库升级工具集，先更新该文件，再同步 `references/tools.md`。
-- workState / 错误码表分别跟随 `docs/openapi-v3/robot-work-state-reference.md` 与 `task-startup-failure-error-codes.md`。
+- workState / 错误码表分别跟随 https://developer.gs-robot.com/v3docs/en_US/Robot%20Work%20State%20Reference 与 `task-startup-failure-error-codes.md`。
 - 不要在 Skill 文件中写入真实凭据；示例一律用占位符。

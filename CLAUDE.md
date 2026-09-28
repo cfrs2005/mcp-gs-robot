@@ -11,7 +11,7 @@
 - `src/gs_openapi/agent/`: Pi Agent, providers, sessions and CLI.
 - `src/gs_openapi/server/`: FastAPI REST/SSE app and H5 static assets.
 - `h5/`: Vue/Vite H5 frontend, builds into `src/gs_openapi/server/static/`.
-- `skills/gs-robot/`: reusable Agent Skill; `docs/openapi-v3/`: archived public reference.
+- `skills/gs-robot/`: reusable Agent Skill; `docs/apis.md`: V3 endpoint index with links to the official documentation.
 - `tests/`: offline unit/integration tests with mock HTTP transport.
 
 ## Commands
@@ -36,7 +36,7 @@ Run H5 commands from `h5/`; run Python commands from the repository root. Start 
 
 ## Adding a V3 tool
 
-1. Check the relevant archived page in `docs/openapi-v3/` and update the contract first.
+1. Read the endpoint's page in the official Gausium OpenAPI V3 documentation (links in `docs/apis.md`) and update the contract first.
 2. Add/extend V3 request/response models and a `GausiumV3` method as needed.
 3. Add a snake_case input model and registered handler in `src/gs_openapi/tools/v3_tools.py`; set its category, bilingual description, and `dangerous` flag.
 4. Add mock-backed tests for validation, payload mapping and invocation; update docs and Skill references.

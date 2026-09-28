@@ -38,7 +38,7 @@
 - **类型化、有测试**：pydantic v2 模型、统一信封解包、六位业务错误码映射为 `GausiumAPIError`，48 个单测，无需联网
 - **安全优先**：所有会让机器人动起来或改数据的工具都标记为 `dangerous`，在 Agent、CLI、H5 中都必须二次确认
 - **OAuth 正确处理**：V3 的 `expires_in` 是毫秒时间戳而非秒数，token 管理器已正确解析并加锁刷新
-- **官方文档归档**：44 页 V3 文档放在 [`docs/openapi-v3/`](https://github.com/cfrs2005/mcp-gs-robot/tree/main/docs/openapi-v3)，AI 助手可离线查阅精确字段
+- **严格对照官方文档**：每个接口都按[高仙 OpenAPI V3 官方文档](https://developer.gs-robot.com/v3docs/zh_CN/OpenAPI%20V3/Overview)实现，[`docs/apis.md`](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/apis.md) 把每个接口映射到对应官方页面
 - **模型无关的 Agent**：默认 Anthropic（`claude-opus-5`），也支持任意 OpenAI 兼容端点（DeepSeek、本地模型……）
 
 ## 🏗️ 架构
@@ -234,7 +234,7 @@ Skill 内置了安全操作流程（状态 → 能力 → 资源 → 任务定�
 |---|---|---|
 | `create_simple_schedule` | `robot_sn`、`task_name`、`site_mode`、`work_mode`、`map_resource_list`、`plan_execute_type`、`plan_repeat_type`、`plan_start_date`、`plan_start_time` | ⚠️ |
 | `update_simple_schedule` / `delete_simple_schedule` | `robot_sn`、`plan_uuid`、`year`、`month`、`day_of_month`、`operation_type` | ⚠️ |
-| `create_schedule` / `update_schedule` / `delete_schedule` | 标准排班字段（见[文档归档](https://github.com/cfrs2005/mcp-gs-robot/tree/main/docs/openapi-v3)） | ⚠️ |
+| `create_schedule` / `update_schedule` / `delete_schedule` | 标准排班字段（见[文档归档](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/Overview)） | ⚠️ |
 | `list_schedules` | `robot_sn` | |
 | `get_schedule` | `robot_sn`、`plan_uuid`、`year`、`month`、`day_of_month` | |
 | `get_schedule_calendar` | `robot_sn`、`year_month` | |
@@ -330,7 +330,6 @@ src/gs_openapi/
 └── main.py                    `mcp-gs-robot` stdio 入口
 h5/                            Vue 3 移动端页面（构建到 server/static）
 skills/gs-robot/               Agent Skill 与参考资料
-docs/openapi-v3/               归档的 V3 官方文档（44 页）
 docs/ARCHITECTURE_V3.md        所有模块遵守的契约
 tests/                         48 个单测（httpx.MockTransport，无需联网）
 ```
@@ -364,7 +363,7 @@ uv build                         # wheel 中包含 H5 静态资源
 | 文档 | 用途 |
 |---|---|
 | [架构契约](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/ARCHITECTURE_V3.md) | 工具名、REST/SSE 协议、Agent 接口 |
-| [V3 接口索引](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/apis.md) 与[文档归档](https://github.com/cfrs2005/mcp-gs-robot/tree/main/docs/openapi-v3) | 每个接口的方法、路径、支持的固件版本 |
+| [V3 接口索引](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/apis.md) | 每个接口的方法、路径、支持的固件版本及官方页面链接 |
 | [Claude Code 集成](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/CLAUDE_CODE_INTEGRATION.md) | MCP 配置 + Skill |
 | [测试指南](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/TESTING_GUIDE.md) | 单测、curl 演练、MCP Inspector |
 | [Skill 说明](https://github.com/cfrs2005/mcp-gs-robot/blob/main/skills/gs-robot/README.md) | 在 Claude Code / Codex / WorkBuddy 中安装 Skill |

@@ -38,7 +38,7 @@
 - **Typed & tested** — pydantic v2 models, envelope unwrapping, six-digit error codes surfaced as `GausiumAPIError`, 48 unit tests, no network needed
 - **Safety first** — every mutating/moving tool is flagged `dangerous` and requires explicit confirmation in the Agent, CLI and H5
 - **Correct OAuth handling** — V3 returns `expires_in` as a millisecond epoch; the token manager handles it (and refreshes under a lock)
-- **Reference docs archived** — all 44 V3 doc pages are in [`docs/openapi-v3/`](https://github.com/cfrs2005/mcp-gs-robot/tree/main/docs/openapi-v3) so AI assistants can read exact field names offline
+- **Built strictly on the official docs** — every endpoint follows the [Gausium OpenAPI V3 documentation](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/Overview); [`docs/apis.md`](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/apis.md) maps each one to its official page
 - **Provider-agnostic Agent** — Anthropic (default, `claude-opus-5`) or any OpenAI-compatible endpoint (DeepSeek, local models…)
 
 ## 🏗️ Architecture
@@ -234,7 +234,7 @@ All 40 tools are defined once in `gs_openapi/tools/` and exposed identically to 
 |---|---|---|
 | `create_simple_schedule` | `robot_sn`, `task_name`, `site_mode`, `work_mode`, `map_resource_list`, `plan_execute_type`, `plan_repeat_type`, `plan_start_date`, `plan_start_time` | ⚠️ |
 | `update_simple_schedule` / `delete_simple_schedule` | `robot_sn`, `plan_uuid`, `year`, `month`, `day_of_month`, `operation_type` | ⚠️ |
-| `create_schedule` / `update_schedule` / `delete_schedule` | standard schedule fields (see [docs](https://github.com/cfrs2005/mcp-gs-robot/tree/main/docs/openapi-v3)) | ⚠️ |
+| `create_schedule` / `update_schedule` / `delete_schedule` | standard schedule fields (see [docs](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/Overview)) | ⚠️ |
 | `list_schedules` | `robot_sn` | |
 | `get_schedule` | `robot_sn`, `plan_uuid`, `year`, `month`, `day_of_month` | |
 | `get_schedule_calendar` | `robot_sn`, `year_month` | |
@@ -330,7 +330,6 @@ src/gs_openapi/
 └── main.py                    `mcp-gs-robot` stdio entry
 h5/                            Vue 3 mobile web app (builds into server/static)
 skills/gs-robot/               Agent Skill + references
-docs/openapi-v3/               Archived V3 reference docs (44 pages)
 docs/ARCHITECTURE_V3.md        The contract every module follows
 tests/                         48 unit tests (httpx.MockTransport, no network)
 ```
@@ -364,7 +363,7 @@ Old tools remain available with `GS_ENABLE_LEGACY_TOOLS=1` under `legacy_*` name
 | Document | Purpose |
 |---|---|
 | [Architecture contract](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/ARCHITECTURE_V3.md) | Tool names, REST/SSE protocol, agent interface |
-| [V3 API index](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/apis.md) & [archive](https://github.com/cfrs2005/mcp-gs-robot/tree/main/docs/openapi-v3) | Every endpoint with method, path, supported firmware |
+| [V3 API index](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/apis.md) | Every endpoint with method, path, supported firmware and a link to the official page |
 | [Claude Code integration](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/CLAUDE_CODE_INTEGRATION.md) | MCP setup + Skill |
 | [Testing guide](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/TESTING_GUIDE.md) | Unit tests, curl walkthrough, MCP Inspector |
 | [Skill README](https://github.com/cfrs2005/mcp-gs-robot/blob/main/skills/gs-robot/README.md) | Installing the skill in Claude Code / Codex / WorkBuddy |

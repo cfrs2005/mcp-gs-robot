@@ -1,6 +1,6 @@
 # workState 工作状态码表
 
-来源：`docs/openapi-v3/robot-work-state-reference.md`（`POST /openapi/v3/robots/status/get` 返回）。`workState` 为机器人原始工作状态码，透传不转换。「运维含义/建议动作」列为本 Skill 编写建议。
+来源：https://developer.gs-robot.com/v3docs/en_US/Robot%20Work%20State%20Reference（`POST /openapi/v3/robots/status/get` 返回）。`workState` 为机器人原始工作状态码，透传不转换。「运维含义/建议动作」列为本 Skill 编写建议。
 
 | workState | 状态码 | 描述 | 运维含义/建议动作 |
 |---|---|---|---|

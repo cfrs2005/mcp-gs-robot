@@ -3,7 +3,7 @@
 endpoints.
 
 Each method maps Python snake_case keyword arguments to the exact camelCase
-request fields documented in ``docs/openapi-v3/*.md`` and returns a parsed
+request fields documented in the official Gausium OpenAPI V3 documentation and returns a parsed
 pydantic model (for query endpoints) or a ``dict`` (for mutation endpoints).
 The facade delegates HTTP, envelope unwrapping, and 401-retry to
 :class:`gs_openapi.core.client.GausiumAPIClient.call_v3`.

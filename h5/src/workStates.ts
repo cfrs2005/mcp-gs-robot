@@ -1,4 +1,4 @@
-// 与 docs/openapi-v3/robot-work-state-reference.md 的状态表保持一致。
+// 与 https://developer.gs-robot.com/v3docs/en_US/Robot%20Work%20State%20Reference 的状态表保持一致。
 export const workStates: Record<number, string> = {
   0: '未指定', 100: '空闲', 110: '未初始化', 140: '路径录制中',
   150: '区域录制中', 160: '地图保存中', 170: '导航中',

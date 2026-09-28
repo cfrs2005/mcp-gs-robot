@@ -241,7 +241,7 @@ ROBOT_CLEANING_ENDPOINTS = {
 # All V3 business endpoints are POST with a JSON body under /openapi/v3/...
 # and return the unified envelope {code, msg, traceId, data}. Each entry below
 # uses the OPENAPI_V3 version so that ``full_path`` resolves to the exact
-# path documented in docs/openapi-v3/*.md. Endpoint names follow the
+# path documented in the official Gausium OpenAPI V3 documentation. Endpoint names follow the
 # ``v3_<domain>_<...>`` convention.
 # ---------------------------------------------------------------------------
 def _v3(path: str, description: str = "") -> APIEndpoint:
