@@ -66,16 +66,16 @@ function openWindow() {
 </template>
 
 <style scoped>
-.html-card { border: 1px solid #d6e2ef; border-radius: 12px; overflow: hidden; background: #fff; margin: 0 0 10px; }
-.html-bar { display: flex; align-items: center; gap: 10px; padding: 6px 8px 6px 12px; border-bottom: 1px solid #e6edf5; background: #f6f9fc; font-size: 12.5px; }
-.html-tag { font-weight: 650; color: #50637a; letter-spacing: .04em; }
-.html-tabs { display: flex; background: #e7eef6; border-radius: 7px; padding: 2px; }
-.html-tabs button { border: 0; background: transparent; padding: 3px 10px; border-radius: 5px; color: #50637a; cursor: pointer; font-size: 12.5px; }
-.html-tabs button.on { background: #fff; color: #1c3146; box-shadow: 0 1px 2px #173a631a; }
+.html-card { border: 1px solid var(--sd-line); border-radius: 12px; overflow: hidden; background: var(--sd-surface); margin: 0 0 10px; }
+.html-bar { display: flex; align-items: center; gap: 10px; padding: 6px 8px 6px 12px; border-bottom: 1px solid var(--sd-line); background: var(--sd-surface-2); font-size: 12.5px; }
+.html-tag { font-weight: 650; color: var(--sd-ink-2); letter-spacing: .04em; }
+.html-tabs { display: flex; background: var(--sd-code-bg); border-radius: 7px; padding: 2px; }
+.html-tabs button { border: 0; background: transparent; padding: 3px 10px; border-radius: 5px; color: var(--sd-ink-2); cursor: pointer; font-size: 12.5px; }
+.html-tabs button.on { background: var(--sd-surface); color: var(--sd-ink); box-shadow: var(--sd-shadow-1); }
 .html-tabs button:disabled { opacity: .45; cursor: default; }
-.html-open { margin-left: auto; border: 0; background: transparent; color: #1f6fbf; cursor: pointer; font-size: 12.5px; }
-.html-wait { margin-left: auto; color: #7d8998; }
-.html-frame { display: block; width: 100%; border: 0; background: #fff; }
-.html-more { display: block; width: 100%; border: 0; border-top: 1px solid #e6edf5; background: #f6f9fc; padding: 6px; color: #1f6fbf; cursor: pointer; font-size: 12.5px; }
-.html-source { margin: 0; padding: 12px 14px; background: #172a3f; color: #e4edf8; font-size: 12.5px; line-height: 1.55; overflow-x: auto; }
+.html-open { margin-left: auto; border: 0; background: transparent; color: var(--sd-primary); cursor: pointer; font-size: 12.5px; }
+.html-wait { margin-left: auto; color: var(--sd-muted); }
+.html-frame { display: block; width: 100%; border: 0; background: var(--sd-surface); }
+.html-more { display: block; width: 100%; border: 0; border-top: 1px solid var(--sd-line); background: var(--sd-surface-2); padding: 6px; color: var(--sd-primary); cursor: pointer; font-size: 12.5px; }
+.html-source { margin: 0; padding: 12px 14px; background: var(--sd-code-block); color: var(--sd-code-ink); font-size: 12.5px; line-height: 1.55; overflow-x: auto; }
 </style>

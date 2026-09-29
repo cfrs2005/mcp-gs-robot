@@ -15,6 +15,14 @@ npm run preview
 
 Settings stores the API base URL and API key in this browser's localStorage (`saodi.apiBase` / `saodi.apiKey`; legacy `pi.*` keys are migrated and removed on first load). Only use a key on trusted devices over HTTPS.
 
+## Layout and design
+
+- `src/shared/tokens.css` holds every color, radius, shadow and type size (plus Vant `--van-*` overrides); components use these variables only.
+- Tool results render as cards through one table, `src/components/cards/registry.ts` (tool name → card). Unmapped or failed results keep the plain tool row; the raw JSON stays expandable.
+- Robot photos come from `src/shared/robotModels.ts` and load at runtime from the product site (`referrerpolicy="no-referrer"`); failures fall back to a drawn robot. Images are never copied into the repo or wheel.
+- Charts in cards are hand-written SVG (`src/components/ui/BarChart.vue`).
+- Markdown: `src/shared/markdown.ts` (`renderSegments`) splits model text into sanitized markdown runs and special fences. ```` ```html ```` renders in a sandboxed iframe (`HtmlPreview.vue`); ```` ```mermaid ```` renders as a diagram (`components/ui/MermaidView.vue`). While a fence is still streaming its source is shown with "Generating…"; once closed it renders. `mermaid` is loaded with a dynamic `import()` into its own chunks only when a closed mermaid fence appears (never in the first-screen bundle, never from a CDN), initialized with `securityLevel: 'strict'` and the design tokens (font, primary, ink); its SVG is sanitized again with DOMPurify (svg profile). Parse errors show the source plus one error line; wide diagrams scroll inside their card so the page never overflows horizontally.
+
 ## Internationalization
 
 English is the source language; Chinese is the second locale.
@@ -27,4 +35,4 @@ English is the source language; Chinese is the second locale.
 
 ## 中文说明
 
-H5 以英文为主语言、中文为第二语言。文案字典在 `src/i18n/en.ts`（源）与 `src/i18n/zh.ts`，两者键必须完全一致，`npm run i18n:check`（`npm run build` 前自动执行）会校验键、占位符，并禁止在 `src/i18n` 之外硬编码中文。语言默认读 `localStorage` 的 `saodi.locale`，没有则按浏览器语言判断（`zh*` 为中文，其余为英文）；设置页可在 English / 中文 之间切换，即时生效并持久化。中文界面品牌显示「扫地僧」加小字 SAODI。
+H5 以英文为主语言、中文为第二语言。文案字典在 `src/i18n/en.ts`（源）与 `src/i18n/zh.ts`，两者键必须完全一致，`npm run i18n:check`（`npm run build` 前自动执行）会校验键、占位符，并禁止在 `src/i18n` 之外硬编码中文。语言默认读 `localStorage` 的 `saodi.locale`，没有则按浏览器语言判断（`zh*` 为中文，其余为英文）；设置页可在 English / 中文 之间切换，即时生效并持久化。品牌统一为 Saodi AI（中文副标「扫地」），标志见 `src/shared/mark.svg`。

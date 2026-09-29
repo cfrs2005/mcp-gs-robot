@@ -4,7 +4,7 @@ import { computed, ref } from 'vue'
 import { Locale as VantLocale } from 'vant'
 import vantEn from 'vant/es/locale/lang/en-US'
 import vantZh from 'vant/es/locale/lang/zh-CN'
-import { KEYS } from '@/storageKeys'
+import { KEYS } from '@/shared/storageKeys'
 import en, { type MessageKey, type Messages } from './en'
 import zh from './zh'
 

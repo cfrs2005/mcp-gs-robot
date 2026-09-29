@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { KEYS } from '@/storageKeys'
+import { KEYS } from '@/shared/storageKeys'
 import { onMounted, ref } from 'vue'
 import { Button, CellGroup, Field, Radio, RadioGroup, showConfirmDialog, showFailToast, showSuccessToast } from 'vant'
 import { ApiError, authCheck, deleteAgentSession, health, type Health } from '@/api/client'
-import { useSettingsStore } from '@/stores/settings'
+import { useSettingsStore } from '@/api/settings'
 import { LOCALES, locale, setLocale, t, type Locale } from '@/i18n'
+import markUrl from '@/shared/mark.svg'
 
 const settings = useSettingsStore()
 const apiBase = ref(settings.apiBase)
@@ -62,8 +63,12 @@ async function clearChat() {
 
 <template>
   <div class="page">
-    <header class="page-header">{{ t('settings.title') }}</header>
+    <header class="page-header"><h1>{{ t('settings.title') }}</h1></header>
     <div class="page-body">
+      <div class="panel brand-panel">
+        <img :src="markUrl" alt="" class="brand-mark">
+        <div><strong>{{ t('brand.name') }}</strong><span class="muted">{{ t('brand.tagline') }}</span></div>
+      </div>
       <div class="panel">
         <CellGroup inset>
           <Field :label="t('settings.language')">
@@ -76,6 +81,7 @@ async function clearChat() {
         </CellGroup>
       </div>
       <div class="panel">
+        <h2 class="panel-title">{{ t('settings.connection') }}</h2>
         <CellGroup inset>
           <Field v-model="apiBase" :label="t('settings.apiBase')" :placeholder="t('settings.apiBasePlaceholder')" inputmode="url" />
           <Field v-model="apiKey" :label="t('settings.apiKey')" type="password" :required="authRequired" :placeholder="authRequired ? t('settings.apiKeyRequired') : t('settings.apiKeyOptional')" />
@@ -92,7 +98,14 @@ async function clearChat() {
 </template>
 
 <style scoped>
-.connection { margin-top: 16px; font-size: 13px; color: #427755; }
-.connection.invalid { color: #c9483c; }
-.key-hint { color: #b7791f; }
+.page-header h1 { margin: 0; font-size: var(--sd-fs-2xl); }
+.brand-panel { display: flex; align-items: center; gap: 12px; }
+.brand-panel div { display: flex; flex-direction: column; gap: 2px; }
+.brand-panel strong { font-size: var(--sd-fs-lg); color: var(--sd-ink); }
+.brand-mark { width: 48px; height: 48px; flex: none; }
+.panel :deep(.van-cell-group--inset) { margin: 0 0 12px; box-shadow: inset 0 0 0 1px var(--sd-line); }
+.panel :deep(.van-cell-group--inset:last-child) { margin-bottom: 0; }
+.connection { margin-top: 14px; padding: 8px 12px; border-radius: var(--sd-r-sm); background: var(--sd-success-soft); font-size: var(--sd-fs-sm); color: var(--sd-success); }
+.connection.invalid { background: var(--sd-danger-soft); color: var(--sd-danger); }
+.key-hint { color: var(--sd-warning); }
 </style>

@@ -74,16 +74,16 @@ async function remove(item: SessionSummary) {
 
 <style scoped>
 .history-drawer { width: min(86vw, 340px); }
-.drawer { height: 100%; display: flex; flex-direction: column; background: #f4f7fb; }
-.drawer-head { display: flex; align-items: center; justify-content: space-between; min-height: 55px; padding: 12px 16px; background: #fff; border-bottom: 1px solid #e8eef5; font-weight: 700; font-size: 17px; }
+.drawer { height: 100%; display: flex; flex-direction: column; background: var(--sd-bg); }
+.drawer-head { display: flex; align-items: center; justify-content: space-between; min-height: 55px; padding: 12px 16px; background: var(--sd-surface); border-bottom: 1px solid var(--sd-line); font-weight: 700; font-size: 17px; }
 .drawer-body { flex: 1; overflow-y: auto; padding: 10px; }
 .retry { margin-top: 10px; }
 .list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-.item { display: flex; align-items: stretch; border-radius: 10px; background: #fff; box-shadow: 0 2px 10px #173a630a; }
-.item.current { background: #d9edff; }
+.item { display: flex; align-items: stretch; border-radius: 10px; background: var(--sd-surface); box-shadow: var(--sd-shadow-1); }
+.item.current { background: var(--sd-primary-soft); }
 .item-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; border: 0; background: transparent; text-align: left; cursor: pointer; color: inherit; }
 .title { font-size: 14.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.meta { font-size: 12px; color: #7d8998; }
-.item-del { flex: none; width: 44px; border: 0; background: transparent; color: #9aa6b3; font-size: 18px; cursor: pointer; border-radius: 0 10px 10px 0; }
-.item-del:hover { color: #c2403c; }
+.meta { font-size: 12px; color: var(--sd-muted); }
+.item-del { flex: none; width: 44px; border: 0; background: transparent; color: var(--sd-faint); font-size: 18px; cursor: pointer; border-radius: 0 10px 10px 0; }
+.item-del:hover { color: var(--sd-danger); }
 </style>

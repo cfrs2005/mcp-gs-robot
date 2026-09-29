@@ -13,6 +13,7 @@
   "dependencies": {
     "dompurify": "^3.4.16",
     "marked": "^14.1.4",
+    "mermaid": "^12.0.0",
     "pinia": "^2.1.7",
     "vant": "^4.9.1",
     "vue": "^3.4.27",

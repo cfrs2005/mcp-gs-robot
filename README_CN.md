@@ -2,7 +2,7 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/logo-dark.svg">
-  <img alt="Saodi 扫地僧" src="https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/logo.svg" width="320">
+  <img alt="Saodi AI 扫地" src="https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/logo.svg" width="320">
 </picture>
 
 <b>扫地僧</b>

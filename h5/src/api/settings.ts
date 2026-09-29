@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { KEYS } from '@/storageKeys'
+import { KEYS } from '@/shared/storageKeys'
 
 const read = (key: string) => localStorage.getItem(key) ?? ''
 
