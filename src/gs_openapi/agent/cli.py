@@ -235,8 +235,8 @@ def main(argv: list[str] | None = None, prog: str = "saodi") -> None:
 
 
 def legacy_main() -> None:
-    """Deprecated ``pi-agent`` command; same behaviour as ``saodi`` for one release."""
-    print("pi-agent is deprecated; use saodi instead (it goes away next release)", file=sys.stderr)
+    """Deprecated ``pi-agent`` command; same behaviour as ``saodi``, removed in 0.5.0."""
+    print("pi-agent is deprecated; use saodi instead (removed in 0.5.0)", file=sys.stderr)
     main(prog="pi-agent")
 
 

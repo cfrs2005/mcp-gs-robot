@@ -22,9 +22,9 @@
 
 > ⚠️ **免责声明** —— 本项目是**非官方、个人研究学习用途的开源项目**，与高仙（Gausium）官方无任何隶属、认可或支持关系，使用风险自负。机器人指令会让实体机器移动，请先在模拟器或空闲机器人上测试。项目仅依据公开的[高仙 OpenAPI V3 文档](https://developer.gs-robot.com/v3docs/zh_CN/OpenAPI%20V3/Overview)实现。
 
-![H5 页面：扫地僧对话、历史会话、机器人列表、地图与报告](https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/h5-showcase_cn.png)
+![H5 页面：首页（问候、推荐问题、机队总览）；结果卡片（机器人卡、报告 KPI、每日趋势）；执行流水线（确认 → 发送 → 送达，未批准不执行）；机器人（搜索、筛选、在线 / 离线 / 失联）；当前定位（地图上的机器人、朝向与点位）](https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/h5-showcase_cn.png)
 
-<sub>内置 H5 页面截图，连接 mock 上游，数据为演示数据。</sub>
+<sub>内置 H5 页面，从左到右：首页 · 结果卡片 · 执行流水线 · 机器人 · 当前定位。连接 mock 上游，数据为演示数据。</sub>
 
 ## 这是什么？
 
@@ -361,7 +361,7 @@ curl -N -XPOST -H "X-API-Key: $KEY" -H 'Content-Type: application/json' \
   localhost:8000/api/v1/agent/sessions/$SID/messages
 ```
 
-**H5**（`h5/`，Vue 3 + Vite + Vant）：**对话**（流式 Markdown、HTML 预览、工具调用时间线、确认按钮、历史抽屉）、**机器人**（在线 / 离线 / 不可达三态、电量、工作状态）、**详情**（地图与画布、任务定义、快捷操作、报告；离线机器人显示横幅而不是报错）、**设置**（API 地址、API Key、语言）。服务端要求 key 而本地没填时，H5 会引导你去设置页。生产构建已提交在 `src/gs_openapi/server/static/`，`pip install` 即可带上。
+**H5**（`h5/`，Vue 3 + Vite + Vant）：**对话**（首页含问候、推荐问题与机队总览；流式 Markdown、HTML 预览与 mermaid 图；工具调用时间线，附机器人、报告 KPI、每日趋势、地图等结果卡片；危险工具的执行流水线卡——确认 → 发送 → 送达，未批准不执行；历史抽屉）、**机器人**（搜索与筛选，在线 / 离线 / 失联三态、电量、工作状态）、**详情**（当前定位——地图上的机器人、朝向与点位；地图与画布、任务定义、快捷操作、报告；离线机器人显示横幅而不是报错）、**设置**（API 地址、API Key、语言）。服务端要求 key 而本地没填时，H5 会引导你去设置页。生产构建已提交在 `src/gs_openapi/server/static/`，`pip install` 即可带上。
 
 ### 多语言
 

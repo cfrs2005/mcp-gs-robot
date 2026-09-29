@@ -20,9 +20,9 @@
 
 > ⚠️ **Disclaimer** — This is an **unofficial, open-source project for personal research and learning.** Not affiliated with, endorsed by, or supported by Gausium (高仙). Use at your own risk — robot commands move physical machines, so test on simulators or idle robots first. Built solely from the public [Gausium OpenAPI V3 documentation](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/Overview).
 
-![H5 app: Saodi chat, history, fleet, maps and reports](https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/h5-showcase.png)
+![H5 app: home with greeting, suggested questions and fleet overview; result cards (robot card, report KPIs, daily trend); execution pipeline (confirm → sent → delivered, nothing runs until approved); robot list (search, filters, online / offline / unreachable); current location (robot, heading and map points on the map)](https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/h5-showcase.png)
 
-<sub>Screenshots of the built-in H5 app, running against a mock upstream with demo data.</sub>
+<sub>The built-in H5 app, left to right: Home · Result cards · Execution pipeline · Robots · Current location. Running against a mock upstream with demo data.</sub>
 
 ## What is this?
 
@@ -365,7 +365,7 @@ curl -N -XPOST -H "X-API-Key: $KEY" -H 'Content-Type: application/json' \
   localhost:8000/api/v1/agent/sessions/$SID/messages
 ```
 
-**H5** (`h5/`, Vue 3 + Vite + Vant): **Chat** (streaming Markdown, HTML preview, a tool-call timeline, confirm buttons and a history drawer), **Robots** (fleet list with online / offline / unreachable states, battery and work state), **Detail** (maps & canvas, task definitions, quick actions, reports; offline robots get a banner instead of errors) and **Settings** (API base, API key, language). When the server needs a key and none is saved, the H5 sends you to Settings. The production build is committed to `src/gs_openapi/server/static/`, so `pip install` ships it.
+**H5** (`h5/`, Vue 3 + Vite + Vant): **Chat** (a home screen with greeting, suggested questions and a fleet overview; streaming Markdown, HTML preview and mermaid diagrams; a tool-call timeline with result cards for robots, report KPIs, daily trends and maps; an execution pipeline card for dangerous tools — confirm → sent → delivered, nothing runs until approved; and a history drawer), **Robots** (fleet list with search and filters, online / offline / unreachable states, battery and work state), **Detail** (current location — the robot, its heading and map points on the map — maps & canvas, task definitions, quick actions, reports; offline robots get a banner instead of errors) and **Settings** (API base, API key, language). When the server needs a key and none is saved, the H5 sends you to Settings. The production build is committed to `src/gs_openapi/server/static/`, so `pip install` ships it.
 
 ### Languages
 
