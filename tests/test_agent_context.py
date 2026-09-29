@@ -144,6 +144,7 @@ def test_pi_agent_alias_warns_then_behaves_like_saodi(monkeypatch, capsys):
     legacy_main()
     captured = capsys.readouterr()
     assert "pi-agent is deprecated; use saodi" in captured.err
+    assert "removed in 0.5.0" in captured.err
     assert captured.out.startswith("<!-- soul: soul.md -->")
 
 

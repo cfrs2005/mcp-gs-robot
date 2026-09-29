@@ -36,7 +36,7 @@ uv run saodi memory [add "<lesson>" | edit]
 uv run saodi errors [show <id> | promote <id>]
 ```
 
-Run H5 commands from `h5/`; run Python commands from the repository root. Start `gs-robot-server` for `/api/v1` and H5 `/`, or `mcp-gs-robot` for MCP stdio. `saodi` opens the terminal REPL (`saodi --show-context` prints the system prompt; `pi-agent` / `PI_AGENT_*` are deprecated aliases kept for one release). Build H5 before `uv build` to include it in the wheel. Every entry point loads `.env` from the current working directory (`gs_openapi.config.load_env`).
+Run H5 commands from `h5/`; run Python commands from the repository root. Start `gs-robot-server` for `/api/v1` and H5 `/`, or `mcp-gs-robot` for MCP stdio. `saodi` opens the terminal REPL (`saodi --show-context` prints the system prompt; `pi-agent` / `PI_AGENT_*` are deprecated aliases, removed in 0.5.0). Build H5 before `uv build` to include it in the wheel. Every entry point loads `.env` from the current working directory (`gs_openapi.config.load_env`).
 
 ## Conventions
 

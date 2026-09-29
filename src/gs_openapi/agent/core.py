@@ -291,5 +291,5 @@ class SaodiAgent:
                 return
 
 
-# Deprecated alias kept for one release; use SaodiAgent.
+# Deprecated alias, removed in 0.5.0; use SaodiAgent.
 PiAgent = SaodiAgent
