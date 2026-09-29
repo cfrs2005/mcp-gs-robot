@@ -5,7 +5,7 @@ export type AgentEvent =
   | { type: 'text_delta'; text: string }
   | { type: 'tool_call'; id: string; name: string; input: Record<string, unknown> }
   | { type: 'tool_result'; id: string; name: string; output: unknown; is_error: boolean }
-  | { type: 'confirm_required'; confirm_id: string; name: string; input: Record<string, unknown>; summary: string }
+  | { type: 'confirm_required'; confirm_id: string; tool_use_id?: string; name: string; input: Record<string, unknown>; summary: string }
   | { type: 'done'; message_id: string; usage: Record<string, unknown> }
   | { type: 'error'; message: string; code?: string }
 

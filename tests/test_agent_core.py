@@ -143,8 +143,11 @@ async def test_large_tool_output_is_truncated(monkeypatch):
     provider = FakeProvider(tool_turn(), [end({"type": "text", "text": "完成"})])
     session = AgentSession()
     events = [event async for event in SaodiAgent(None, provider).run(session, "查询")]
-    assert events[2]["output"].endswith("[truncated]")
-    assert len(session.messages[2]["content"][0]["content"]) < 21_000
+    # No list to cut: a single huge string falls back to a character prefix, still valid JSON.
+    stored = session.messages[2]["content"][0]["content"]
+    assert json.loads(stored) == events[2]["output"]
+    assert events[2]["output"]["_truncated"]["unit"] == "chars"
+    assert len(stored) <= 20_000
 
 
 async def test_store_and_provider_defaults(monkeypatch):

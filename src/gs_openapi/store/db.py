@@ -12,7 +12,7 @@ from typing import TypeVar
 
 T = TypeVar("T")
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS sessions (
     id TEXT PRIMARY KEY,
@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS sessions (
     system_prompt TEXT,
     messages TEXT NOT NULL DEFAULT '[]',
     errors TEXT NOT NULL DEFAULT '[]',
+    confirmations TEXT NOT NULL DEFAULT '[]',
     message_count INTEGER NOT NULL DEFAULT 0,
     created_at REAL NOT NULL,
     updated_at REAL NOT NULL
@@ -72,6 +73,19 @@ CREATE INDEX IF NOT EXISTS tool_calls_thread ON tool_calls(thread_id, ts DESC);
 CREATE INDEX IF NOT EXISTS tool_calls_tool ON tool_calls(tool, status);
 """
 
+# Columns added after v1. CREATE TABLE IF NOT EXISTS leaves an existing table alone, so older
+# databases get them here; checking table_info first makes this safe to run on every open.
+MIGRATIONS: tuple[tuple[str, str, str], ...] = (
+    ("sessions", "confirmations", "TEXT NOT NULL DEFAULT '[]'"),  # v2
+)
+
+
+def migrate(conn: sqlite3.Connection) -> None:
+    for table, column, decl in MIGRATIONS:
+        existing = {row[1] for row in conn.execute(f"PRAGMA table_info({table})")}
+        if column not in existing:
+            conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {decl}")
+
 
 def default_data_dir() -> Path:
     return Path(os.environ.get("SAODI_DATA_DIR") or "~/.saodi").expanduser()
@@ -101,6 +115,7 @@ class Database:
             self._conn.execute("PRAGMA synchronous=NORMAL")
             self._conn.execute("PRAGMA busy_timeout=5000")
             self._conn.executescript(SCHEMA)
+            migrate(self._conn)
             self._conn.execute(f"PRAGMA user_version={SCHEMA_VERSION}")
 
     def sync(self, fn: Callable[[sqlite3.Connection], T], *, write: bool = False) -> T:

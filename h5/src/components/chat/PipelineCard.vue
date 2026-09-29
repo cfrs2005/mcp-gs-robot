@@ -23,9 +23,9 @@ const delivery = computed(() => {
 })
 const steps = computed<{ key: string; label: MessageKey; state: State; detail?: string }[]>(() => {
   const answered = props.confirm.answered
-  const confirmState: State = answered === undefined ? 'wait' : answered ? 'ok' : 'no'
+  const confirmState: State = props.confirm.expired ? 'no' : answered === undefined ? 'wait' : answered ? 'ok' : 'no'
   let sent: State = 'idle', sentDetail: string | undefined
-  if (answered === false) sent = 'skip'
+  if (answered === false || props.confirm.expired) sent = 'skip'
   else if (answered && props.tool) {
     sent = props.tool.output === undefined ? 'run' : props.tool.isError ? 'fail' : 'ok'
     sentDetail = sent === 'ok' && requestId.value ? t('pipeline.requestId', { id: requestId.value }) : undefined
@@ -50,7 +50,7 @@ const steps = computed<{ key: string; label: MessageKey; state: State; detail?: 
 const overall = computed<{ tone: 'wait' | 'ok' | 'fail' | 'run' | 'off'; label: MessageKey }>(() => {
   const [c, s, d] = steps.value.map(step => step.state)
   if (c === 'wait') return { tone: 'wait', label: 'pipeline.awaiting' }
-  if (c === 'no') return { tone: 'off', label: 'chat.cancelled' }
+  if (c === 'no') return { tone: 'off', label: props.confirm.expired ? 'pipeline.unanswered' : 'pipeline.rejected' }
   if (s === 'fail' || d === 'fail') return { tone: 'fail', label: 'pipeline.failed' }
   if (d === 'ok') return { tone: 'ok', label: 'pipeline.delivered' }
   if (s === 'ok') return { tone: 'ok', label: 'pipeline.accepted' }
@@ -79,7 +79,8 @@ const overall = computed<{ tone: 'wait' | 'ok' | 'fail' | 'run' | 'off'; label: 
       </li>
     </ol>
     <ToolCallCard :name="confirm.name" :input="confirm.input" />
-    <div v-if="confirm.answered !== undefined" class="answered">{{ confirm.answered ? t('chat.confirmed') : t('chat.cancelled') }}</div>
+    <div v-if="confirm.expired" class="answered">{{ t('pipeline.expired') }}</div>
+    <div v-else-if="confirm.answered !== undefined" class="answered">{{ confirm.answered ? t('chat.confirmed') : t('chat.cancelled') }}</div>
     <div v-else class="actions">
       <Button size="small" type="primary" :loading="confirm.pending" @click="emit('respond', true)">{{ t('chat.approve') }}</Button>
       <Button size="small" :disabled="confirm.pending" @click="emit('respond', false)">{{ t('chat.reject') }}</Button>

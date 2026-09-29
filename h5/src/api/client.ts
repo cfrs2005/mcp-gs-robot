@@ -76,11 +76,14 @@ export interface Page<T> {
 }
 /** SSE error events persisted with the session; after_message = messages.length when it happened. */
 export interface SessionError { message: string; at: number; after_message: number; code?: string }
+/** A confirm_required event and its outcome, persisted with the session (decision null = never answered). */
+export interface SessionConfirmation { confirm_id: string; tool_use_id: string; name: string; input: unknown; summary: string; decision: 'approved' | 'rejected' | null; at: number; after_message: number }
 export interface AgentSession {
   session_id: string
   title?: string | null
   messages: { role: string; content: unknown; tool_calls?: unknown[] }[]
   errors?: SessionError[]
+  confirmations?: SessionConfirmation[]
   created_at: number
   updated_at?: number
   message_count?: number

@@ -18,62 +18,27 @@ const RESULT_CARDS: Record<string, CardSpec> = {
   get_task_report_map_images: { component: MapImageCard, accepts: out => nonEmpty(obj(out)?.list) },
 }
 
-const TRUNCATED = '…[truncated]'
-
-/** The server cuts tool results over 20k characters and appends "…[truncated]" (agent/core.py), which
- *  happens to a 20-row report page. The stored transcript then holds that string JSON-encoded and cut
- *  again. Unwrap the string layers, then keep the complete leading array elements: scan the JSON,
- *  remember the last point where an object inside an array closed (preferring the shallowest array, so
- *  no row is cut mid-way), cut there and close the open brackets. */
-function unwrap(text: string, cut = false): { text: string; cut: boolean } {
-  if (text.endsWith(TRUNCATED)) return unwrap(text.slice(0, -TRUNCATED.length), true)
-  if (text.startsWith('"')) {
-    // A JSON string literal, possibly missing its end (and cut inside an escape sequence).
-    for (let drop = 0; drop <= 6; drop++) {
-      try {
-        const inner: unknown = JSON.parse(`${text.slice(0, text.length - drop)}${text.endsWith('"') && drop === 0 ? '' : '"'}`)
-        if (typeof inner === 'string') return unwrap(inner, cut || drop > 0 || !text.endsWith('"'))
-      } catch { /* try a shorter prefix */ }
-    }
+/** Server-side truncation note (docs/ARCHITECTURE_V3.md §4 "工具结果截断"): the first `_truncated` found. */
+export type Truncation = { field: string; kept: number; total: number; unit: 'items' | 'chars' }
+export function truncationOf(value: unknown, depth = 0): Truncation | null {
+  if (!value || typeof value !== 'object' || depth > 4) return null
+  const note = (value as { _truncated?: unknown })._truncated as Partial<Truncation> | undefined
+  if (note && typeof note.kept === 'number' && typeof note.total === 'number') {
+    return { field: String(note.field ?? ''), kept: note.kept, total: note.total, unit: note.unit === 'chars' ? 'chars' : 'items' }
   }
-  return { text, cut }
+  for (const child of Object.values(value)) {
+    const found = truncationOf(child, depth + 1)
+    if (found) return found
+  }
+  return null
 }
 
-export function salvageJson(raw: string): unknown {
-  const { text: body, cut } = unwrap(raw)
-  if (!cut) { try { return JSON.parse(body) } catch { return undefined } }
-  const stack: string[] = []
-  const cuts = new Map<number, { at: number; closers: string }>()
-  let inString = false, escaped = false
-  for (let i = 0; i < body.length; i++) {
-    const c = body[i]
-    if (inString) {
-      if (escaped) escaped = false
-      else if (c === '\\') escaped = true
-      else if (c === '"') inString = false
-      continue
-    }
-    if (c === '"') inString = true
-    else if (c === '{' || c === '[') stack.push(c)
-    else if (c === '}' || c === ']') {
-      stack.pop()
-      if (c === '}' && stack[stack.length - 1] === '[') {
-        cuts.set(stack.length, { at: i + 1, closers: [...stack].reverse().map(b => b === '[' ? ']' : '}').join('') })
-      }
-    }
-  }
-  if (!cuts.size) return undefined
-  const best = cuts.get(Math.min(...cuts.keys()))!
-  try { return JSON.parse(body.slice(0, best.at) + best.closers) } catch { return undefined }
-}
+export type CardView = { component: Component; output: unknown; truncation: Truncation | null }
 
-export type CardView = { component: Component; output: unknown; truncated: boolean }
-
+// Sessions saved before structured truncation hold a cut, doubly encoded string ("…[truncated]").
+// It no longer parses, so it simply gets no card and stays readable as raw text in the tool row.
 export function resultCard(tool: { name: string; output?: unknown; isError?: boolean }): CardView | null {
   if (tool.output === undefined || tool.isError) return null
   const spec = RESULT_CARDS[tool.name]
-  if (!spec) return null
-  if (spec.accepts(tool.output)) return { component: spec.component, output: tool.output, truncated: false }
-  const salvaged = typeof tool.output === 'string' ? salvageJson(tool.output) : undefined
-  return salvaged !== undefined && spec.accepts(salvaged) ? { component: spec.component, output: salvaged, truncated: true } : null
+  return spec && spec.accepts(tool.output) ? { component: spec.component, output: tool.output, truncation: truncationOf(tool.output) } : null
 }

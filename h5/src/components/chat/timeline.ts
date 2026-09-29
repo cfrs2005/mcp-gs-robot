@@ -1,4 +1,4 @@
-import { messageForCode, type SessionError } from '@/api/client'
+import { messageForCode, type SessionConfirmation, type SessionError } from '@/api/client'
 import type { AgentEvent } from '@/api/sse'
 import type { ToolItem } from '@/components/ToolGroup.vue'
 
@@ -6,8 +6,10 @@ import type { ToolItem } from '@/components/ToolGroup.vue'
 // Live SSE events (applyEvent) and stored transcripts (toMessages) build the same structure.
 export type Confirmation = {
   confirmId: string; summary: string; name: string; input: unknown; pending: boolean; answered?: boolean
-  /** The tool_call this confirmation gates (same reply, same name and input). */
+  /** The tool_call this confirmation gates (tool_use_id from the server; older servers: same name and input). */
   toolId?: string
+  /** Never answered here: the server gave up (timeout / stream ended). No buttons; treated as not run. */
+  expired?: boolean
 }
 export type Part =
   | { kind: 'text'; text: string }
@@ -34,6 +36,17 @@ export function findTool(message: Message, id: string | undefined): ToolItem | u
   return id === undefined ? undefined : allTools(message).find(tool => tool.id === id)
 }
 
+function confirmFor(message: Message, toolId: string): Confirmation | undefined {
+  for (const part of message.parts) if (part.kind === 'confirm' && part.confirm.toolId === toolId) return part.confirm
+}
+/** A declined or unanswered confirmation means the tool never ran: mark it rejected, not failed. */
+function settle(message: Message, tool: ToolItem) {
+  const confirm = confirmFor(message, tool.id)
+  if (!confirm || confirm.answered === true || !tool.isError) return
+  tool.rejected = true
+  if (confirm.answered === undefined) confirm.expired = true
+}
+
 function linkConfirm(message: Message, name: string, input: unknown): string | undefined {
   const linked = new Set(message.parts.flatMap(p => p.kind === 'confirm' && p.confirm.toolId ? [p.confirm.toolId] : []))
   const key = JSON.stringify(input)
@@ -47,11 +60,11 @@ export function applyEvent(ev: AgentEvent, message: Message): string | undefined
     case 'tool_call': appendTool(message, { id: ev.id, name: ev.name, input: ev.input }); break
     case 'tool_result': {
       const tool = findTool(message, ev.id)
-      if (tool) { tool.output = ev.output; tool.isError = ev.is_error }
+      if (tool) { tool.output = ev.output; tool.isError = ev.is_error; settle(message, tool) }
       break
     }
     case 'confirm_required':
-      message.parts.push({ kind: 'confirm', confirm: { confirmId: ev.confirm_id, name: ev.name, input: ev.input, summary: ev.summary, pending: false, toolId: linkConfirm(message, ev.name, ev.input) } })
+      message.parts.push({ kind: 'confirm', confirm: { confirmId: ev.confirm_id, name: ev.name, input: ev.input, summary: ev.summary, pending: false, toolId: ev.tool_use_id ?? linkConfirm(message, ev.name, ev.input) } })
       break
     case 'error': { const text = messageForCode(ev.code, ev.message); message.parts.push({ kind: 'error', message: text }); return text }
     case 'done': break
@@ -64,9 +77,12 @@ const parseOutput = (value: unknown) => { if (typeof value !== 'string') return 
 // Rebuild timelines from the stored transcript: consecutive assistant turns merge into one reply,
 // and tool_result blocks (stored as user turns) fill in the matching tool call.
 // Persisted SSE errors go back where they happened: after the first `after_message` stored messages.
-export function toMessages(stored: { role: string; content: unknown }[], errors: SessionError[] = []): Message[] {
+// Persisted confirmations become the same confirm parts the live stream creates, placed right after
+// the tool group that holds their tool_use (where confirm_required arrived live).
+export function toMessages(stored: { role: string; content: unknown }[], errors: SessionError[] = [], confirmations: SessionConfirmation[] = []): Message[] {
   const result: Message[] = []
   const tools = new Map<string, ToolItem>()
+  const replies = new Map<string, Message>()
   const pending = [...errors].sort((a, b) => a.after_message - b.after_message)
   const flushErrors = (upTo: number) => {
     while (pending.length && pending[0].after_message <= upTo) {
@@ -98,10 +114,26 @@ export function toMessages(stored: { role: string; content: unknown }[], errors:
       else if (b.type === 'tool_use' && b.id) {
         const tool: ToolItem = { id: b.id, name: b.name ?? '', input: b.input ?? {} }
         tools.set(tool.id, tool)
+        replies.set(tool.id, reply)
         appendTool(reply, tool)
       }
     }
   }
   flushErrors(Number.MAX_SAFE_INTEGER)
+  for (const c of confirmations) {
+    const reply = replies.get(c.tool_use_id)
+    if (!reply) continue
+    const confirm: Confirmation = {
+      confirmId: c.confirm_id, name: c.name, input: c.input, summary: c.summary, pending: false, toolId: c.tool_use_id,
+      answered: c.decision === 'approved' ? true : c.decision === 'rejected' ? false : undefined,
+      expired: c.decision == null,
+    }
+    const at = reply.parts.findIndex(p => p.kind === 'tools' && p.tools.some(t => t.id === c.tool_use_id))
+    let insert = at + 1
+    while (reply.parts[insert]?.kind === 'confirm') insert++  // keep several confirms in order
+    reply.parts.splice(insert, 0, { kind: 'confirm', confirm })
+    const tool = tools.get(c.tool_use_id)
+    if (tool) settle(reply, tool)
+  }
   return result
 }

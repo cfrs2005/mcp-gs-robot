@@ -4,11 +4,13 @@ import ToolCallCard from './ToolCallCard.vue'
 import { resultCard } from './cards/registry'
 import { t, tn } from '@/i18n'
 
-export type ToolItem = { id: string; name: string; input: unknown; output?: unknown; isError?: boolean }
+/** `rejected`: a dangerous call the user declined (its result is an error, but not a failure). */
+export type ToolItem = { id: string; name: string; input: unknown; output?: unknown; isError?: boolean; rejected?: boolean }
 const props = defineProps<{ tools: ToolItem[] }>()
 const open = ref(false)
 const running = computed(() => props.tools.filter((t: ToolItem) => t.output === undefined).length)
-const failed = computed(() => props.tools.filter((t: ToolItem) => t.isError).length)
+const failed = computed(() => props.tools.filter((t: ToolItem) => t.isError && !t.rejected).length)
+const rejected = computed(() => props.tools.filter((t: ToolItem) => t.rejected).length)
 const names = computed(() => [...new Set(props.tools.map((t: ToolItem) => t.name))].join(t('common.listSep')))
 // Result cards for successful, mapped tools (cards/registry.ts); the raw JSON stays one tap away above.
 const cards = computed(() => props.tools.flatMap(tool => {
@@ -26,14 +28,15 @@ const cards = computed(() => props.tools.flatMap(tool => {
         <span class="group-names">{{ names }}</span>
         <span v-if="running" class="group-state run">{{ t('tools.running', { n: running }) }}</span>
         <span v-else-if="failed" class="group-state err">{{ t('tools.failed', { n: failed }) }}</span>
+        <span v-else-if="rejected" class="group-state off">{{ t('tools.rejected', { n: rejected }) }}</span>
       </button>
       <div v-if="open" class="group-body">
-        <ToolCallCard v-for="tool in tools" :key="tool.id" :name="tool.name" :input="tool.input" :output="tool.output" :is-error="tool.isError" />
+        <ToolCallCard v-for="tool in tools" :key="tool.id" :name="tool.name" :input="tool.input" :output="tool.output" :is-error="tool.isError" :rejected="tool.rejected" />
       </div>
     </div>
     <template v-for="card in cards" :key="card.tool.id">
       <component :is="card.view.component" :name="card.tool.name" :input="card.input" :output="card.view.output" />
-      <p v-if="card.view.truncated" class="truncated">{{ t('cards.truncated') }}</p>
+      <p v-if="card.view.truncation" class="truncated">{{ card.view.truncation.unit === 'items' ? t('cards.truncatedItems', { total: card.view.truncation.total, kept: card.view.truncation.kept }) : t('cards.truncatedChars', { total: card.view.truncation.total, kept: card.view.truncation.kept }) }}</p>
     </template>
   </div>
 </template>
@@ -48,6 +51,7 @@ const cards = computed(() => props.tools.flatMap(tool => {
 .group-state { flex: none; font-size: var(--sd-fs-xs); }
 .group-state.run { color: var(--sd-warning); }
 .group-state.err { color: var(--sd-danger); }
+.group-state.off { color: var(--sd-muted); }
 .group-body { padding: 0 8px 8px; }
 .truncated { margin: -4px 4px 0; font-size: var(--sd-fs-2xs); color: var(--sd-muted); }
 </style>

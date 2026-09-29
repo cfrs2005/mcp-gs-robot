@@ -8,7 +8,8 @@ import sqlite3
 from ..agent.session import AgentSession, touch
 from .db import Database
 
-_COLUMNS = "id, title, system_prompt, messages, errors, message_count, created_at, updated_at"
+_COLUMNS = ("id, title, system_prompt, messages, errors, confirmations, message_count, "
+            "created_at, updated_at")
 
 
 def _dump(value) -> str:
@@ -17,7 +18,8 @@ def _dump(value) -> str:
 
 def _row(session: AgentSession) -> tuple:
     return (session.session_id, session.title, session.system_prompt, _dump(session.messages),
-            _dump(session.errors), len(session.messages), session.created_at, session.updated_at)
+            _dump(session.errors), _dump(session.confirmations), len(session.messages),
+            session.created_at, session.updated_at)
 
 
 def _session(row: sqlite3.Row) -> AgentSession:
@@ -25,6 +27,8 @@ def _session(row: sqlite3.Row) -> AgentSession:
         session_id=row["id"], messages=json.loads(row["messages"]), created_at=row["created_at"],
         system_prompt=row["system_prompt"], title=row["title"], updated_at=row["updated_at"],
         errors=json.loads(row["errors"]),
+        # Rows written before v2 were migrated with the '[]' default; NULL is tolerated anyway.
+        confirmations=json.loads(row["confirmations"] or "[]"),
     )
 
 
@@ -41,10 +45,11 @@ class SqliteSessionStore:
 
     def _upsert(self, conn: sqlite3.Connection, session: AgentSession) -> None:
         conn.execute(
-            f"INSERT INTO sessions ({_COLUMNS}) VALUES (?,?,?,?,?,?,?,?) "
+            f"INSERT INTO sessions ({_COLUMNS}) VALUES (?,?,?,?,?,?,?,?,?) "
             "ON CONFLICT(id) DO UPDATE SET title=excluded.title, "
             "system_prompt=excluded.system_prompt, messages=excluded.messages, "
-            "errors=excluded.errors, message_count=excluded.message_count, "
+            "errors=excluded.errors, confirmations=excluded.confirmations, "
+            "message_count=excluded.message_count, "
             "updated_at=excluded.updated_at",
             _row(session),
         )

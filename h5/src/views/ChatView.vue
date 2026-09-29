@@ -62,7 +62,7 @@ async function restore() {
   loading.value = true
   try {
     const session = await getAgentSession(sessionId.value)
-    messages.value = toMessages(session.messages, session.errors)
+    messages.value = toMessages(session.messages, session.errors, session.confirmations)
     await scroll(true)
   } catch (e) {
     // The backend no longer has this session: quietly fall back to a fresh chat.
@@ -122,6 +122,11 @@ async function respond(item: Confirmation, approve: boolean) {
   try {
     await confirmAgent(sessionId.value, item.confirmId, approve)
     item.answered = approve
+    if (!approve) {
+      const reply = messages.value.find(m => m.parts.some(p => p.kind === 'confirm' && p.confirm === item))
+      const tool = reply && findTool(reply, item.toolId)
+      if (tool) tool.rejected = true
+    }
   } catch (e) { showFailToast(e instanceof Error ? e.message : t('chat.confirmFailed')) }
   finally { item.pending = false }
 }

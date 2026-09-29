@@ -24,6 +24,9 @@ class AgentSession:
     updated_at: float = field(default_factory=time.time)
     # SSE ``error`` events: {"message", "at", "after_message"} so a UI can rebuild the timeline.
     errors: list[dict] = field(default_factory=list)
+    # confirm_required events and their outcome: {"confirm_id", "tool_use_id", "name", "input",
+    # "summary", "decision": "approved" | "rejected" | None, "at", "after_message"}.
+    confirmations: list[dict] = field(default_factory=list)
 
 
 def derive_title(messages: list[dict]) -> str | None:
