@@ -79,8 +79,8 @@ class PendingConfirms:
 
 
 @router.post("")
-async def create_session(body: SessionInput, sessions: deps.SessionsDep) -> dict:
-    session = await sessions.create(body.title)
+async def create_session(sessions: deps.SessionsDep, body: SessionInput | None = None) -> dict:
+    session = await sessions.create(body.title if body else None)
     return {"session_id": session.session_id}
 
 

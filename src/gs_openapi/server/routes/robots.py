@@ -21,9 +21,14 @@ async def list_robots(
     v3: deps.V3Dep, page: int = 1, page_size: int = 20,
 ) -> Any:
     result = await call("list_robots", v3, page=page, page_size=page_size)
+    if isinstance(result, dict):
+        result = result.get("list", result.get("robots", result))
     if isinstance(result, list):
-        return result
-    return result.get("list", result.get("robots", result))
+        # Legacy v1alpha1/robots names the SN serialNumber; the H5 keys robots by robotSn.
+        for item in result:
+            if isinstance(item, dict) and "robotSn" not in item and "serialNumber" in item:
+                item["robotSn"] = item["serialNumber"]
+    return result
 
 
 @router.post("/status")

@@ -69,8 +69,9 @@ async function send() {
   try {
     if (!sessionId.value) await createSession()
     messages.value.push({ role: 'user', content, tools: [], confirms: [] })
-    const assistant: Message = { role: 'assistant', content: '', tools: [], confirms: [] }
-    messages.value.push(assistant)
+    messages.value.push({ role: 'assistant', content: '', tools: [], confirms: [] })
+    // Mutate the reactive proxy, not the raw object, so streamed deltas and confirm cards render live.
+    const assistant = messages.value[messages.value.length - 1]
     await scroll()
     controller = new AbortController()
     await streamAgentMessage(sessionId.value, content, ev => handleEvent(ev, assistant), controller.signal)

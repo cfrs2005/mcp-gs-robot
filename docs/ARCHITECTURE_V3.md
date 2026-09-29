@@ -112,7 +112,7 @@ def to_openai_tools() -> list[dict]        # {"type":"function","function":{...}
 - `GET /api/v1/health` → `{"status":"ok","version":"0.2.0","agent_provider":"anthropic","tools":<int>}`
 - 通用工具调用（REST 与工具注册表一一对应）：`POST /api/v1/tools/{tool_name}`，body = 工具输入 JSON，返回 `{"result": ...}`。危险工具在 REST 下直接执行（调用方即已确认）。
 - 友好路由（内部也走注册表）：
-  - `GET /api/v1/robots?page&page_size`
+  - `GET /api/v1/robots?page&page_size` → 机器人数组；legacy 列表的 `serialNumber` 会补齐为 `robotSn`（H5 以此为键）
   - `POST /api/v1/robots/status` `{robot_sn_list}`；`GET /api/v1/robots/{sn}/status`
   - `GET /api/v1/robots/{sn}/maps`；`GET /api/v1/robots/{sn}/maps/{map_id}/canvas`；`GET /api/v1/robots/{sn}/maps/{map_id}/resources`
   - `GET /api/v1/robots/{sn}/capabilities`；`GET /api/v1/robots/{sn}/work-modes`
@@ -123,7 +123,7 @@ def to_openai_tools() -> list[dict]        # {"type":"function","function":{...}
   - `GET /api/v1/robots/{sn}/reports?page&pagesize&end_time_min&end_time_max`
   - `GET/POST /api/v1/robots/{sn}/schedules`；`POST /api/v1/robots/{sn}/schedules/simple`；`GET/PUT/DELETE /api/v1/robots/{sn}/schedules/{plan_id}`
 - Agent：
-  - `POST /api/v1/agent/sessions` `{ "title"?: str }` → `{"session_id": str}`
+  - `POST /api/v1/agent/sessions` `{ "title"?: str }`（body 可省略）→ `{"session_id": str}`
   - `GET /api/v1/agent/sessions/{id}` → `{"session_id", "messages":[{"role","content","tool_calls"?}], "created_at"}`
   - `DELETE /api/v1/agent/sessions/{id}`
   - `POST /api/v1/agent/sessions/{id}/messages` `{ "content": str }` → **SSE**（`text/event-stream`），每行 `data: <json>`，事件类型：

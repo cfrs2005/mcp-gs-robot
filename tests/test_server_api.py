@@ -147,6 +147,29 @@ async def test_h5_list_robots_and_go_home_requires_map(client, app, monkeypatch)
     assert home.json()["error"]["code"] == 422
 
 
+@pytest.mark.asyncio
+async def test_h5_list_robots_maps_legacy_serial_number(client, app, monkeypatch):
+    monkeypatch.delenv("GS_SERVER_API_KEY", raising=False)
+
+    def handler(request):
+        return httpx.Response(200, json={"robots": [{"serialNumber": "SN", "displayName": "d"}], "total": 1})
+
+    app.dependency_overrides[deps.get_v3] = lambda: mock_v3(handler)
+    listed = await client.get("/api/v1/robots")
+    assert listed.json() == [{"serialNumber": "SN", "displayName": "d", "robotSn": "SN"}]
+
+
+@pytest.mark.asyncio
+async def test_create_agent_session_without_body(client, app, monkeypatch):
+    monkeypatch.delenv("GS_SERVER_API_KEY", raising=False)
+    from gs_openapi.agent.session import InMemorySessionStore
+
+    app.dependency_overrides[deps.get_sessions] = lambda: InMemorySessionStore()
+    created = await client.post("/api/v1/agent/sessions")
+    assert created.status_code == 200
+    assert created.json()["session_id"]
+
+
 class FakeAgent:
     def __init__(self, gate):
         self.gate = gate
