@@ -1,286 +1,356 @@
-# 🤖 高仙机器人 OpenAPI MCP服务器
-
 <div align="center">
 
-[![Python 版本](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
-[![PyPI 版本](https://img.shields.io/pypi/v/mcp-gs-robot.svg)](https://pypi.org/project/mcp-gs-robot/)
-[![许可证](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![MCP 兼容](https://img.shields.io/badge/MCP-Compatible-purple.svg)](https://github.com/modelcontextprotocol)
-[![Claude Code](https://img.shields.io/badge/Claude_Code-Ready-orange.svg)](https://claude.ai/code)
+# 🤖 mcp-gs-robot
 
-**🔧 连接AI模型与高仙机器人的强大MCP服务器**
+**用自然语言指挥高仙清洁机器人 —— 在 Claude、Cursor、终端，或者手机上。**
 
-*通过Claude、Cursor等AI助手控制和监控高仙清洁机器人*
+[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/downloads/)
+[![PyPI](https://img.shields.io/pypi/v/mcp-gs-robot.svg)](https://pypi.org/project/mcp-gs-robot/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/cfrs2005/mcp-gs-robot/blob/main/LICENSE)
+[![CI](https://github.com/cfrs2005/mcp-gs-robot/actions/workflows/ci.yml/badge.svg)](https://github.com/cfrs2005/mcp-gs-robot/actions/workflows/ci.yml)
+[![MCP](https://img.shields.io/badge/MCP-Compatible-purple.svg)](https://modelcontextprotocol.io)
+[![OpenAPI V3](https://img.shields.io/badge/高仙_OpenAPI-V3-orange.svg)](https://developer.gs-robot.com/v3docs/zh_CN/OpenAPI%20V3/Overview)
 
-[🚀 快速开始](#-快速开始) • [📖 文档](#-文档) • [🛠️ 安装](#️-安装) • [🎯 示例](#-示例)
+MCP 服务 · HTTP/REST 服务 · Pi Agent（CLI + H5）· Agent Skill<br>
+一套代码、一个工具注册表，基于高仙 OpenAPI V3
+
+[快速开始](#-快速开始) · [安全机制](#-安全机制) · [工具](#-工具) · [HTTP API 与 H5](#-http-api-与-h5) · [配置](#-配置) · [开发](#-开发) · [English](https://github.com/cfrs2005/mcp-gs-robot/blob/main/README.md)
 
 </div>
 
----
+> ⚠️ **免责声明** —— 本项目是**非官方、个人研究学习用途的开源项目**，与高仙（Gausium）官方无任何隶属、认可或支持关系，使用风险自负。机器人指令会让实体机器移动，请先在模拟器或空闲机器人上测试。项目仅依据公开的[高仙 OpenAPI V3 文档](https://developer.gs-robot.com/v3docs/zh_CN/OpenAPI%20V3/Overview)实现。
+
+![H5 页面：Pi Agent 对话、机器人列表、地图与报告](https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/h5-showcase_cn.png)
+
+<sub>内置 H5 页面截图，连接 mock 上游，数据为演示数据。</sub>
 
 ## 🌟 这是什么？
 
-这是一个MCP（模型控制协议）服务器，通过标准化接口实现AI模型与高仙清洁机器人的无缝交互。非常适合构建智能自动化工作流，支持Claude Code、Cursor和其他MCP兼容的AI工具。
+`mcp-gs-robot` 把高仙 OpenAPI **V3**（机器人状态、地图、组合任务、排班、指令、报告）封装成带类型的 Python 客户端，并通过四个入口对外提供，四个入口共用**同一个工具注册表**：
 
-**🔗 代码仓库：** [https://github.com/cfrs2005/mcp-gs-robot](https://github.com/cfrs2005/mcp-gs-robot)
+| | 入口 | 命令 | 适用场景 |
+|---|---|---|---|
+| 🔌 | **MCP 服务**（stdio） | `mcp-gs-robot` | 让 Claude Code、Claude Desktop、Cursor、Cherry Studio 等 MCP 客户端直接操作机器人 |
+| 🌐 | **HTTP 服务**（FastAPI） | `gs-robot-server` | 需要 REST 接口、Swagger，以及内置的 **H5 移动端页面** |
+| 🧠 | **Pi Agent**（CLI + H5 对话） | `pi-agent` | 需要一个会规划、会执行、执行前会确认的机器人运维助手 |
+| 📚 | **Agent Skill** | `skills/gs-robot/` | 教 Claude Code / Codex / WorkBuddy 正确的操作流程 |
 
-### 🎯 核心优势
+![架构图](https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/architecture_cn.svg)
 
-- 🤖 **AI优先设计**：专为AI助手集成而构建
-- 🔄 **实时控制**：即时监控和命令机器人
-- 📊 **丰富数据**：获取详细状态、地图和任务报告
-- 🛡️ **安全可靠**：基于OAuth的环境变量身份验证
-- 🌐 **通用兼容**：支持Claude、Cursor和任何MCP客户端
-
-## 🏗️ 架构设计
-
-服务器采用分层架构，关注点分离，提升可维护性：
-
-![架构图](https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/architecture.svg)
-
-### 🔄 MCP协议流程
-
-下图展示AI模型如何通过MCP协议与高仙机器人交互：
-
-![MCP协议流程](https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/mcp-flow.svg)
-
-### 🤝 支持的机器人系列
-
-#### M系列机器人（传统清洁机器人）
-- **OMNIE** (OMNIE系列) - 多功能清洁机器人
-- **Vacuum 40** (40系列) - 吸尘清洁机器人
-- **Scrubber 50** (50系列) - 洗地清洁机器人
-- **Scrubber 75** (75系列) - 重型洗地清洁机器人
-
-#### S系列机器人（高级智能机器人，包含SW系列）
-- **Phantas** (S系列) - 幻影智能清洁机器人
-- **BEETLE** (SW系列) - 甲壳虫智能清洁机器人
-
-## ✨ 功能特性
-
-### 🛠️ 核心MCP工具
-
-| 工具 | 描述 | 状态 |
-|------|------|------|
-| 🤖 `list_robots` | 列出所有可访问的机器人 | ✅ 就绪 |
-| 📊 `get_robot_status` | 获取详细的机器人状态和位置 | ✅ 就绪 |
-| 📋 `list_robot_task_reports` | 检索带过滤的清洁任务报告 | ✅ 就绪 |
-| 🗺️ `list_robot_maps` | 获取机器人导航可用地图 | ✅ 就绪 |
-| 🎯 `create_robot_command` | 发送机器人命令（开始/暂停/停止） | ✅ 就绪 |
-| 🏢 `get_site_info` | 获取建筑和楼层信息 | ✅ 就绪 |
-| 📍 `get_map_subareas` | 获取任务详细区域信息 | ✅ 就绪 |
-| 🚀 `submit_temp_task` | 提交临时清洁任务 | ✅ 就绪 |
-
-### 🔧 高级工作流
-
-- 🎛️ **自动化任务执行**：状态查询 → 任务选择 → 执行的完整工作流
-- 📈 **批量操作**：同时处理多个机器人
-- 🗺️ **地图管理**：上传、下载和管理机器人地图
-- 📊 **报告生成**：从任务报告生成PNG地图
-- 🏗️ **基于站点的任务**：包含建筑/楼层上下文的高级任务创建
-
-### 🤝 支持的机器人系列
-
-#### M系列机器人（传统清洁机器人）
-- **OMNIE** (OMNIE) - 全能清洁机器人
-- **Vacuum 40** (40系列) - 吸尘清洁机器人
-- **Scrubber 50** (50系列) - 洗地清洁机器人  
-- **Scrubber 75** (75系列) - 大型洗地清洁机器人
-
-#### S系列机器人（高级智能机器人，包含SW系列）
-- **Phantas** (S系列) - 幻影智能清洁机器人
-- **BEETLE** (SW系列) - 甲壳虫智能清洁机器人
-
-## 📁 项目结构
-
-项目采用针对MCP开发优化的结构化布局：
-
-```
-🗂️ mcp-gs-robot/
-├── 📦 src/gs_openapi/           # 主包
-│   ├── 🔌 api/                  # 直接API集成
-│   │   ├── 🤖 robots.py         # 机器人管理API
-│   │   └── 🗺️ maps.py           # 地图管理API
-│   ├── 🔐 auth/                 # 认证层
-│   │   └── 🎫 token_manager.py  # OAuth令牌生命周期
-│   ├── ⚙️ config.py             # 配置管理
-│   ├── 🔧 core/                 # 核心功能
-│   │   ├── 📡 client.py         # HTTP客户端包装器
-│   │   └── 🛣️ endpoints.py      # API端点定义
-│   ├── 🔌 mcp/                  # MCP服务器实现
-│   │   └── 🌉 gausium_mcp.py    # 主MCP桥接
-│   └── 🔄 workflows/            # 自动化工作流
-│       └── 🎯 task_engine.py    # 任务自动化引擎
-├── 📚 docs/                     # 文档
-│   ├── 🖼️ images/               # 可视化文档
-│   ├── 📖 apis.md              # API文档
-│   └── 🧪 TESTING_GUIDE.md     # 测试说明
-├── 🚀 main.py                  # 应用程序入口点
-└── 📋 pyproject.toml           # 包配置
-```
+- **40 个工具**：覆盖全部 36 个 V3 业务接口，外加工作流工具 `run_cleaning_task`、`wait_for_command`
+- **类型化、有测试**：pydantic v2 模型、统一信封解包、六位业务错误码映射为 `GausiumAPIError`；50 个离线测试
+- **安全优先**：所有会让机器人动起来或改数据的工具都标记为 `dangerous`，在 Agent、CLI、H5 中都必须明确确认
+- **OAuth 正确处理**：V3 的 `expires_in` 是毫秒时间戳而非秒数，token 管理器已正确解析并加锁刷新
+- **模型无关的 Agent**：默认 Anthropic（`claude-opus-5`），也支持任意 OpenAI 兼容端点（DeepSeek、vLLM、Ollama……）
+- **严格对照官方文档**：[`docs/apis.md`](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/apis.md) 把每个接口映射到对应官方页面；完整契约见 [`docs/ARCHITECTURE_V3.md`](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/ARCHITECTURE_V3.md)
 
 ## 🚀 快速开始
 
-### 📦 安装
-
-#### 选项1：从PyPI安装（推荐）
+**1 · 安装**
 
 ```bash
-pip install mcp-gs-robot
+pip install mcp-gs-robot            # 或：uv pip install mcp-gs-robot
+# 从源码安装
+git clone https://github.com/cfrs2005/mcp-gs-robot.git && cd mcp-gs-robot && uv sync
 ```
 
-#### 选项2：从源码安装
+**2 · 凭据**：在[高仙开发者中心](https://developer.gs-robot.com/)创建应用和 AccessKey：
 
 ```bash
-# 克隆仓库
-git clone https://github.com/cfrs2005/mcp-gs-robot.git
-cd mcp-gs-robot
-
-# 使用uv设置（推荐）
-uv venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-uv pip install -e .
+export GS_CLIENT_ID="cli-xxxxxxxx"
+export GS_CLIENT_SECRET="sk-xxxxxxxx"
+export GS_OPEN_ACCESS_KEY="ak-xxxxxxxx"     # 填 AccessKeySecret，不是 AccessKeyID
 ```
 
-### 🔧 配置
+也会读取当前目录下的 `.env`（参考 [`.env.example`](https://github.com/cfrs2005/mcp-gs-robot/blob/main/.env.example)）。不要把凭据提交到仓库。
 
-**设置你的高仙API凭证：**
+**3 · 选一个入口**
+
+<details open>
+<summary><b>🔌 MCP 服务 —— Claude Code / Claude Desktop / Cursor</b></summary>
 
 ```bash
-# 必需的环境变量
-export GS_CLIENT_ID="你的客户端ID"
-export GS_CLIENT_SECRET="你的客户端密钥"
-export GS_OPEN_ACCESS_KEY="你的访问密钥"
+claude mcp add gs-robot \
+  --env GS_CLIENT_ID="…" --env GS_CLIENT_SECRET="…" --env GS_OPEN_ACCESS_KEY="…" \
+  -- mcp-gs-robot
 ```
 
-> 🔑 **从 [高仙开发者门户](https://developer.gs-robot.com/) 获取凭证**
-
-### 🏃‍♂️ 运行服务器
-
-```bash
-# 启动MCP服务器（stdio模式）
-python -m gs_openapi.main
-# 或通过pip安装后：
-mcp-gs-robot
-```
-
-✅ 服务器使用 `stdio` 传输启动（完美适配Claude Code）
-
-### 🔌 Claude Code集成
-
-**方法1：带环境变量的自动安装**
-
-```bash
-# 添加带环境变量的MCP服务器
-claude mcp add mcp-gs-robot \
-  --env GS_CLIENT_ID="你的客户端ID" \
-  --env GS_CLIENT_SECRET="你的客户端密钥" \
-  --env GS_OPEN_ACCESS_KEY="你的访问密钥"
-```
-
-**方法2：手动配置**
-
-在你的 `claude_desktop_config.json` 中添加：
+或者写进 `claude_desktop_config.json` / Cursor 的 MCP 设置：
 
 ```json
 {
   "mcpServers": {
-    "mcp-gs-robot": {
+    "gs-robot": {
       "command": "mcp-gs-robot",
-      "env": {
-        "GS_CLIENT_ID": "你的客户端ID",
-        "GS_CLIENT_SECRET": "你的客户端密钥",
-        "GS_OPEN_ACCESS_KEY": "你的访问密钥"
-      }
+      "env": { "GS_CLIENT_ID": "…", "GS_CLIENT_SECRET": "…", "GS_OPEN_ACCESS_KEY": "…" }
     }
   }
 }
 ```
 
-**方法3：使用环境文件**
+然后直接问：*「列出我的机器人，显示电量和工作状态」* → `list_robots` + `get_robot_status`。
+传输方式为 **stdio**。设置 `GS_ENABLE_LEGACY_TOOLS=1` 会额外以 `legacy_*` 名称暴露 0.1.x 的旧工具。
 
-如果你偏好使用 `.env` 文件：
+</details>
+
+<details>
+<summary><b>🌐 HTTP 服务 + H5 移动端</b></summary>
 
 ```bash
-# 设置全局环境变量
-export GS_CLIENT_ID="你的客户端ID"
-export GS_CLIENT_SECRET="你的客户端密钥"
-export GS_OPEN_ACCESS_KEY="你的访问密钥"
-
-# 简单MCP安装
-claude mcp add mcp-gs-robot
+gs-robot-server                     # http://0.0.0.0:8000
 ```
 
-> 💡 **注意**：此MCP服务器使用 `stdio` 传输（非SSE），完美适配Claude Code集成
+- **H5 页面**：用手机或浏览器打开 `http://localhost:8000/`
+- **Swagger**：`http://localhost:8000/docs`
+- **加保护**：设置 `GS_SERVER_API_KEY=…`，请求时带 `X-API-Key`（H5 的「设置」页可以保存）
 
-## 🎯 使用示例
-
-### 📱 Claude Code使用
-
-```python
-# 在Claude Code中，你现在可以使用自然语言：
-
-"列出所有我的机器人"
-# → 调用 mcp__mcp-gs-robot__list_robots
-
-"获取机器人 GS101-0100-V1P-B001 的状态"
-# → 调用 mcp__mcp-gs-robot__get_robot_status
-
-"为5号楼的机器人开始清洁任务"
-# → 编排 站点信息 → 地图选择 → 任务创建
+```bash
+cp .env.example .env && $EDITOR .env
+docker compose up -d                # 构建 H5 + Python 镜像，监听 :8000
 ```
 
-### 🖥️ IDE集成
+</details>
 
-**Cursor配置：**
+<details>
+<summary><b>🧠 Pi Agent —— 在终端里对话</b></summary>
 
-![Cursor使用截图](https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/cursor_usage_screenshot.png)
+```bash
+export ANTHROPIC_API_KEY="…"                 # 默认 provider：Anthropic，模型 claude-opus-5
+pi-agent --robot GS438-0120-X8P-0001
 
-**Cherry Studio配置：**
+# 或任意 OpenAI 兼容端点
+PI_AGENT_PROVIDER=openai OPENAI_BASE_URL=https://api.deepseek.com/v1 OPENAI_API_KEY=… \
+PI_AGENT_MODEL=deepseek-chat pi-agent
+```
 
-![Cherry Studio配置](https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/cherrystudio.png)
+```
+› 一楼大厅的机器人现在什么状态？电量够不够跑一次清扫？
+⚙ get_robot_status(robot_sn_list=["GS438-0120-X8P-0001"])
+机器人在线，电量 82%，状态 IDLE（空闲），当前地图「一楼大厅」，可以执行任务。
+› 好，启动「大厅每日尘推」
+⚙ list_task_definitions(...)
+⚠ 即将执行危险操作 start_task robot_sn=GS438-… fusion_task_id=… 确认？[y/N] y
+⚙ start_task(...)  ⚙ wait_for_command(...)
+命令已下发（cmdStatus=6），任务实例 47d029ee… 已开始。
+```
 
-### 🐛 调试
+</details>
 
-监控服务器日志以进行故障排除：
+<details>
+<summary><b>📚 Agent Skill —— Claude Code / Codex / WorkBuddy</b></summary>
 
-![MCP调试截图](https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/mcp_debug_screenshot.png)
+```bash
+cp -r skills/gs-robot ~/.claude/skills/gs-robot     # Claude Code（用户级）
+cp -r skills/gs-robot ~/.codex/skills/gs-robot      # Codex CLI
+```
+
+Skill 固化了安全操作流程（状态 → 能力 → 资源 → 任务定义 → 启动 → 轮询），并附带工作状态、指令类型、任务启动错误码的参考表。详见 [`skills/gs-robot/README.md`](https://github.com/cfrs2005/mcp-gs-robot/blob/main/skills/gs-robot/README.md)。
+
+</details>
+
+## 🔒 安全机制
+
+会让机器人移动或修改数据的工具注册时都带 `dangerous=True`。Pi Agent 不会自行执行它们，而是先发出 `confirm_required` 并等待：终端里是 `[y/N]`，H5 里是按钮，REST 则是 `POST …/confirm`。被拒绝的调用永远不会触达机器人。
+
+![危险工具确认流程](https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/confirm-flow_cn.svg)
+
+有两点需要注意：
+
+- **已下发不等于已完成。** `cmdStatus=6` 只表示机器人收到了指令，之后请用 `get_robot_status` 或任务报告跟进。
+- **REST 直接执行。** `POST /api/v1/tools/{name}` 视调用方已经确认过，请在你自己的客户端里做确认。`PI_AGENT_AUTO_APPROVE=1` 会关闭 Agent 的确认闸门（不推荐）。
+
+最常见的「清扫这几个区域」场景，可以用 `run_cleaning_task` 把整个流程打包成一次确认调用：
+
+![run_cleaning_task 工作流](https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/cleaning-workflow_cn.svg)
+
+## 🧰 工具
+
+全部 40 个工具只在 `gs_openapi/tools/` 中定义一次，以完全相同的方式暴露给 MCP、Agent 和 REST（`POST /api/v1/tools/{name}`）。输入统一为 `snake_case`，由注册表映射成 V3 的 `camelCase`。**⚠️ = 危险工具。**
+
+| 分类 | 工具 |
+|---|---|
+| **机器人** | `list_robots` · `get_robot_status` · `describe_work_state` · `get_robot_capabilities` |
+| **地图** | `list_robot_maps` · `get_map_canvas` · `list_charging_positions` · `list_map_resources` · `list_task_resources` |
+| **任务** | `list_work_modes` · `list_task_definitions` · `get_task_definition` · `create_task_definition` ⚠️ · `update_task_definition` ⚠️ · `delete_task_definition` ⚠️ · `start_task` ⚠️ · `pause_task` ⚠️ · `resume_task` ⚠️ · `stop_task` ⚠️ · `skip_task_item` ⚠️ |
+| **定时排班** | `list_schedules` · `get_schedule` · `get_schedule_calendar` · `list_schedule_pre_tasks` · `create_simple_schedule` ⚠️ · `update_simple_schedule` ⚠️ · `delete_simple_schedule` ⚠️ · `create_schedule` ⚠️ · `update_schedule` ⚠️ · `delete_schedule` ⚠️ |
+| **指令** | `get_command_status` · `list_command_history` · `navigate_home` ⚠️ · `pause_navigation` ⚠️ · `resume_navigation` ⚠️ · `stop_navigation` ⚠️ |
+| **报告** | `list_task_reports` · `get_task_report_map_images` |
+| **工作流** | `wait_for_command` · `run_cleaning_task` ⚠️ |
+
+<details>
+<summary><b>各工具的输入参数</b></summary>
+
+**机器人与地图**
+
+| 工具 | 必填 | 可选 | 说明 |
+|---|---|---|---|
+| `list_robots` | – | `page`、`page_size`、`relation` | 走 legacy `v1alpha1/robots`（V3 没有列表接口） |
+| `get_robot_status` | `robot_sn_list`（≤100） | | 附加 `work_state_name` / `work_state_desc`；快照最多延迟 30 秒 |
+| `describe_work_state` | `work_state` | | 本地查表，不调接口 |
+| `get_robot_capabilities` | `robot_sn` | | 是否支持组合任务 / 定时任务 |
+| `list_robot_maps` | `robot_sn` | | `mapId`、`mapVersionId`、`displayName` |
+| `get_map_canvas` | `robot_sn`、`map_id` | | 临时 PNG 地址 + 栅格元数据 |
+| `list_charging_positions` | `robot_sn`、`map_id` | | |
+| `list_map_resources` | `robot_sn`、`map_id_list` | `include_paths/regions/positions` | 不含工作模式的地图资源 |
+| `list_task_resources` | `robot_sn`、`map_id_list` | `include_paths/regions/positions` | **创建任务 / 排班前先查它** |
+
+**任务（组合任务）**
+
+| 工具 | 必填 | 可选 | |
+|---|---|---|---|
+| `list_work_modes` | `robot_sn` | | |
+| `list_task_definitions` | `robot_sn` | `page`、`pagesize`、`site_id`、`task_name` | |
+| `get_task_definition` | `robot_sn`、`fusion_task_id` | | |
+| `create_task_definition` | `robot_sn`、`task_name`、`work_mode`、`map_resource_list` | `loop_count`、`site_id`、`task_advance_config` | ⚠️ |
+| `update_task_definition` | `robot_sn`、`fusion_task_id` | 同创建 | ⚠️ |
+| `delete_task_definition` | `robot_sn`、`fusion_task_id` | | ⚠️ |
+| `start_task` | `robot_sn`、`fusion_task_id` | `loop_count` | ⚠️ 返回 `requestId`、`taskInstanceId` |
+| `pause_task` / `resume_task` / `stop_task` / `skip_task_item` | `robot_sn` | | ⚠️ |
+
+**定时排班**
+
+| 工具 | 必填 | |
+|---|---|---|
+| `create_simple_schedule` | `robot_sn`、`task_name`、`site_mode`、`work_mode`、`map_resource_list`、`plan_execute_type`、`plan_repeat_type`、`plan_start_date`、`plan_start_time` | ⚠️ |
+| `update_simple_schedule` / `delete_simple_schedule` | `robot_sn`、`plan_uuid`、`year`、`month`、`day_of_month`、`operation_type` | ⚠️ |
+| `create_schedule` / `update_schedule` / `delete_schedule` | 标准排班字段（见[官方文档](https://developer.gs-robot.com/v3docs/zh_CN/OpenAPI%20V3/Overview)） | ⚠️ |
+| `list_schedules` | `robot_sn` | |
+| `get_schedule` | `robot_sn`、`plan_uuid`、`year`、`month`、`day_of_month` | |
+| `get_schedule_calendar` | `robot_sn`、`year_month` | |
+| `list_schedule_pre_tasks` | `robot_sn`、`date` | |
+
+**指令、报告与工作流**
+
+| 工具 | 必填 | 可选 | |
+|---|---|---|---|
+| `get_command_status` | `robot_sn`、`request_id` | | `cmdStatus=6` 表示已下发，**不是**已完成 |
+| `list_command_history` | `robot_sn` | `page`、`pagesize`、`cmd_status`、`command_type` | |
+| `navigate_home` | `robot_sn`、`map_id` | `map_resource_id` | ⚠️ |
+| `pause_navigation` / `resume_navigation` / `stop_navigation` | `robot_sn` | | ⚠️ |
+| `list_task_reports` | `robot_sn` | `page`、`pagesize`、`end_time_min`、`end_time_max` | |
+| `get_task_report_map_images` | `task_report_id` | `robot_sn` | |
+| `wait_for_command` | `robot_sn`、`request_id` | `timeout_seconds` | 轮询直到 `cmdStatus` 进入终态 |
+| `run_cleaning_task` | `robot_sn`、`task_name`、`map_id`、`resource_ids` | `mode`、`strength`、`loop_count`、`wait_seconds` | ⚠️ 能力 → 资源 → 创建 → 启动 → 轮询 |
+
+</details>
+
+从注册表重新生成工具清单：
+
+```bash
+uv run python -c "from gs_openapi.tools.registry import REGISTRY; [print(t.category, t.name, '⚠️' if t.dangerous else '') for t in REGISTRY.values()]"
+```
+
+## 🌐 HTTP API 与 H5
+
+统一前缀 `/api/v1`。`GET /api/v1/health` 无需鉴权；设置了 `GS_SERVER_API_KEY` 时，其余接口都要带 `X-API-Key`。错误统一使用 `{"error": {"code", "message", "trace_id"}}` 信封；上游 V3 错误映射为 HTTP 502，并携带六位业务码。
+
+| 分类 | 路由 |
+|---|---|
+| 工具 | `POST /tools/{tool_name}` —— 用工具的 JSON 输入调用任意注册表工具 |
+| 机器人 | `GET /robots` · `POST /robots/status` · `GET /robots/{sn}/status` · `/capabilities` · `/work-modes` |
+| 地图 | `GET /robots/{sn}/maps` · `/maps/{map_id}/canvas` · `/maps/{map_id}/resources` |
+| 任务 | `GET/POST /robots/{sn}/task-definitions` · `GET/PUT/DELETE …/{fusion_task_id}` · `POST /robots/{sn}/tasks/{start\|pause\|resume\|stop\|skip}` |
+| 导航 | `POST /robots/{sn}/navigation/{go-home\|pause\|resume\|stop}` |
+| 指令与报告 | `GET /robots/{sn}/commands` · `…/commands/{request_id}` · `GET /robots/{sn}/reports` |
+| 定时排班 | `GET/POST /robots/{sn}/schedules` · `POST …/schedules/simple` · `GET/PUT/DELETE …/schedules/{plan_id}` |
+| Agent | `POST /agent/sessions` · `GET/DELETE /agent/sessions/{id}` · `POST …/{id}/messages`（**SSE**）· `POST …/{id}/confirm` |
+
+`/messages` 的 SSE 事件：`text_delta` · `tool_call` · `tool_result` · `confirm_required` · `done` · `error`。
+
+```bash
+SID=$(curl -s -XPOST -H "X-API-Key: $KEY" localhost:8000/api/v1/agent/sessions | jq -r .session_id)
+curl -N -XPOST -H "X-API-Key: $KEY" -H 'Content-Type: application/json' \
+  -d '{"content":"列出我的机器人和电量"}' \
+  localhost:8000/api/v1/agent/sessions/$SID/messages
+```
+
+**H5**（`h5/`，Vue 3 + Vite + Vant）有四个页面：**对话**（流式对话，带工具卡片和确认按钮）、**机器人**（机器人列表，显示在线状态、电量、工作状态）、**详情**（地图与画布、任务定义、快捷操作、报告）、**设置**（API 地址与密钥）。生产构建产物已提交到 `src/gs_openapi/server/static/`，`pip install` 即自带 H5。
+
+## 🔧 配置
+
+| 变量 | 默认值 | 说明 |
+|---|---|---|
+| `GS_CLIENT_ID` / `GS_CLIENT_SECRET` / `GS_OPEN_ACCESS_KEY` | – | **必填。** 高仙应用与 AccessKey 凭据 |
+| `GS_BASE_URL` | `https://openapi.gs-robot.com/` | 上游地址（测试时可指向 mock） |
+| `GS_HTTP_TIMEOUT` | `30` | HTTP 超时（秒） |
+| `GS_ENABLE_LEGACY_TOOLS` | 未设置 | 设为 `1` 时 MCP 服务额外注册 `legacy_*` 旧工具 |
+| `GS_SERVER_HOST` / `GS_SERVER_PORT` | `0.0.0.0` / `8000` | HTTP 服务监听地址 |
+| `GS_SERVER_API_KEY` | 未设置 | 设置后，受保护路由要求 `X-API-Key` |
+| `PI_AGENT_PROVIDER` | `anthropic` | `anthropic` 或 `openai` |
+| `PI_AGENT_MODEL` | `claude-opus-5` / `deepseek-chat` | 各 provider 的模型 ID |
+| `ANTHROPIC_API_KEY` | – | Anthropic provider 密钥 |
+| `OPENAI_BASE_URL` / `OPENAI_API_KEY` | – | OpenAI 兼容 provider |
+| `PI_AGENT_AUTO_APPROVE` | `0` | 设为 `1` 时跳过危险工具确认 |
+| `PI_AGENT_MAX_TURNS` | `12` | 每条用户消息最多的工具循环次数（工具结果超过 2 万字符会截断） |
+
+## 🧑‍💻 开发
+
+```
+src/gs_openapi/
+├── auth/token_manager.py      OAuth token（毫秒时间戳过期、加锁刷新）
+├── core/                      HTTP 客户端、V3 接口注册表、错误类型
+├── v3/                        GausiumV3 门面 · pydantic 模型 · 参考表
+├── tools/                     工具注册表（MCP / Agent / REST 的唯一真源）
+├── mcp/                       FastMCP 服务（v3_server.py）+ legacy_tools.py
+├── agent/                     Pi Agent 核心、provider、会话存储、CLI
+├── server/                    FastAPI 应用、路由、SSE、H5 静态托管
+└── main.py                    `mcp-gs-robot` stdio 入口
+h5/                            Vue 3 移动端（构建到 server/static）
+skills/gs-robot/               Agent Skill 及参考资料
+docs/ARCHITECTURE_V3.md        所有模块遵循的契约
+tests/                         离线测试（httpx.MockTransport，无需联网）
+```
+
+```bash
+uv sync --extra dev
+uv run pytest -q                    # 50 passed
+uv run ruff check src tests
+cd h5 && npm ci && npm run build    # 重新构建 H5 到 src/gs_openapi/server/static
+uv build                            # wheel 包含 H5 静态资源
+```
+
+新增 V3 工具：在 `src/gs_openapi/tools/v3_tools.py` 用 `@tool(...)` 定义输入模型和处理函数，MCP、REST、Agent 会自动接入；再补一个测试，并更新上面的工具表。开发约定见 [`CLAUDE.md`](https://github.com/cfrs2005/mcp-gs-robot/blob/main/CLAUDE.md)，curl 演练与 MCP Inspector 用法见[测试指南](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/TESTING_GUIDE.md)。
+
+<details>
+<summary><b>🔁 从 0.1.x 迁移</b></summary>
+
+| 0.1.x | 0.2.0 |
+|---|---|
+| `get_robot_status_smart`、`get_robot_status`（按 SN 前缀路由 v1/v2） | `get_robot_status`（V3 快照，全系列，批量 ≤100） |
+| `get_task_reports_smart`、`list_robot_task_reports` | `list_task_reports` |
+| `create_robot_command`（启动 / 暂停 / 停止） | `start_task` / `pause_task` / `resume_task` / `stop_task`、`navigate_home` |
+| `submit_temp_site_task`、`execute_*_workflow` | `create_task_definition` + `start_task`，或 `run_cleaning_task` |
+| `list_robot_maps`（openapi/v1） | `list_robot_maps`（V3）+ `list_task_resources` |
+
+设置 `GS_ENABLE_LEGACY_TOOLS=1` 后，旧工具仍以 `legacy_*` 名称可用。OAuth `expires_in` 的 bug（把毫秒时间戳当成秒数）已修复，可以删掉之前为刷新 token 做的临时处理。
+
+</details>
 
 ## 📖 文档
 
 | 文档 | 用途 |
-|------|------|
-| 🎯 [Claude Code集成](docs/CLAUDE_CODE_INTEGRATION.md) | 完整的Claude Code设置指南 |
-| 📋 [API参考](docs/apis.md) | 完整的API文档 |
-| 🧪 [测试指南](docs/TESTING_GUIDE.md) | 如何测试MCP服务器 |
-| 🔧 [配置说明](docs/README.md) | 详细的设置说明 |
+|---|---|
+| [架构契约](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/ARCHITECTURE_V3.md) | 工具名、REST/SSE 协议、Agent 接口 |
+| [V3 接口索引](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/apis.md) | 每个接口的方法、路径、支持固件及官方文档链接 |
+| [Claude Code 集成](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/CLAUDE_CODE_INTEGRATION.md) | MCP 配置 + Skill |
+| [测试指南](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/TESTING_GUIDE.md) | 单元测试、curl 演练、MCP Inspector |
+| [Skill 说明](https://github.com/cfrs2005/mcp-gs-robot/blob/main/skills/gs-robot/README.md) | 在 Claude Code / Codex / WorkBuddy 中安装 Skill |
+| [更新日志](https://github.com/cfrs2005/mcp-gs-robot/blob/main/CHANGELOG.md) | 版本发布说明 |
 
-## 🤝 贡献
+## 🤝 参与贡献
 
-我们欢迎贡献！请：
-
-1. 🍴 Fork仓库
-2. 🌿 创建功能分支
-3. ✅ 为你的更改添加测试
-4. 📝 更新文档
-5. 🔄 提交拉取请求
+Fork 仓库并新建分支，执行 `uv sync --extra dev`，改动时附带测试，运行 `uv run pytest -q && uv run ruff check src tests`；如果改了注册表请同步更新工具表，然后提交 Pull Request。
 
 ## 📄 许可证
 
-MIT许可证 - 详见 [LICENSE](LICENSE) 文件。
+MIT，见 [LICENSE](https://github.com/cfrs2005/mcp-gs-robot/blob/main/LICENSE)。
 
-## 🆘 支持
+## ⚠️ 免责声明
 
-- 📝 [问题反馈](https://github.com/cfrs2005/mcp-gs-robot/issues)
-- 📧 [邮箱](mailto:cfrs2005@gmail.com)
-- 📚 [高仙开发者文档](https://developer.gs-robot.com/)
-
----
+本项目是**非官方、个人研究学习用途的开源项目**，仅依据高仙公开的 OpenAPI V3 文档实现，与高仙（Gausium）官方无任何隶属、认可或支持关系。不提供任何形式的担保，你需要对自己下发指令的机器人负责。请务必先在模拟器或空闲机器人上验证，不要把凭据提交到版本库，并记住：指令已下发（`cmdStatus=6`）不代表任务已完成。
 
 <div align="center">
 
-**为Claude Code社区用 ❤️ 制作**
-
-*启用AI驱动的机器人自动化，一次一个任务* 🤖✨
+*献给宁愿直接问机器人、也不想在控制台里点来点去的人。* 🤖✨
 
 </div>

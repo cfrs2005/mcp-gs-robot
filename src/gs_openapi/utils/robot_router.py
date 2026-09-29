@@ -4,8 +4,10 @@
 根据机器人系列自动选择正确的API版本和端点。
 """
 
-from typing import Dict, Any, Optional, List
+from typing import Any, ClassVar
+
 from ..mcp.gausium_mcp import GausiumMCP
+
 
 class RobotAPIRouter:
     """机器人API智能路由器。
@@ -17,7 +19,7 @@ class RobotAPIRouter:
     """
     
     # 机器人系列前缀映射
-    ROBOT_SERIES_MAPPING = {
+    ROBOT_SERIES_MAPPING: ClassVar[dict[str, str]] = {
         # M-line 机器人
         "GS100": "75",    # 75系列
         "GS400": "75",    # 75系列 (新发现)
@@ -35,9 +37,9 @@ class RobotAPIRouter:
     
     def __init__(self, mcp: GausiumMCP):
         self.mcp = mcp
-        self._robot_cache: Dict[str, Dict[str, Any]] = {}
+        self._robot_cache: dict[str, dict[str, Any]] = {}
     
-    async def get_robot_info(self, serial_number: str) -> Optional[Dict[str, Any]]:
+    async def get_robot_info(self, serial_number: str) -> dict[str, Any] | None:
         """获取机器人基本信息（带缓存）。"""
         if serial_number in self._robot_cache:
             return self._robot_cache[serial_number]
@@ -61,7 +63,7 @@ class RobotAPIRouter:
                     if robot["serialNumber"] == serial_number:
                         self._robot_cache[serial_number] = robot
                         return robot
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - Lookup failures leave the cache empty.
             print(f"Failed to get robot info for {serial_number}: {e}")
         
         return None
@@ -89,7 +91,7 @@ class RobotAPIRouter:
         """判断是否为S-line机器人。"""
         return model_family_code in ["S", "SW"]
     
-    async def get_robot_status_smart(self, serial_number: str) -> Dict[str, Any]:
+    async def get_robot_status_smart(self, serial_number: str) -> dict[str, Any]:
         """智能获取机器人状态。
         
         自动根据机器人序列号前缀选择V1或V2 API。
@@ -110,7 +112,7 @@ class RobotAPIRouter:
             result["detected_series"] = detected_series
             return result
     
-    async def get_task_reports_smart(self, serial_number: str, **kwargs) -> Dict[str, Any]:
+    async def get_task_reports_smart(self, serial_number: str, **kwargs) -> dict[str, Any]:
         """智能获取任务报告。
         
         自动根据机器人序列号前缀选择M-line或S-line任务报告API。
@@ -131,7 +133,7 @@ class RobotAPIRouter:
             result["detected_series"] = detected_series
             return result
 
-    async def batch_get_robot_statuses_smart(self, serial_numbers: List[str]) -> Dict[str, Any]:
+    async def batch_get_robot_statuses_smart(self, serial_numbers: list[str]) -> dict[str, Any]:
         """智能批量获取机器人状态。
         
         自动根据机器人序列号前缀分组并选择正确的批量API。
@@ -171,7 +173,7 @@ class RobotAPIRouter:
                     results.extend(v1_results["results"])
                 else:
                     results.extend(v1_results if isinstance(v1_results, list) else [v1_results])
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - Return per-robot errors for batch failures.
                 for sn in v1_robots:
                     results.append({
                         "serialNumber": sn, 
@@ -191,7 +193,7 @@ class RobotAPIRouter:
                     results.extend(s_results["results"])
                 else:
                     results.extend(s_results if isinstance(s_results, list) else [s_results])
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - Return per-robot errors for batch failures.
                 for sn in s_line_robots:
                     results.append({
                         "serialNumber": sn, 
@@ -207,7 +209,7 @@ class RobotAPIRouter:
             "results": results
         }
     
-    async def get_capabilities(self, serial_number: str) -> Dict[str, Any]:
+    async def get_capabilities(self, serial_number: str) -> dict[str, Any]:
         """获取机器人支持的API能力。"""
         # 基于序列号前缀判断机器人系列
         detected_series = self._determine_robot_series_from_sn(serial_number)

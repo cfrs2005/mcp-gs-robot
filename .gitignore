@@ -23,6 +23,9 @@ wheels/
 # Virtual Environment
 .env
 .venv
+.venv/
+h5/node_modules/
+h5/dist/
 env/
 venv/
 ENV/
@@ -65,11 +68,9 @@ coverage.xml
 .claude/
 .specstory/
 test_basic.py
-CLAUDE.md
 MCP-ASSISTANT-RULES.md
 
 # Development and testing files
-test_*.py
 !tests/
 
 # Specific project files that might contain sensitive data
@@ -197,3 +198,6 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
+
+# Local development records (never committed)
+.dev/
