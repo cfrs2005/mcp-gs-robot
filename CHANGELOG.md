@@ -2,6 +2,35 @@
 
 All notable changes to this project are documented here.
 
+## [0.4.0] - 2026-09-29
+
+### 🚀 Added
+- **H5 brand and design tokens**: new Saodi AI logo (`docs/images/logo*.svg`) and robot-head mark (favicon, header, avatar); one token file (`h5/src/shared/tokens.css`) for colors, radii, shadows, type and spacing, also overriding Vant's theme variables.
+- **Chat result cards**: a single tool → card table (`components/cards/registry.ts`) renders `get_robot_status`, `list_task_reports` (KPI tiles, per-day area chart in hand-written SVG, recent reports) and map images for both live streams and replayed history; the raw JSON stays expandable. Rule-based follow-up chips, suggested questions on the empty chat, a retry button and message times for live messages.
+- **Dangerous-tool pipeline card**: confirm → sent → delivery, driven by the confirmation, the tool result and a later `get_command_status` / `wait_for_command` for the same `requestId` (`cmdStatus` 6 is shown as "delivered", not "done").
+- **Mermaid diagrams** in chat: ```` ```mermaid ```` fences render as diagrams (`securityLevel: 'strict'`, design-token theme, SVG re-sanitized with DOMPurify). `mermaid` 12 is lazily imported into its own chunks only when a closed fence appears, so the first-screen bundle is unaffected; parse errors fall back to the source; wide diagrams scroll inside their card.
+- **Robot list**: search by SN / name / map, filter chips (all / online / offline / unreachable / by work state / charging) and product photos by `modelTypeCode` (loaded at runtime, never bundled; a drawn robot is the fallback).
+- **Robot detail**: gradient hero with battery / map / work-state tiles, readable capability tags with the raw JSON collapsible, report KPIs, and a **current location card** that marks the robot (pulse + heading arrow) and map points / chargers on the map PNG (grid origin bottom-left, angle in degrees; read-only).
+- Session JSON gains `confirmations` (`confirm_id`, `tool_use_id`, `name`, `input`, `summary`, `decision`, `at`, `after_message`); SSE `confirm_required` gains `tool_use_id`. History replay rebuilds the same pipeline card; rejected calls show "Rejected", not failed.
+
+### 🔧 Changed
+- **Structure-aware tool-result truncation** (`fit_tool_output`, budget `TOOL_RESULT_BUDGET = 20000` characters): an oversized result drops items from the tail of its largest list and notes `"_truncated": {"field", "kept", "total", "unit"}` on the holding object, falling back to a character prefix wrapped as `{"_truncated": …, "text": …}`. The result is always valid JSON, and the SSE `tool_result.output`, the stored `tool_result.content` (encoded once) and what the model sees come from the same cut. Cards say "M records in total, showing the first N".
+- **Local store schema v2**: `sessions.confirmations` is added automatically and idempotently when a v1 database is opened; old rows read as an empty list.
+- One fleet source (`h5/src/api/fleet.ts`) for online / offline / unreachable: the chat home overview and the robot list always show the same counts.
+- Brand text is "Saodi AI" in both languages.
+
+### 🐛 Fixed
+- Tool results over 20k characters were cut mid-JSON (invalid for the model and the UI) and stored doubly encoded.
+- `confirm_required` was not persisted, so replayed chats lost their confirmation cards and showed rejected calls as failures.
+
+### ⚠️ Deprecated
+- `pi-agent`, `PiAgent` and `PI_AGENT_*` (deprecated in 0.3.0) are still kept in this release; their removal is postponed to 0.5.0.
+
+### Known limitations
+- A confirmation that times out (120 s) is recorded as `rejected`: the confirm gate only reports approved / not approved.
+- Replay of an approved pipeline (sent → delivered) is covered by tests only; it was not exercised against a real robot.
+- Sessions saved by 0.3.0 keep their truncated tool results as raw text (no result card).
+
 ## [0.3.0] - 2026-09-29
 
 ### 🚀 Added

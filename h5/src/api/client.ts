@@ -1,4 +1,4 @@
-import { useSettingsStore } from '@/stores/settings'
+import { useSettingsStore } from '@/api/settings'
 import { t, type MessageKey } from '@/i18n'
 
 export class ApiError extends Error {
@@ -15,6 +15,7 @@ export interface Robot {
   online?: boolean
   displayName?: string
   modelTypeCode?: string
+  modelFamilyCode?: string
   softwareVersion?: string
   hardwareVersion?: string
   [key: string]: unknown
@@ -31,20 +32,34 @@ export interface RobotStatus {
   work_state_desc?: string
   taskName?: string
   observedMsTimestamp?: number
+  /** Localization on the current map: grid cells (origin bottom-left, y up), angle in degrees (0 = +x, CCW). */
+  position?: {
+    angle?: number
+    gridPosition?: { x?: number; y?: number }
+    mapInfo?: MapInfo
+    worldPosition?: { position?: { x?: number; y?: number; z?: number } }
+  }
   /** Backend fallback placeholder: false on upstream 230003, with `error` (including trace_id). */
   reachable?: boolean
   error?: { code?: string | number; message?: string; trace_id?: string | null }
   [key: string]: unknown
 }
 export interface RobotMap { mapId: string; displayName: string; mapVersionId?: string }
+export interface MapInfo { gridWidth?: number; gridHeight?: number; resolution?: number; originX?: number; originY?: number }
 export interface MapCanvas {
   mapPng?: { downloadUri?: string; exist?: boolean }
-  mapInfo?: { gridWidth?: number; gridHeight?: number; resolution?: number; originX?: number; originY?: number }
+  mapInfo?: MapInfo
 }
+/** Map positions: gridX / gridY arrive as strings from map resources and as numbers from charging positions. */
+export interface MapPosition { mapResourceId?: string; mapResourceName?: string; positionName?: string; positionType?: string; gridX?: string | number; gridY?: string | number }
+export interface MapResources { maps?: { mapId?: string; positions?: MapPosition[] }[] }
+export interface ChargingPositions { mapId?: string; positions?: MapPosition[] }
 export interface TaskDefinition { fusionTaskId: string; taskName: string; loopCount?: number }
 export interface TaskReport {
   id?: string
+  robotSerialNumber?: string
   displayName?: string
+  cleaningMode?: string
   startTime?: number
   endTime?: number
   actualCleaningAreaSquareMeter?: number
@@ -61,11 +76,14 @@ export interface Page<T> {
 }
 /** SSE error events persisted with the session; after_message = messages.length when it happened. */
 export interface SessionError { message: string; at: number; after_message: number; code?: string }
+/** A confirm_required event and its outcome, persisted with the session (decision null = never answered). */
+export interface SessionConfirmation { confirm_id: string; tool_use_id: string; name: string; input: unknown; summary: string; decision: 'approved' | 'rejected' | null; at: number; after_message: number }
 export interface AgentSession {
   session_id: string
   title?: string | null
   messages: { role: string; content: unknown; tool_calls?: unknown[] }[]
   errors?: SessionError[]
+  confirmations?: SessionConfirmation[]
   created_at: number
   updated_at?: number
   message_count?: number
@@ -144,6 +162,11 @@ export const batchRobotStatus = (robot_sn_list: string[]) => post<RobotStatus[] 
 export const getRobotStatus = (sn: string) => apiFetch<RobotStatus>(`${robotPath(sn)}/status`)
 export const listMaps = (sn: string) => apiFetch<RobotMap[] | Page<RobotMap>>(`${robotPath(sn)}/maps`)
 export const getMapCanvas = (sn: string, mapId: string) => apiFetch<MapCanvas>(`${robotPath(sn)}/maps/${encodeURIComponent(mapId)}/canvas`)
+export const getMapResources = (sn: string, mapId: string) => apiFetch<MapResources>(`${robotPath(sn)}/maps/${encodeURIComponent(mapId)}/resources`)
+/** Read-only tools without a dedicated REST route go through the registry's generic endpoint. Only list read-only names here. */
+type ReadOnlyTool = 'list_charging_positions'
+const callTool = async <T>(name: ReadOnlyTool, args: Record<string, unknown>) => (await post<{ result: T }>(`${root}/tools/${name}`, args)).result
+export const listChargingPositions = (sn: string, mapId: string) => callTool<ChargingPositions>('list_charging_positions', { robot_sn: sn, map_id: mapId })
 export const getCapabilities = (sn: string) => apiFetch<unknown>(`${robotPath(sn)}/capabilities`)
 export const listTaskDefinitions = (sn: string, page = 1) => apiFetch<TaskDefinition[] | Page<TaskDefinition>>(`${robotPath(sn)}/task-definitions?page=${page}&pagesize=100`)
 export const startTask = (sn: string, fusionTaskId: string, loopCount?: number) => post<unknown>(`${robotPath(sn)}/tasks/start`, { fusion_task_id: fusionTaskId, ...(loopCount === undefined ? {} : { loop_count: loopCount }) })

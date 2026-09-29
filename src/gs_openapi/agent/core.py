@@ -3,7 +3,7 @@
 import asyncio
 import json
 import time
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable, Iterator
 from contextlib import aclosing
 from typing import Any, Protocol, TypedDict
 from uuid import uuid4
@@ -57,9 +57,97 @@ def _neutral_content(content: list[dict] | dict) -> list[dict]:
     return blocks
 
 
-def _tool_content(output: Any) -> str:
-    text = json.dumps(output, ensure_ascii=False, default=str)
-    return text if len(text) <= 20_000 else text[:20_000] + "…[truncated]"
+# One budget for what a tool result may cost in the conversation (json.dumps characters). The fitted
+# value is what the model sees, what the SSE ``tool_result.output`` carries and what the session stores.
+TOOL_RESULT_BUDGET = 20_000
+TRUNCATED_KEY = "_truncated"
+
+
+def _dumps(value: Any) -> str:
+    return json.dumps(value, ensure_ascii=False, default=str)
+
+
+def _fits(value: Any, budget: int) -> bool:
+    return len(_dumps(value)) <= budget
+
+
+def _object_lists(value: Any) -> Iterator[tuple[dict, str, list]]:
+    """Every non-empty list held by an object key, anywhere in the value (parent, key, list)."""
+    if isinstance(value, dict):
+        for key, item in value.items():
+            if key == TRUNCATED_KEY:
+                continue
+            if isinstance(item, list) and item:
+                yield value, key, item
+            if isinstance(item, (dict, list)):
+                yield from _object_lists(item)
+    elif isinstance(value, list):
+        for item in value:
+            yield from _object_lists(item)
+
+
+def _largest_prefix(fits: Callable[[int], bool], total: int) -> int | None:
+    """Largest n in [0, total] with fits(n), assuming fits is monotone; None if even 0 does not fit."""
+    if not fits(0):
+        return None
+    low, high = 0, total
+    while low < high:
+        mid = (low + high + 1) // 2
+        if fits(mid):
+            low = mid
+        else:
+            high = mid - 1
+    return low
+
+
+def fit_tool_output(output: Any, budget: int = TOOL_RESULT_BUDGET) -> Any:
+    """Return ``output`` unchanged when it fits; otherwise a valid-JSON value that fits.
+
+    Structure first: drop items from the tail of the largest list (by serialized size) and note
+    ``{"_truncated": {"field", "kept", "total", "unit": "items"}}`` on the object holding it; a root
+    list is wrapped as ``{"items": [...]}``. A list that cannot keep even one item is skipped for the
+    next largest (so a single oversized parent item yields to the list inside it); repeat until it
+    fits. With no list left that keeps an item, fall back to a character prefix wrapped as
+    ``{"_truncated": {..., "unit": "chars"}, "text": ...}``. Generic: no tool names.
+    """
+    text = _dumps(output)
+    if len(text) <= budget:
+        return output
+    work: Any = json.loads(text)  # a private, JSON-normalised copy
+    if isinstance(work, list):
+        work = {"items": work}
+    while isinstance(work, dict) and not _fits(work, budget):
+        candidates = sorted(((len(_dumps(items)), parent, key, items)
+                             for parent, key, items in _object_lists(work) if TRUNCATED_KEY not in parent),
+                            key=lambda c: c[0], reverse=True)
+        for _, parent, key, items in candidates:  # largest first; skip lists that cannot keep one item
+
+            def keep(n: int, parent=parent, key=key, items=items) -> bool:
+                parent[key] = items[:n]
+                parent[TRUNCATED_KEY] = {"field": key, "kept": n, "total": len(items), "unit": "items"}
+                return _fits(work, budget) or n == 0
+
+            kept = _largest_prefix(keep, len(items)) or 0
+            if kept > 0:
+                keep(kept)
+                break
+            parent[key] = items
+            del parent[TRUNCATED_KEY]
+        else:
+            break  # no list can keep even one item: fall back to characters
+    if isinstance(work, dict) and _fits(work, budget):
+        return work
+    source = output if isinstance(output, str) else text
+
+    def chars(n: int) -> bool:
+        return _fits(_char_fallback(source, n), budget)
+
+    return _char_fallback(source, _largest_prefix(chars, len(source)) or 0)
+
+
+def _char_fallback(source: str, n: int) -> dict:
+    return {TRUNCATED_KEY: {"field": "text", "kept": n, "total": len(source), "unit": "chars"},
+            "text": source[:n]}
 
 
 INTERRUPTED_RESULT = "The previous run was interrupted; the result is unknown."
@@ -157,13 +245,24 @@ class SaodiAgent:
                     summary = " ".join(f"{key}={value}" for key, value in tool.input.items())
                     summary = f"{tool.name} {summary}".strip()
                     confirm_id = str(uuid4())
+                    # Kept on the session so a replay can rebuild the confirmation; decision stays
+                    # None if the stream ends while waiting.
+                    record = {
+                        "confirm_id": confirm_id, "tool_use_id": tool.id, "name": tool.name,
+                        "input": tool.input, "summary": summary, "decision": None,
+                        "at": time.time(), "after_message": len(session.messages),
+                    }
+                    session.confirmations.append(record)
                     yield {
-                        "type": "confirm_required", "confirm_id": confirm_id,
+                        "type": "confirm_required", "confirm_id": confirm_id, "tool_use_id": tool.id,
                         "name": tool.name, "input": tool.input, "summary": summary,
                     }
-                    if not await self.confirm_gate.ask(
+                    approved_now = await self.confirm_gate.ask(
                         session.session_id, confirm_id, tool.name, tool.input, summary,
-                    ):
+                    )
+                    # ConfirmGate only returns a bool: timeouts and "no confirm channel" are rejections.
+                    record["decision"] = "approved" if approved_now else "rejected"
+                    if not approved_now:
                         denied[tool.id] = NOT_APPROVED_RESULT
                         continue
                 approved.append(tool)
@@ -174,16 +273,16 @@ class SaodiAgent:
             blocks = []
             for tool in uses:
                 output, is_error = results.get(tool.id, (denied.get(tool.id, NOT_RUN_RESULT), True))
-                safe_output = _tool_content(output)
-                if len(safe_output) > 20_000:
-                    output = safe_output
+                # One fit, three consumers: the SSE event, the stored block and (via the stored
+                # block) the model all see this same value, serialized exactly once.
+                fitted = fit_tool_output(output)
                 yield {
                     "type": "tool_result", "id": tool.id, "name": tool.name,
-                    "output": output, "is_error": is_error,
+                    "output": fitted, "is_error": is_error,
                 }
                 blocks.append({
                     "type": "tool_result", "tool_use_id": tool.id,
-                    "content": _tool_content(output), "is_error": is_error,
+                    "content": _dumps(fitted), "is_error": is_error,
                 })
             session.messages.append({"role": "user", "content": blocks})
             if turn == self.max_turns - 1:

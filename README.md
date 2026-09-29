@@ -2,7 +2,7 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/logo-dark.svg">
-  <img alt="Saodi" src="https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/logo.svg" width="320">
+  <img alt="Saodi AI" src="https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/logo.svg" width="320">
 </picture>
 
 **An open-source ops agent for Gausium cleaning robots — MCP server, REST API, CLI and mobile web, on OpenAPI V3.**

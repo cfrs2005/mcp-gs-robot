@@ -105,6 +105,7 @@ async def get_session(session_id: str, sessions: deps.SessionsDep) -> dict:
         "title": session.title,
         "messages": session.messages,
         "errors": session.errors,
+        "confirmations": session.confirmations,
         "created_at": session.created_at,
         "updated_at": session.updated_at,
         "message_count": len(session.messages),

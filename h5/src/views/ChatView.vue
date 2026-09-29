@@ -1,25 +1,24 @@
 <script setup lang="ts">
-import { nextTick, onMounted, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { Button, Icon, showConfirmDialog, showFailToast } from 'vant'
-import { AUTH_REQUIRED_EVENT, ApiError, confirmAgent, createAgentSession, getAgentSession, health, messageForCode, type SessionError } from '@/api/client'
-import { useSettingsStore } from '@/stores/settings'
-import { KEYS } from '@/storageKeys'
-import { streamAgentMessage, type AgentEvent } from '@/api/sse'
+import { Button, showConfirmDialog, showFailToast } from 'vant'
+import { AUTH_REQUIRED_EVENT, ApiError, confirmAgent, createAgentSession, getAgentSession, health } from '@/api/client'
+import { useSettingsStore } from '@/api/settings'
+import { KEYS } from '@/shared/storageKeys'
+import { clock } from '@/shared/format'
+import markUrl from '@/shared/mark.svg'
+import { streamAgentMessage } from '@/api/sse'
 import MarkdownView from '@/components/MarkdownView.vue'
-import ToolCallCard from '@/components/ToolCallCard.vue'
-import ToolGroup, { type ToolItem } from '@/components/ToolGroup.vue'
+import ToolGroup from '@/components/ToolGroup.vue'
 import HistoryDrawer from '@/components/HistoryDrawer.vue'
+import ChatHeader from '@/components/chat/ChatHeader.vue'
+import ChatComposer from '@/components/chat/ChatComposer.vue'
+import ChatWelcome from '@/components/chat/ChatWelcome.vue'
+import PipelineCard from '@/components/chat/PipelineCard.vue'
+import { followUps } from '@/components/chat/followUps'
+import { allTools, applyEvent, findTool, toMessages, type Confirmation, type Message } from '@/components/chat/timeline'
 import { t } from '@/i18n'
 
-type Confirmation = { confirmId: string; summary: string; name: string; input: unknown; pending: boolean; answered?: boolean }
-// One assistant reply is a timeline in event order: text runs, groups of consecutive tool calls, confirm cards.
-type Part =
-  | { kind: 'text'; text: string }
-  | { kind: 'tools'; tools: ToolItem[] }
-  | { kind: 'confirm'; confirm: Confirmation }
-  | { kind: 'error'; message: string }
-type Message = { role: 'user' | 'assistant'; content: string; parts: Part[] }
 const messages = ref<Message[]>([])
 const sessionId = ref(localStorage.getItem(KEYS.sessionId) || '')
 const draft = ref('')
@@ -31,8 +30,14 @@ const router = useRouter()
 const settings = useSettingsStore()
 // Server protects the API with GS_SERVER_API_KEY but this browser has none saved.
 const needsKey = ref(false)
-async function checkAuth() {
-  try { needsKey.value = !!(await health()).auth_required && !settings.apiKey } catch { needsKey.value = false }
+// Service status for the header dot: null while checking, false when /health fails.
+const online = ref<boolean | null>(null)
+async function checkHealth() {
+  try {
+    const result = await health()
+    online.value = result.status === 'ok'
+    needsKey.value = !!result.auth_required && !settings.apiKey
+  } catch { online.value = false; needsKey.value = false }
 }
 
 // The window is the only scroll container. Follow new output only while the reader is at the bottom.
@@ -52,59 +57,12 @@ async function createSession() {
   localStorage.setItem(KEYS.sessionId, sessionId.value)
   messages.value = []
 }
-
-type Block = { type?: string; text?: string; id?: string; name?: string; input?: unknown; tool_use_id?: string; content?: unknown; is_error?: boolean }
-const parseOutput = (value: unknown) => { if (typeof value !== 'string') return value; try { return JSON.parse(value) } catch { return value } }
-// Rebuild timelines from the stored transcript: consecutive assistant turns merge into one reply,
-// and tool_result blocks (stored as user turns) fill in the matching tool call.
-// Persisted SSE errors go back where they happened: after the first `after_message` stored messages.
-function toMessages(stored: { role: string; content: unknown }[], errors: SessionError[] = []): Message[] {
-  const result: Message[] = []
-  const tools = new Map<string, ToolItem>()
-  const pending = [...errors].sort((a, b) => a.after_message - b.after_message)
-  const flushErrors = (upTo: number) => {
-    while (pending.length && pending[0].after_message <= upTo) {
-      let reply = result[result.length - 1]
-      if (reply?.role !== 'assistant') { reply = { role: 'assistant', content: '', parts: [] }; result.push(reply) }
-      const error = pending.shift()!
-      reply.parts.push({ kind: 'error', message: messageForCode(error.code, error.message) })
-    }
-  }
-  for (const [index, m] of stored.entries()) {
-    flushErrors(index)
-    const blocks: Block[] = typeof m.content === 'string' ? [{ type: 'text', text: m.content }] : Array.isArray(m.content) ? m.content as Block[] : []
-    if (m.role === 'user' && blocks.some(b => b.type === 'tool_result')) {
-      for (const b of blocks) {
-        const tool = b.tool_use_id ? tools.get(b.tool_use_id) : undefined
-        if (tool) { tool.output = parseOutput(b.content); tool.isError = !!b.is_error }
-      }
-      continue
-    }
-    if (m.role === 'user') {
-      result.push({ role: 'user', content: blocks.map(b => b.text ?? '').join('\n'), parts: [] })
-      continue
-    }
-    if (m.role !== 'assistant') continue
-    let reply = result[result.length - 1]
-    if (reply?.role !== 'assistant') { reply = { role: 'assistant', content: '', parts: [] }; result.push(reply) }
-    for (const b of blocks) {
-      if (b.type === 'text' && b.text) appendText(reply, b.text)
-      else if (b.type === 'tool_use' && b.id) {
-        const tool: ToolItem = { id: b.id, name: b.name ?? '', input: b.input ?? {} }
-        tools.set(tool.id, tool)
-        appendTool(reply, tool)
-      }
-    }
-  }
-  flushErrors(Number.MAX_SAFE_INTEGER)
-  return result
-}
 async function restore() {
   if (!sessionId.value) return
   loading.value = true
   try {
     const session = await getAgentSession(sessionId.value)
-    messages.value = toMessages(session.messages, session.errors)
+    messages.value = toMessages(session.messages, session.errors, session.confirmations)
     await scroll(true)
   } catch (e) {
     // The backend no longer has this session: quietly fall back to a fresh chat.
@@ -135,49 +93,25 @@ async function newChat() {
     await createSession()
   } catch (e) { if (e !== 'cancel') showFailToast(e instanceof Error ? e.message : t('chat.createFailed')) }
 }
-function appendText(message: Message, text: string) {
-  const last = message.parts[message.parts.length - 1]
-  if (last?.kind === 'text') last.text += text
-  else message.parts.push({ kind: 'text', text })
-}
-function appendTool(message: Message, tool: ToolItem) {
-  const last = message.parts[message.parts.length - 1]
-  if (last?.kind === 'tools') last.tools.push(tool)
-  else message.parts.push({ kind: 'tools', tools: [tool] })
-}
-function findTool(message: Message, id: string) {
-  for (const part of message.parts) if (part.kind === 'tools') { const tool = part.tools.find(t => t.id === id); if (tool) return tool }
-}
-function handleEvent(ev: AgentEvent, message: Message) {
-  switch (ev.type) {
-    case 'text_delta': appendText(message, ev.text); break
-    case 'tool_call': appendTool(message, { id: ev.id, name: ev.name, input: ev.input }); break
-    case 'tool_result': {
-      const tool = findTool(message, ev.id)
-      if (tool) { tool.output = ev.output; tool.isError = ev.is_error }
-      break
-    }
-    case 'confirm_required': message.parts.push({ kind: 'confirm', confirm: { confirmId: ev.confirm_id, name: ev.name, input: ev.input, summary: ev.summary, pending: false } }); break
-    case 'error': { const text = messageForCode(ev.code, ev.message); message.parts.push({ kind: 'error', message: text }); showFailToast(text); break }
-    case 'done': break
-  }
-  void scroll()
-}
-async function send() {
-  const content = draft.value.trim()
+async function send(text?: string) {
+  const content = (text ?? draft.value).trim()
   if (!content || busy.value) return
   if (needsKey.value) { window.dispatchEvent(new Event(AUTH_REQUIRED_EVENT)); return }
   busy.value = true
-  draft.value = ''
+  if (text === undefined) draft.value = ''
   try {
     if (!sessionId.value) await createSession()
-    messages.value.push({ role: 'user', content, parts: [] })
-    messages.value.push({ role: 'assistant', content: '', parts: [] })
+    messages.value.push({ role: 'user', content, parts: [], at: Date.now() })
+    messages.value.push({ role: 'assistant', content: '', parts: [], at: Date.now() })
     // Mutate the reactive proxy, not the raw object, so streamed deltas and confirm cards render live.
     const assistant = messages.value[messages.value.length - 1]
     await scroll(true)
     controller = new AbortController()
-    await streamAgentMessage(sessionId.value, content, ev => handleEvent(ev, assistant), controller.signal)
+    await streamAgentMessage(sessionId.value, content, ev => {
+      const error = applyEvent(ev, assistant)
+      if (error) showFailToast(error)
+      void scroll()
+    }, controller.signal)
   } catch (e) {
     if (!(e instanceof DOMException && e.name === 'AbortError')) showFailToast(e instanceof Error ? e.message : t('chat.sendFailed'))
   } finally { busy.value = false; controller = null }
@@ -188,15 +122,29 @@ async function respond(item: Confirmation, approve: boolean) {
   try {
     await confirmAgent(sessionId.value, item.confirmId, approve)
     item.answered = approve
+    if (!approve) {
+      const reply = messages.value.find(m => m.parts.some(p => p.kind === 'confirm' && p.confirm === item))
+      const tool = reply && findTool(reply, item.toolId)
+      if (tool) tool.rejected = true
+    }
   } catch (e) { showFailToast(e instanceof Error ? e.message : t('chat.confirmFailed')) }
   finally { item.pending = false }
 }
 const isStreaming = (index: number) => busy.value && index === messages.value.length - 1
+const lastIndex = computed(() => messages.value.length - 1)
+// Retry re-sends the user message this reply answered (as a new turn in the same session).
+function questionBefore(index: number): string | undefined {
+  for (let i = index - 1; i >= 0; i--) if (messages.value[i].role === 'user') return messages.value[i].content
+}
+const chips = computed(() => {
+  const last = messages.value[lastIndex.value]
+  return last?.role === 'assistant' && !busy.value ? followUps(allTools(last)) : []
+})
 function clearLocal() { controller?.abort(); busy.value = false; sessionId.value = ''; messages.value = [] }
 onMounted(() => {
   window.addEventListener('saodi:clear-chat', clearLocal)
   window.addEventListener('scroll', onWindowScroll, { passive: true })
-  void checkAuth(); void restore()
+  void checkHealth(); void restore()
 })
 onUnmounted(() => {
   window.removeEventListener('saodi:clear-chat', clearLocal)
@@ -207,64 +155,72 @@ onUnmounted(() => {
 
 <template>
   <div class="chat-page">
-    <header class="chat-header"><div class="col page-header"><div class="head-left"><button type="button" class="history-btn" :aria-label="t('chat.historyAria')" @click="showHistory = true"><Icon name="bars" /><span>{{ t('chat.history') }}</span></button><span class="brand">{{ t('brand.name') }}<small v-if="t('brand.sub')">{{ t('brand.sub') }}</small></span></div><Button size="small" plain type="primary" :disabled="busy" @click="newChat">{{ t('chat.new') }}</Button></div></header>
+    <div class="chat-top"><div class="col"><ChatHeader :busy="busy" :online="online" @history="showHistory = true" @new="newChat" /></div></div>
     <HistoryDrawer v-model:show="showHistory" :current-id="sessionId" :busy="busy" @select="openSession" @deleted="onSessionDeleted" @new="newChatFromHistory" />
     <div class="col message-list">
       <div v-if="needsKey" class="auth-notice"><span>{{ t('auth.message') }}</span><Button size="small" type="primary" @click="router.push('/settings')">{{ t('auth.goSettings') }}</Button></div>
       <div v-if="loading" class="empty">{{ t('chat.loading') }}</div>
-      <div v-else-if="!messages.length" class="empty">{{ t('chat.welcome') }}</div>
+      <ChatWelcome v-else-if="!messages.length" @ask="send" />
       <div v-for="(message, index) in messages" :key="index" class="message" :class="message.role">
-        <div v-if="message.role === 'user'" class="bubble">{{ message.content }}</div>
-        <div v-else class="reply">
-          <template v-for="(part, i) in message.parts" :key="i">
-            <MarkdownView v-if="part.kind === 'text'" :text="part.text" />
-            <ToolGroup v-else-if="part.kind === 'tools'" :tools="part.tools" />
-            <div v-else-if="part.kind === 'error'" class="error-line">{{ t('chat.errorLine', { message: part.message }) }}</div>
-            <div v-else class="confirm-card">
-              <strong>{{ t('chat.confirmTitle', { name: part.confirm.name }) }}</strong><p>{{ part.confirm.summary }}</p>
-              <ToolCallCard :name="part.confirm.name" :input="part.confirm.input" />
-              <div v-if="part.confirm.answered !== undefined" class="muted">{{ part.confirm.answered ? t('chat.confirmed') : t('chat.cancelled') }}</div>
-              <div v-else class="row"><Button size="small" type="primary" :loading="part.confirm.pending" @click="respond(part.confirm, true)">{{ t('chat.approve') }}</Button><Button size="small" :disabled="part.confirm.pending" @click="respond(part.confirm, false)">{{ t('chat.reject') }}</Button></div>
+        <template v-if="message.role === 'user'">
+          <div class="bubble">{{ message.content }}</div>
+          <time v-if="message.at" class="stamp">{{ clock(new Date(message.at)) }}</time>
+        </template>
+        <template v-else>
+          <div class="who"><img :src="markUrl" alt="" class="avatar"><strong>{{ t('brand.name') }}</strong><time v-if="message.at" class="stamp">{{ clock(new Date(message.at)) }}</time></div>
+          <div class="reply">
+            <template v-for="(part, i) in message.parts" :key="i">
+              <div v-if="part.kind === 'text'" class="text-card"><MarkdownView :text="part.text" /></div>
+              <ToolGroup v-else-if="part.kind === 'tools'" :tools="part.tools" />
+              <div v-else-if="part.kind === 'error'" class="error-line">{{ t('chat.errorLine', { message: part.message }) }}</div>
+              <PipelineCard v-else :confirm="part.confirm" :tool="findTool(message, part.confirm.toolId)" :follow-ups="allTools(message)" @respond="approve => respond(part.confirm, approve)" />
+            </template>
+            <span v-if="isStreaming(index) && message.parts[message.parts.length - 1]?.kind !== 'text'" class="thinking"><i /><i /><i />{{ t('chat.thinking') }}</span>
+            <div v-if="index === lastIndex && !busy && questionBefore(index)" class="reply-actions">
+              <button type="button" class="ghost-btn" @click="send(questionBefore(index))">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4" /></svg>{{ t('common.retry') }}
+              </button>
             </div>
-          </template>
-          <span v-if="isStreaming(index) && message.parts[message.parts.length - 1]?.kind !== 'text'" class="muted thinking">{{ t('chat.thinking') }}</span>
-        </div>
+          </div>
+        </template>
+      </div>
+      <div v-if="chips.length" class="chips" :aria-label="t('chat.followUpsAria')">
+        <button v-for="chip in chips" :key="chip" type="button" class="chip" @click="send(chip)">{{ chip }}</button>
       </div>
     </div>
-    <div class="composer-dock">
-      <form class="col composer" @submit.prevent="send">
-        <textarea v-model="draft" rows="1" :placeholder="t('chat.placeholder')" :aria-label="t('chat.inputAria')" @keydown.enter.exact.prevent="send" />
-        <Button type="primary" size="small" native-type="submit" :disabled="busy || loading || !draft.trim()">{{ t('chat.send') }}</Button>
-      </form>
-    </div>
+    <div class="composer-dock"><div class="col"><ChatComposer v-model="draft" :disabled="busy || loading" @send="send()" /></div></div>
   </div>
 </template>
 
 <style scoped>
 /* One reading column shared by header, messages and composer; the window is the only scroller. */
-.chat-page { --col: 728px; --gutter: 16px; --tabbar: 50px; min-height: calc(100dvh - 58px - env(safe-area-inset-bottom)); display: flex; flex-direction: column; margin-bottom: calc(var(--tabbar) - 58px); }
+.chat-page { --col: 728px; --gutter: 14px; --tabbar: 56px; min-height: calc(100dvh - var(--tabbar) - env(safe-area-inset-bottom)); display: flex; flex-direction: column; background: var(--sd-bg-grad); }
 .col { width: 100%; max-width: calc(var(--col) + 2 * var(--gutter)); margin: 0 auto; padding-left: var(--gutter); padding-right: var(--gutter); }
-.chat-header { position: sticky; top: 0; z-index: 10; background: #fff; border-bottom: 1px solid #e8eef5; }
-.chat-header .page-header { background: transparent; }
-.head-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.history-btn { display: inline-flex; align-items: center; gap: 4px; height: 32px; padding: 0 10px 0 8px; border: 1px solid #d8e2ee; border-radius: 16px; background: #fff; color: #33506e; font-size: 13px; font-weight: 600; cursor: pointer; }
-.history-btn .van-icon { font-size: 16px; }
-.brand { display: inline-flex; align-items: baseline; gap: 6px; }
-.brand small { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #7d8998; }
-.message-list { flex: 1; padding-top: 18px; padding-bottom: 18px; }
-.message { display: flex; margin-bottom: 20px; }
-.message.user { justify-content: flex-end; }
-.bubble { max-width: min(85%, 620px); border-radius: 16px 16px 4px 16px; padding: 9px 14px; background: #d9edff; font-size: 15px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.chat-top { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--sd-primary-softer) 88%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--sd-line); }
+.message-list { flex: 1; padding-top: 16px; padding-bottom: 16px; }
+.message { display: flex; flex-direction: column; margin-bottom: 20px; }
+.message.user { align-items: flex-end; }
+.bubble { max-width: min(85%, 620px); border-radius: var(--sd-r-lg) var(--sd-r-lg) var(--sd-r-xs) var(--sd-r-lg); padding: 10px 14px; background: var(--sd-primary-soft); color: var(--sd-ink); box-shadow: inset 0 0 0 1px var(--sd-primary-line); font-size: var(--sd-fs-md); line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.stamp { margin-top: 4px; font-size: var(--sd-fs-2xs); color: var(--sd-faint); font-variant-numeric: tabular-nums; }
+.who { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.who strong { font-size: var(--sd-fs-sm); color: var(--sd-ink); }
+.who .stamp { margin-top: 0; }
+.avatar { width: 30px; height: 30px; padding: 3px; border-radius: 50%; background: var(--sd-surface); box-shadow: var(--sd-shadow-1); }
 .reply { width: 100%; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
-.thinking { padding: 2px 0; }
-.auth-notice { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #fff8e9; border: 1px solid #f1d6a3; border-radius: 10px; padding: 10px 12px; margin-bottom: 14px; font-size: 13px; }
-.confirm-card { background: #fff8e9; border: 1px solid #f1d6a3; border-radius: 10px; padding: 12px; font-size: 14px; }
-.error-line { padding: 8px 12px; border-radius: 10px; background: #fdeeee; color: #b23b37; font-size: 13.5px; overflow-wrap: anywhere; }
-.confirm-card p { margin: 8px 0; overflow-wrap: anywhere; }
-.confirm-card .row { margin-top: 10px; }
-.confirm-card :deep(.dot) { display: none; }
-.composer-dock { position: sticky; bottom: calc(var(--tabbar) + env(safe-area-inset-bottom)); z-index: 10; background: #f4f7fb; padding-bottom: 10px; }
-.composer { display: flex; align-items: end; gap: 9px; }
-.composer textarea { resize: none; flex: 1; max-height: 110px; min-height: 42px; border: 1px solid #d8e2ee; border-radius: 12px; padding: 10px 12px; line-height: 20px; background: #fff; box-shadow: 0 2px 10px #173a630d; }
-.composer :deep(.van-button) { height: 42px; padding: 0 16px; border-radius: 12px; }
+.text-card { padding: 14px 16px; border-radius: var(--sd-r-lg); background: var(--sd-surface); box-shadow: var(--sd-shadow-1); color: var(--sd-ink); }
+.thinking { display: inline-flex; align-items: center; gap: 4px; padding: 2px 0; color: var(--sd-muted); font-size: var(--sd-fs-sm); }
+.thinking i { width: 5px; height: 5px; border-radius: 50%; background: var(--sd-primary); animation: blink 1.2s infinite ease-in-out; }
+.thinking i:nth-child(2) { animation-delay: .15s; }
+.thinking i:nth-child(3) { animation-delay: .3s; margin-right: 4px; }
+@keyframes blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+.reply-actions { display: flex; justify-content: flex-end; }
+.ghost-btn { display: inline-flex; align-items: center; gap: 4px; height: 28px; padding: 0 10px; border: 0; border-radius: var(--sd-r-pill); background: transparent; color: var(--sd-muted); font-size: var(--sd-fs-xs); cursor: pointer; }
+.ghost-btn:hover { background: var(--sd-surface); color: var(--sd-primary); }
+.ghost-btn svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: -4px; }
+.chip { max-width: 100%; padding: 8px 14px; border: 1px solid var(--sd-primary-line); border-radius: var(--sd-r-pill); background: var(--sd-surface); color: var(--sd-primary-strong); font-size: var(--sd-fs-sm); line-height: 1.3; text-align: left; cursor: pointer; box-shadow: var(--sd-shadow-1); }
+.chip:active { background: var(--sd-primary-soft); }
+.auth-notice { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--sd-warning-soft); border: 1px solid var(--sd-warning-line); border-radius: var(--sd-r-md); padding: 10px 12px; margin-bottom: 14px; font-size: var(--sd-fs-sm); }
+.error-line { padding: 9px 12px; border-radius: var(--sd-r-md); background: var(--sd-danger-soft); color: var(--sd-danger); font-size: var(--sd-fs-sm); overflow-wrap: anywhere; }
+.composer-dock { position: sticky; bottom: calc(var(--tabbar) + env(safe-area-inset-bottom)); z-index: 10; padding: 8px 0 10px; background: linear-gradient(180deg, transparent, var(--sd-bg) 30%); }
 </style>

@@ -122,7 +122,7 @@ def to_openai_tools() -> list[dict]        # {"type":"function","function":{...}
 - 启动：`gs-robot-server`（entry point）或 `uvicorn gs_openapi.server.app:app`。
 - 前缀 `/api/v1`；所有响应 JSON；错误统一 `{"error": {"code": <int|str>, "message": str, "trace_id": str|null}}`。上游 `GausiumAPIError` → HTTP 502（code 为六位业务码），参数错误 → 422/400，鉴权失败 → 401。
 - CORS：默认允许所有来源（H5 同源部署时无影响）。
-- `GET /api/v1/health`（公开）→ `{"status":"ok","version":"0.3.0","agent_provider":"anthropic","tools":<int>,"auth_required":<bool>}`；`auth_required` 仅表示服务端是否设置了 `GS_SERVER_API_KEY`，绝不返回 key 本身
+- `GET /api/v1/health`（公开）→ `{"status":"ok","version":"0.4.0","agent_provider":"anthropic","tools":<int>,"auth_required":<bool>}`；`auth_required` 仅表示服务端是否设置了 `GS_SERVER_API_KEY`，绝不返回 key 本身
 - `GET /api/v1/auth/check`（受 `X-API-Key` 保护、无副作用、不打上游）→ `{"ok":true}`；key 缺失或错误时 401。H5 设置页用它校验 key
 - 通用工具调用（REST 与工具注册表一一对应）：`POST /api/v1/tools/{tool_name}`，body = 工具输入 JSON，返回 `{"result": ...}`。危险工具在 REST 下直接执行（调用方即已确认）。
 - 友好路由（内部也走注册表）：
@@ -139,16 +139,23 @@ def to_openai_tools() -> list[dict]        # {"type":"function","function":{...}
 - Agent（会话持久化在 SQLite，后端重启后可继续对话，见 §5.2）：
   - `POST /api/v1/agent/sessions` `{ "title"?: str }`（body 可省略）→ `{"session_id": str}`
   - `GET /api/v1/agent/sessions?page=1&page_size=20&include_empty=false` → `{"items":[{"session_id","title","created_at","updated_at","message_count"}],"total","page","page_size"}`，按 `updated_at` 倒序；默认不列出还没有消息的空会话
-  - `GET /api/v1/agent/sessions/{id}` → `{"session_id","title","messages","errors","created_at","updated_at","message_count"}`。`messages` 为中立格式：`user` 的 `content` 是字符串或 `tool_result` 块数组（`tool_use_id`、`content`（JSON 文本）、`is_error`）；`assistant` 的 `content` 是块数组（`text`、`tool_use`（`id`、`name`、`input`），anthropic 还可能有 `thinking`）。`errors` 为本会话 SSE `error` 事件 `[{"message","at","after_message","code"?}]`，`after_message` 是出错时 `messages` 的长度，用于把错误插回时间线
+  - `GET /api/v1/agent/sessions/{id}` → `{"session_id","title","messages","errors","confirmations","created_at","updated_at","message_count"}`。`messages` 为中立格式：`user` 的 `content` 是字符串或 `tool_result` 块数组（`tool_use_id`、`content`（JSON 文本）、`is_error`）；`assistant` 的 `content` 是块数组（`text`、`tool_use`（`id`、`name`、`input`），anthropic 还可能有 `thinking`）。`errors` 为本会话 SSE `error` 事件 `[{"message","at","after_message","code"?}]`，`after_message` 是出错时 `messages` 的长度，用于把错误插回时间线。`confirmations` 为本会话每一次 `confirm_required` 及其结果 `[{"confirm_id","tool_use_id","name","input","summary","decision","at","after_message"}]`：`tool_use_id` 指向同一回复里的 `tool_use` 块；`decision` 为 `"approved"` / `"rejected"`（`ConfirmGate.ask` 返回 False，含 120s 超时与未配置确认通道），流在等待确认时中断则为 `null`；`after_message` 同 `errors`。旧会话没有该字段时返回 `[]`
   - `DELETE /api/v1/agent/sessions/{id}` → `{"ok":true}`；会话运行中返回 409
   - `POST /api/v1/agent/sessions/{id}/messages` `{ "content": str }` → **SSE**（`text/event-stream`），每行 `data: <json>`，事件类型：
     - `{"type":"text_delta","text":str}`
     - `{"type":"tool_call","id":str,"name":str,"input":dict}`
-    - `{"type":"tool_result","id":str,"name":str,"output":any,"is_error":bool}`
-    - `{"type":"confirm_required","confirm_id":str,"name":str,"input":dict,"summary":str}` —— 流暂停，等待确认（最长 120s，超时视为拒绝）
+    - `{"type":"tool_result","id":str,"name":str,"output":any,"is_error":bool}` —— `output` 永远是可 JSON 序列化的值，且与会话里该 `tool_result` 块的 `content`（`json.dumps(output)`，只编码一次）、模型看到的内容来自同一次截断（见下「工具结果截断」）
+    - `{"type":"confirm_required","confirm_id":str,"tool_use_id":str,"name":str,"input":dict,"summary":str}` —— 流暂停，等待确认（最长 120s，超时视为拒绝）；`tool_use_id` 为对应 `tool_call` 的 `id`（新增字段，旧客户端忽略）
     - `{"type":"done","message_id":str,"usage":{...}}`
     - `{"type":"error","message":str,"code"?:str}` —— `message` 为英文原文；可选的 `code` 是稳定的机器可读原因，客户端据此本地化，没有 `code` 或码未知时显示 `message`（向后兼容：旧客户端忽略 `code`）。取值：`incomplete_response`（模型未返回完整消息）、`max_turns`（达到 `SAODI_MAX_TURNS`）、`provider_auth` / `provider_rate_limited` / `provider_http` / `provider_connection` / `provider_error`（LLM 后端失败）、`internal_error`（服务端异常）。用户拒绝危险操作不是 `error` 事件：该工具的 `tool_result` 为 `is_error: true`，内容是给模型看的英文说明，由模型按用户语言复述
   - `POST /api/v1/agent/sessions/{id}/confirm` `{ "confirm_id": str, "approve": bool }` → `{"ok": true}`
+  - **工具结果截断**（`gs_openapi.agent.core.fit_tool_output`，预算常量 `TOOL_RESULT_BUDGET = 20000` 字符，按 `json.dumps(ensure_ascii=False)` 计）：未超预算原样不动。超预算时按结构截断，结果永远是合法 JSON：
+    1. 在结果里找序列化后最大的列表（父节点是对象，或结果本身就是列表），从尾部删条目直到放得下；在该列表所在的对象上加 `"_truncated": {"field": <列表键名>, "kept": N, "total": M, "unit": "items"}`。结果本身是列表时包成 `{"_truncated": {"field": "items", ...}, "items": [...]}`。
+    2. 某个列表连 1 条都放不下（例如唯一的父条目本身就超预算）就跳过它，改截下一个最大的列表（通常是它里面的列表）；截完仍超预算就继续找下一个。已带 `_truncated` 的对象不再截它的其它列表。
+    3. 所有候选列表都放不下 1 条时，才退回字符截断（见 4）。
+    4. 字符截断（没有列表，例如单个巨大字符串；或第 3 条）：`{"_truncated": {"field": "text", "kept": K, "total": T, "unit": "chars"}, "text": <前 K 个字符>}`，结果是字符串时 `text` 取它的前缀，否则取 `json.dumps(结果)` 的前缀；`kept` / `total` 按字符计。
+    - 规则通用，不按工具名分支。截断发生在 agent 层：REST `/tools/{name}` 与 MCP 返回完整结果。
+    - 旧会话（v0.3.0 及之前）存的是「截断字符串 + `…[truncated]`」且二次编码，客户端解析失败时按原始文本显示。
 - 错误线程（受 `X-API-Key` 保护，见 §5.2）：
   - `GET /api/v1/errors/threads?status=&category=&limit=100` → `{"items":[Thread]}`，按 `last_seen` 倒序
   - `GET /api/v1/errors/threads/{id}` → `Thread` + `"calls":[Call]`（最近 20 次失败调用明细）+ `"tool_calls_total"`/`"tool_errors_total"`（该工具全部调用与失败次数，用于算失败率）；不存在 404
@@ -177,6 +184,7 @@ class AgentSession:  # 内存态，可序列化
     system_prompt: str | None  # 会话首轮由 build_system_prompt() 生成并固定，不对外序列化
     title: str | None; updated_at: float
     errors: list[dict]         # SSE error 事件，见 §4 GET session
+    confirmations: list[dict]  # confirm_required 及其 decision，见 §4 GET session
 class SessionStore(Protocol):
     async def create(title=None) -> AgentSession
     async def get(session_id) -> AgentSession | None   # SQLite 实现每次返回新对象
@@ -217,7 +225,8 @@ class LLMProvider(Protocol):
 ### 5.2 本地持久化（`gs_openapi.store`，stdlib `sqlite3`）
 
 - 库文件 `$SAODI_DATA_DIR/saodi.sqlite`（默认 `~/.saodi/saodi.sqlite`），WAL + `synchronous=NORMAL` + `busy_timeout=5000`；所有读写经 `asyncio.to_thread`，不阻塞事件循环与 SSE。
-- 表：`sessions`（id、title、system_prompt、messages JSON、errors JSON、message_count、created_at、updated_at）；`tool_calls`；`error_threads`；`error_thread_sns`（线程 × 去重 SN）。`PRAGMA user_version` 记 schema 版本。
+- 表：`sessions`（id、title、system_prompt、messages JSON、errors JSON、confirmations JSON、message_count、created_at、updated_at）；`tool_calls`；`error_threads`；`error_thread_sns`（线程 × 去重 SN）。`PRAGMA user_version` 记 schema 版本（当前 2）。
+- 迁移：打开库时对照 `PRAGMA table_info` 补缺失列（v2 新增 `sessions.confirmations TEXT NOT NULL DEFAULT '[]'`），可重复执行；旧行读出为空列表。
 - **工具调用日志**：HTTP Server、MCP stdio、`saodi` CLI 启动时各自注册同一个观察者（§3），因此 Agent 内调用、REST（`/tools/{name}` 与友好路由）、MCP 调用都在 `registry.invoke` 这一处记录。来源：Agent 在 `call_context("agent", session_id)` 内执行工具；HTTP 中间件设 `rest`；MCP 设 `mcp`。
   - 每次调用一行：时间、来源、session_id、tool、args（**递归脱敏**：键名含 `token/secret/key/password/authorization` 的值 → `***`，整体截 4KB）、robot_sn（从 `robot_sn`/`robot_sn_list` 提取）、耗时、`ok`/`error`、上游 HTTP 状态、上游业务 code、msg、traceId、endpoint、异常类型。成功也记（算失败率），**从不存响应体**。
   - 错误类别 `error_class`：`upstream`（`GausiumAPIError`）、`input`（`ToolInputError` / 未知工具）、`response_model`（handler 内 pydantic `ValidationError`，即上游响应与本地模型不一致）、`exception`（其余）。
@@ -240,7 +249,7 @@ class LLMProvider(Protocol):
 ## 6. H5（`h5/`，Vue 3 + Vite + TypeScript + Vant 4）
 
 - 构建产物输出到 `src/gs_openapi/server/static/`（`vite.config.ts` 的 `build.outDir`，`base: './'`）。产物纳入 wheel（`pyproject` 的 `[tool.hatch.build.targets.wheel]` 不需改，因为在包目录内）。
-- 页面（底部 Tabbar）：`/chat` 扫地僧聊天（SSE 流式、工具调用折叠卡片、confirm_required 弹确认按钮）、`/robots` 机器人列表（状态卡：在线、电量、工作状态名、当前地图）、`/robots/:sn` 详情（地图列表+画布图、能力、任务定义、快捷操作 开始/暂停/继续/停止/回充 带确认弹窗、最近报告）、`/settings`（API Base、API Key 保存到 localStorage）。
+- 页面（底部 Tabbar）：`/chat` 扫地僧聊天（SSE 流式、工具调用折叠卡片 + 结果卡片、confirm_required 渲染为执行流水线卡；历史回放按 `confirmations` 复原同一张卡，被拒绝的显示「已拒绝」而不是失败；带 `_truncated` 的结果在卡片下注明「共 M 条，显示前 N 条」）、`/robots` 机器人列表（状态卡：在线、电量、工作状态名、当前地图）、`/robots/:sn` 详情（地图列表+画布图、能力、任务定义、快捷操作 开始/暂停/继续/停止/回充 带确认弹窗、最近报告）、`/settings`（API Base、API Key 保存到 localStorage）。
 - 与后端通信：`fetch`；SSE 用 `fetch` + `ReadableStream` 逐行解析 `data:`。
 - 开发：`npm run dev` 通过 Vite proxy 转发 `/api` 到 `http://127.0.0.1:8000`。
 
@@ -250,6 +259,6 @@ Agent Skill（Claude Code / Codex / WorkBuddy 通用格式：YAML frontmatter `n
 
 ## 8. 版本与兼容
 
-- 版本 `0.3.0`（契约自 0.2.0 起向后兼容：新增工具、字段与 CLI 子命令，未删除任何接口）。V3 为默认工具集；旧版工具保留在 `gs_openapi/mcp/legacy_tools.py`，通过 `GS_ENABLE_LEGACY_TOOLS=1` 注册（名称加 `legacy_` 前缀），避免与 V3 工具名冲突。
+- 版本 `0.4.0`（契约自 0.2.0 起向后兼容，未删除任何接口。0.4.0 只做增量：会话 JSON 新增 `confirmations`，SSE `confirm_required` 新增 `tool_use_id`，超预算的工具结果带 `_truncated` 元数据且永远是合法 JSON；本地库 schema 升到 v2，打开时自动迁移（§5.2），旧库与旧会话照常可读）。V3 为默认工具集；旧版工具保留在 `gs_openapi/mcp/legacy_tools.py`，通过 `GS_ENABLE_LEGACY_TOOLS=1` 注册（名称加 `legacy_` 前缀），避免与 V3 工具名冲突。
 - `python -m gs_openapi.main` / `mcp-gs-robot` 仍为 MCP stdio 入口。
-- Agent 改名（Pi Agent → 扫地僧 / Saodi）的兼容层保留一个版本：`pi-agent` 命令、`PiAgent` 类别名、`PI_AGENT_*` 环境变量回落（见 §2、§5）。`GET /api/v1/health` 字段不变（`agent_provider` 语义不变）。
+- Agent 改名（Pi Agent → 扫地僧 / Saodi）的兼容层在 0.4.0 仍保留，移除推迟到 0.5.0：`pi-agent` 命令、`PiAgent` 类别名、`PI_AGENT_*` 环境变量回落（见 §2、§5）。`GET /api/v1/health` 字段不变（`agent_provider` 语义不变）。

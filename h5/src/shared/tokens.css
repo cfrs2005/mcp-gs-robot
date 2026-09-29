@@ -1,0 +1,111 @@
+/* Saodi design tokens: the only place raw colors, radii, shadows and type sizes live.
+   Imported by main.ts after Vant's CSS so the --van-* overrides win. */
+:root {
+  /* brand / ink */
+  --sd-primary: #2b6ef6;
+  --sd-primary-strong: #1d58d8;
+  --sd-primary-soft: #e9f1ff;
+  --sd-primary-softer: #f3f7ff;
+  --sd-primary-line: #cfe0ff;
+  --sd-on-primary: #ffffff;
+  --sd-ink: #111c2d;
+  --sd-ink-2: #3a4a60;
+  --sd-muted: #7a879a;
+  --sd-faint: #a7b2c2;
+  --sd-mark-shell: #1b2433;
+
+  /* status (always paired with a label or icon, never color alone) */
+  --sd-success: #16a765;
+  --sd-success-soft: #e5f7ee;
+  --sd-warning: #d98a0b;
+  --sd-warning-soft: #fff6e6;
+  --sd-warning-line: #f4d9a6;
+  --sd-danger: #d9423e;
+  --sd-danger-soft: #fdeeee;
+
+  /* surfaces */
+  --sd-bg: #f2f6fc;
+  --sd-bg-grad: linear-gradient(180deg, #eaf2ff 0%, #f2f6fc 320px);
+  --sd-surface: #ffffff;
+  --sd-surface-2: #f6f9fe;
+  --sd-line: #e4ebf5;
+  --sd-line-strong: #d3ddeb;
+  --sd-code-bg: #eef3fa;
+  --sd-code-block: #16263b;
+  --sd-code-ink: #e4edf8;
+  --sd-hero-grad: linear-gradient(145deg, #173a73 0%, #2b6ef6 62%, #6ea4ff 100%);
+  --sd-chart-bar: #b9d1ff;
+  --sd-chart-grid: #e8eef7;
+
+  /* radius */
+  --sd-r-xs: 6px;
+  --sd-r-sm: 9px;
+  --sd-r-md: 13px;
+  --sd-r-lg: 18px;
+  --sd-r-xl: 24px;
+  --sd-r-pill: 999px;
+
+  /* elevation */
+  --sd-shadow-1: 0 1px 2px rgba(22, 52, 104, .05), 0 4px 14px rgba(22, 62, 128, .06);
+  --sd-shadow-2: 0 2px 6px rgba(22, 52, 104, .06), 0 12px 32px rgba(30, 72, 150, .10);
+  --sd-shadow-primary: 0 6px 16px rgba(43, 110, 246, .32);
+  --sd-shadow-up: 0 -6px 24px rgba(30, 72, 150, .08);
+  --sd-glow: rgba(255, 255, 255, .22);
+
+  /* type scale */
+  --sd-fs-2xs: 11px;
+  --sd-fs-xs: 12px;
+  --sd-fs-sm: 13px;
+  --sd-fs-md: 15px;
+  --sd-fs-lg: 17px;
+  --sd-fs-xl: 20px;
+  --sd-fs-2xl: 26px;
+  --sd-font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'PingFang SC', 'Helvetica Neue', 'Microsoft YaHei', sans-serif;
+  --sd-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* spacing */
+  --sd-s-1: 4px;
+  --sd-s-2: 8px;
+  --sd-s-3: 12px;
+  --sd-s-4: 16px;
+  --sd-s-5: 20px;
+  --sd-s-6: 28px;
+
+  /* Vant theme */
+  --van-primary-color: var(--sd-primary);
+  --van-success-color: var(--sd-success);
+  --van-danger-color: var(--sd-danger);
+  --van-warning-color: var(--sd-warning);
+  --van-text-color: var(--sd-ink);
+  --van-text-color-2: var(--sd-muted);
+  --van-text-color-3: var(--sd-faint);
+  --van-background: var(--sd-bg);
+  --van-background-2: var(--sd-surface);
+  --van-border-color: var(--sd-line);
+  --van-active-color: var(--sd-surface-2);
+  --van-radius-sm: var(--sd-r-xs);
+  --van-radius-md: var(--sd-r-sm);
+  --van-radius-lg: var(--sd-r-md);
+  --van-font-family: var(--sd-font);
+  --van-button-radius: var(--sd-r-sm);
+  --van-button-small-height: 32px;
+  --van-button-small-padding: 0 12px;
+  --van-tag-radius: var(--sd-r-xs);
+  --van-tag-padding: 1px 7px;
+  --van-progress-color: var(--sd-primary);
+  --van-progress-background: var(--sd-line);
+  --van-tabbar-height: 56px;
+  --van-tabbar-item-active-color: var(--sd-primary);
+  --van-tabbar-item-text-color: var(--sd-muted);
+  --van-tabbar-item-icon-size: 23px;
+  --van-tabs-bottom-bar-color: var(--sd-primary);
+  --van-tabs-bottom-bar-width: 28px;
+  --van-tab-active-text-color: var(--sd-primary);
+  --van-tab-text-color: var(--sd-muted);
+  --van-tabs-nav-background: transparent;
+  --van-cell-group-inset-radius: var(--sd-r-md);
+  --van-cell-group-inset-padding: 0;
+  --van-dialog-radius: var(--sd-r-lg);
+  --van-popup-round-radius: var(--sd-r-xl);
+  --van-search-background: transparent;
+}
