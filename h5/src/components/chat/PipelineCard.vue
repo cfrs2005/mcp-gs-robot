@@ -56,6 +56,8 @@ const overall = computed<{ tone: 'wait' | 'ok' | 'fail' | 'run' | 'off'; label: 
   if (s === 'ok') return { tone: 'ok', label: 'pipeline.accepted' }
   return { tone: 'run', label: 'pipeline.running' }
 })
+// Title and the corner tag come from the same `overall` state (live and replay alike).
+const title = computed(() => t('pipeline.title', { state: t(overall.value.label), name: props.confirm.name }))
 </script>
 
 <template>
@@ -67,7 +69,7 @@ const overall = computed<{ tone: 'wait' | 'ok' | 'fail' | 'run' | 'off'; label: 
         <svg v-else viewBox="0 0 24 24"><path d="M12 7v5l3 2" /><circle cx="12" cy="12" r="8" /></svg>
       </span>
       <div class="titles">
-        <strong>{{ t('chat.confirmTitle', { name: confirm.name }) }}</strong>
+        <strong>{{ title }}</strong>
         <p class="summary">{{ confirm.summary }}</p>
       </div>
       <span class="state">{{ t(overall.label) }}</span>
@@ -79,9 +81,7 @@ const overall = computed<{ tone: 'wait' | 'ok' | 'fail' | 'run' | 'off'; label: 
       </li>
     </ol>
     <ToolCallCard :name="confirm.name" :input="confirm.input" />
-    <div v-if="confirm.expired" class="answered">{{ t('pipeline.expired') }}</div>
-    <div v-else-if="confirm.answered !== undefined" class="answered">{{ confirm.answered ? t('chat.confirmed') : t('chat.cancelled') }}</div>
-    <div v-else class="actions">
+    <div v-if="confirm.answered === undefined && !confirm.expired" class="actions">
       <Button size="small" type="primary" :loading="confirm.pending" @click="emit('respond', true)">{{ t('chat.approve') }}</Button>
       <Button size="small" :disabled="confirm.pending" @click="emit('respond', false)">{{ t('chat.reject') }}</Button>
     </div>
@@ -121,7 +121,6 @@ const overall = computed<{ tone: 'wait' | 'ok' | 'fail' | 'run' | 'off'; label: 
 .step-text b { font-size: var(--sd-fs-xs); color: var(--sd-ink); }
 .step-text small { font-size: var(--sd-fs-2xs); color: var(--sd-muted); overflow-wrap: anywhere; }
 .skip .step-text b, .idle .step-text b, .no .step-text b { color: var(--sd-muted); }
-.answered { margin-top: 10px; color: var(--sd-muted); }
 .actions { display: flex; gap: 10px; margin-top: 12px; }
 .pipeline :deep(.dot) { display: none; }
 </style>
