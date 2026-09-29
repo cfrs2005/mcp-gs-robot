@@ -1,50 +1,50 @@
 <div align="center">
 
-# 🤖 mcp-gs-robot
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/logo-dark.svg">
+  <img alt="Saodi" src="https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/logo.svg" width="320">
+</picture>
 
-**Talk to your Gausium cleaning robots — from Claude, Cursor, a terminal, or your phone.**
+**An open-source ops agent for Gausium cleaning robots — MCP server, REST API, CLI and mobile web, on OpenAPI V3.**
 
-[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/downloads/)
+<sub>package <code>mcp-gs-robot</code> · <code>pip install mcp-gs-robot</code></sub>
+
 [![PyPI](https://img.shields.io/pypi/v/mcp-gs-robot.svg)](https://pypi.org/project/mcp-gs-robot/)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/cfrs2005/mcp-gs-robot/blob/main/LICENSE)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/downloads/)
 [![CI](https://github.com/cfrs2005/mcp-gs-robot/actions/workflows/ci.yml/badge.svg)](https://github.com/cfrs2005/mcp-gs-robot/actions/workflows/ci.yml)
-[![MCP](https://img.shields.io/badge/MCP-Compatible-purple.svg)](https://modelcontextprotocol.io)
-[![OpenAPI V3](https://img.shields.io/badge/Gausium_OpenAPI-V3-orange.svg)](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/Overview)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/cfrs2005/mcp-gs-robot/blob/main/LICENSE)
 
-MCP server · HTTP/REST server · Saodi 扫地僧 agent (CLI + H5) · Agent Skill<br>
-one codebase, one tool registry, built on Gausium OpenAPI V3
-
-[5-minute start](#-5-minute-quick-start) · [Let your AI agent set it up](#-let-your-ai-agent-set-it-up) · [Safety](#-safety-model) · [Cognition & memory](#-saodis-cognition-and-memory) · [Tools](#-tools) · [HTTP API & H5](#-http-api--h5) · [Configuration](#-configuration) · [Troubleshooting](#-troubleshooting) · [中文文档](https://github.com/cfrs2005/mcp-gs-robot/blob/main/README_CN.md)
+[5-minute start](#5-minute-quick-start) · [Let your AI agent set it up](#let-your-ai-agent-set-it-up) · [Safety](#safety-model) · [Cognition & memory](#saodis-cognition-and-memory) · [Tools](#tools) · [HTTP API & H5](#http-api--h5) · [Configuration](#configuration) · [Troubleshooting](#troubleshooting) · [中文文档](https://github.com/cfrs2005/mcp-gs-robot/blob/main/README_CN.md)
 
 </div>
 
 > ⚠️ **Disclaimer** — This is an **unofficial, open-source project for personal research and learning.** Not affiliated with, endorsed by, or supported by Gausium (高仙). Use at your own risk — robot commands move physical machines, so test on simulators or idle robots first. Built solely from the public [Gausium OpenAPI V3 documentation](https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/Overview).
 
-![H5 app: Saodi chat, fleet, maps and reports](https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/h5-showcase.png)
+![H5 app: Saodi chat, history, fleet, maps and reports](https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/h5-showcase.png)
 
 <sub>Screenshots of the built-in H5 app, running against a mock upstream with demo data.</sub>
 
-## 🌟 What is this?
+## What is this?
 
 `mcp-gs-robot` wraps the Gausium OpenAPI **V3** (robot status, maps, combined tasks, schedules, commands, reports) in a typed Python client, and exposes it through four entry points that share **one tool registry**:
 
-| | Entry point | Command | Use it when… |
-|---|---|---|---|
-| 🔌 | **MCP Server** (stdio) | `mcp-gs-robot` | Claude Code, Claude Desktop, Cursor, Cherry Studio or any MCP client should operate robots |
-| 🌐 | **HTTP Server** (FastAPI) | `gs-robot-server` | You want REST endpoints, Swagger and the built-in **H5 mobile app** |
-| 🧠 | **Saodi 扫地僧** (CLI + H5 chat) | `saodi` | You want a chat assistant that plans and runs robot operations behind confirmation gates, and remembers what it learns |
-| 📚 | **Agent Skill** | `skills/gs-robot/` | You want to teach Claude Code / Codex / WorkBuddy the correct operating procedure |
+| Entry point | Command | Use it when… |
+|---|---|---|
+| **MCP Server** (stdio) | `mcp-gs-robot` | Claude Code, Claude Desktop, Cursor, Cherry Studio or any MCP client should operate robots |
+| **HTTP Server** (FastAPI) | `gs-robot-server` | You want REST endpoints, Swagger and the built-in **H5 mobile app** |
+| **Saodi 扫地僧** (CLI + H5 chat) | `saodi` | You want a chat assistant that plans and runs robot operations behind confirmation gates, and remembers what it learns |
+| **Agent Skill** | `skills/gs-robot/` | You want to teach Claude Code / Codex / WorkBuddy the correct operating procedure |
 
 ![Architecture](https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/architecture.svg)
 
 - **42 tools** — all 36 V3 business endpoints, the legacy robot list, local lookups (`describe_work_state`, `lookup_error_code`), local memory (`remember`) and workflow helpers (`run_cleaning_task`, `wait_for_command`)
-- **Typed & tested** — pydantic v2 models, envelope unwrapping, six-digit error codes surfaced as `GausiumAPIError`; offline test suite with a mock HTTP transport
+- **Typed & tested** — pydantic v2 models, envelope unwrapping, upstream errors (6-digit platform codes, 10-digit robot task codes) surfaced as `GausiumAPIError`; offline test suite with a mock HTTP transport
 - **Safety first** — every tool that moves a robot or writes data is flagged `dangerous` and needs explicit approval in the Agent, CLI and H5
 - **Gets smarter with use** — sessions, tool calls and error threads are kept in a local SQLite file; verified lessons go into a private memory file that every new session loads
 - **Provider-agnostic Agent** — Anthropic (default, `claude-opus-5`) or any OpenAI-compatible endpoint (DeepSeek, vLLM, Ollama…); it answers in the language you write in
 - **Built strictly on the official docs** — [`docs/apis.md`](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/apis.md) maps each endpoint to its official page; the full contract is [`docs/ARCHITECTURE_V3.md`](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/ARCHITECTURE_V3.md)
 
-## 🚀 5-minute quick start
+## 5-minute quick start
 
 **Prerequisites**: Python 3.12+, [uv](https://docs.astral.sh/uv/), and Gausium open-platform credentials (an application plus an AccessKey from the [Gausium Developer Center](https://developer.gs-robot.com/)). Node 18+ is only needed if you want to rebuild the H5 app — a production build is already committed.
 
@@ -73,16 +73,16 @@ uv sync --extra dev
 
 | Entry point | Command | Then |
 |---|---|---|
-| 🔌 MCP (stdio) | `claude mcp add gs-robot -- uv --directory "$PWD" run mcp-gs-robot` | Ask your MCP client *"List my robots and show battery and work state"* |
-| 🌐 REST + H5 | `uv run gs-robot-server` | Open `http://localhost:8000/` → **Settings** → paste `GS_SERVER_API_KEY` → Save. Swagger: `http://localhost:8000/docs` |
-| 🧠 Saodi CLI | `uv run saodi` | Chat in the terminal; dangerous steps ask `[y/N]` |
-| 📚 Skill | `cp -r skills/gs-robot ~/.claude/skills/gs-robot` | Also mount the MCP server (row 1); the skill teaches the procedure |
+| MCP (stdio) | `claude mcp add gs-robot -- uv --directory "$PWD" run mcp-gs-robot` | Ask your MCP client *"List my robots and show battery and work state"* |
+| REST + H5 | `uv run gs-robot-server` | Open `http://localhost:8000/` → **Settings** → paste `GS_SERVER_API_KEY` → Save. Swagger: `http://localhost:8000/docs` |
+| Saodi CLI | `uv run saodi` | Chat in the terminal; dangerous steps ask `[y/N]` |
+| Skill | `cp -r skills/gs-robot ~/.claude/skills/gs-robot` | Also mount the MCP server (row 1); the skill teaches the procedure |
 
 Check that the server is up: `curl -s http://127.0.0.1:8000/api/v1/health` → `{"status":"ok", …, "auth_required":true}`. `auth_required: true` means the H5 needs the key before anything else works.
 
 `uv run saodi --show-context` prints Saodi's full system prompt without any key — a quick way to confirm the install.
 
-## 🤝 Let your AI agent set it up
+## Let your AI agent set it up
 
 Paste this into Claude Code, Codex or Cursor (agent mode). It installs, configures, tests and smoke-tests the project **with read-only calls only**. The same prompt, with a Chinese version, is in [`docs/AGENT_SETUP_PROMPT.md`](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/AGENT_SETUP_PROMPT.md).
 
@@ -131,10 +131,10 @@ Steps
     online / offline, and any error as `<code> <msg>`. Leave out secrets and trace IDs.
 ```
 
-## 🧭 Entry points in detail
+## Entry points in detail
 
 <details open>
-<summary><b>🔌 MCP Server — Claude Code / Claude Desktop / Cursor</b></summary>
+<summary><b>MCP Server — Claude Code / Claude Desktop / Cursor</b></summary>
 
 From a clone (reads `.env` in the repository):
 
@@ -160,7 +160,7 @@ Transport is **stdio**. MCP hosts run tools directly, so keep your host's own to
 </details>
 
 <details>
-<summary><b>🌐 HTTP Server + H5 mobile app</b></summary>
+<summary><b>HTTP Server + H5 mobile app</b></summary>
 
 ```bash
 uv run gs-robot-server              # http://0.0.0.0:8000 (GS_SERVER_HOST / GS_SERVER_PORT)
@@ -173,7 +173,7 @@ uv run gs-robot-server              # http://0.0.0.0:8000 (GS_SERVER_HOST / GS_S
 </details>
 
 <details>
-<summary><b>🧠 Saodi (扫地僧) — chat in the terminal</b></summary>
+<summary><b>Saodi (扫地僧) — chat in the terminal</b></summary>
 
 ```bash
 uv run saodi                                   # provider and keys from .env
@@ -203,12 +203,12 @@ uv run saodi errors show <id>                  # one thread with its recent call
 uv run saodi errors promote <id>               # turn a thread into a memory lesson
 ```
 
-> Renamed from *Pi Agent* after 0.2.0: the old `pi-agent` command and `PI_AGENT_*` variables still work for one release and print a deprecation warning.
+> Renamed after 0.2.0: the old `pi-agent` command and `PI_AGENT_*` variables still work for one release and print a deprecation warning.
 
 </details>
 
 <details>
-<summary><b>📚 Agent Skill — Claude Code / Codex / WorkBuddy</b></summary>
+<summary><b>Agent Skill — Claude Code / Codex / WorkBuddy</b></summary>
 
 ```bash
 cp -r skills/gs-robot ~/.claude/skills/gs-robot     # Claude Code (user scope)
@@ -219,7 +219,7 @@ The skill encodes the safe operating procedure (status → capabilities → reso
 
 </details>
 
-## 🔒 Safety model
+## Safety model
 
 Tools that move a robot or write data are registered with `dangerous=True`. Saodi never runs them on its own: it emits `confirm_required` and waits — `[y/N]` in the terminal, buttons in the H5, `POST …/confirm` over REST. A rejected call never reaches the robot (or the memory file).
 
@@ -234,7 +234,7 @@ For the common "clean these areas" case, `run_cleaning_task` bundles the whole p
 
 ![run_cleaning_task workflow](https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/cleaning-workflow.svg)
 
-## 🧠 Saodi's cognition and memory
+## Saodi's cognition and memory
 
 Every new session gets one system prompt, assembled in this order and fixed for the session (`saodi --show-context` prints it):
 
@@ -248,6 +248,8 @@ Every new session gets one system prompt, assembled in this order and fixed for 
 
 The official error-code table (`skills/gs-robot/references/error-codes.md`, ~23 KB) is **not** loaded into every prompt: Saodi calls the read-only `lookup_error_code` tool when it meets a code it does not know, and is told not to guess. The whole prompt is capped by `SAODI_CONTEXT_MAX_CHARS` (default 60000); when it overflows, the **oldest local memory entries are dropped first** and a WARNING says how many.
 
+![Saodi memory loop: load stack and learning loop](https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/memory-loop.svg)
+
 **How it gets smarter**
 
 1. **`remember` in chat.** When Saodi learns something verified and reusable — what an error code means in practice, a robot's lasting quirk, your preferences — it proposes `remember(lesson)`. That writes a file, so it asks for confirmation like any dangerous tool. On approval it appends `- [YYYY-MM-DD] lesson` to `memory.md`; duplicates are skipped and anything that looks like a credential (token / secret / Bearer / long random strings) is refused. It does not remember one-off data (today's battery, a single snapshot) or guesses. The next session loads the new line.
@@ -255,7 +257,7 @@ The official error-code table (`skills/gs-robot/references/error-codes.md`, ~23 
 3. **By hand.** `saodi memory add "…"` or `saodi memory edit`.
 4. **Back to everyone.** If a lesson is general, propose it for `experience.md` in a pull request. Writing rule: general behaviour and how to handle it only — **no robot SNs, trace IDs, request IDs, accounts, credentials, customer or site names**.
 
-## 🧰 Tools
+## Tools
 
 All 42 tools are defined once in `gs_openapi/tools/` and exposed identically to MCP, the Agent and REST (`POST /api/v1/tools/{name}`). Inputs are `snake_case`; the registry maps them to V3 `camelCase`. **⚠️ = dangerous.**
 
@@ -336,7 +338,7 @@ Regenerate the list from the registry:
 uv run python -c "from gs_openapi.tools.registry import REGISTRY; [print(t.category, t.name, '⚠️' if t.dangerous else '') for t in REGISTRY.values()]"
 ```
 
-## 🌐 HTTP API & H5
+## HTTP API & H5
 
 Base prefix `/api/v1`. `GET /health` is public; everything else requires `X-API-Key` when `GS_SERVER_API_KEY` is set. Errors share one envelope, `{"error": {"code", "message", "trace_id"}}`; upstream V3 errors become HTTP 502 carrying the business code.
 
@@ -365,13 +367,13 @@ curl -N -XPOST -H "X-API-Key: $KEY" -H 'Content-Type: application/json' \
 
 **H5** (`h5/`, Vue 3 + Vite + Vant): **Chat** (streaming Markdown, HTML preview, a tool-call timeline, confirm buttons and a history drawer), **Robots** (fleet list with online / offline / unreachable states, battery and work state), **Detail** (maps & canvas, task definitions, quick actions, reports; offline robots get a banner instead of errors) and **Settings** (API base, API key, language). When the server needs a key and none is saved, the H5 sends you to Settings. The production build is committed to `src/gs_openapi/server/static/`, so `pip install` ships it.
 
-### 🌍 Languages
+### Languages
 
 - **H5**: English and 中文, switchable under Settings → Language (the first visit follows the browser language).
 - **Saodi**: replies in the language you write in; field names such as `workState` or `cmdStatus` stay in English.
 - **Docs**: English is the primary language; [README_CN.md](https://github.com/cfrs2005/mcp-gs-robot/blob/main/README_CN.md) mirrors this file in Chinese. Tool descriptions are bilingual.
 
-## 🔧 Configuration
+## Configuration
 
 | Variable | Default | Description |
 |---|---|---|
@@ -401,7 +403,7 @@ Deprecated names, read for one more release when the new name is unset (each pri
 | `SAODI_MAX_TURNS` | `PI_AGENT_MAX_TURNS` |
 | `saodi` (command) | `pi-agent` |
 
-## 🩺 Troubleshooting
+## Troubleshooting
 
 | Symptom | Cause | Fix |
 |---|---|---|
@@ -413,7 +415,7 @@ Deprecated names, read for one more release when the new name is unset (each pri
 | Credentials "missing" although `.env` exists | `.env` is read from the **current working directory**; real environment variables win over it | Run commands from the directory holding `.env` (for MCP: `uv --directory <repo> run mcp-gs-robot`), or pass the variables in the MCP `env` block; check for stale exported variables with `env \| grep '^GS_'` |
 | `PI_AGENT_* is deprecated` warnings | Old variable names in `.env` | Rename them to `SAODI_*` |
 
-## 🧑‍💻 Development
+## Development
 
 ```
 src/gs_openapi/
@@ -443,7 +445,7 @@ uv build                            # wheel includes the H5 assets and the skill
 To add a V3 tool, define the input model and handler in `src/gs_openapi/tools/v3_tools.py` with `@tool(...)`; MCP, REST and the Agent pick it up automatically. Add a test and a row to the tool tables. Conventions are in [`CLAUDE.md`](https://github.com/cfrs2005/mcp-gs-robot/blob/main/CLAUDE.md); curl walkthroughs and MCP Inspector usage are in the [Testing Guide](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/TESTING_GUIDE.md).
 
 <details>
-<summary><b>🔁 Migrating from 0.1.x</b></summary>
+<summary><b>Migrating from 0.1.x</b></summary>
 
 | 0.1.x | 0.2.0+ |
 |---|---|
@@ -457,7 +459,7 @@ Old tools remain available under `legacy_*` names with `GS_ENABLE_LEGACY_TOOLS=1
 
 </details>
 
-## 📖 Documentation
+## Documentation
 
 | Document | Purpose |
 |---|---|
@@ -469,20 +471,20 @@ Old tools remain available under `legacy_*` names with `GS_ENABLE_LEGACY_TOOLS=1
 | [Skill README](https://github.com/cfrs2005/mcp-gs-robot/blob/main/skills/gs-robot/README.md) | Installing the skill in Claude Code / Codex / WorkBuddy |
 | [Changelog](https://github.com/cfrs2005/mcp-gs-robot/blob/main/CHANGELOG.md) | Release notes |
 
-## 🤝 Contributing
+## Contributing
 
 Fork, create a feature branch, `uv sync --extra dev`, make your change with tests, run `uv run pytest -q && uv run ruff check src tests`, update the tool tables if you touched the registry, and open a pull request. Experience for `experience.md` is welcome — general behaviour only, with no SNs, trace IDs, accounts, credentials or customer / site names.
 
-## 📄 License
+## License
 
 MIT — see [LICENSE](https://github.com/cfrs2005/mcp-gs-robot/blob/main/LICENSE).
 
-## ⚠️ Disclaimer
+## Disclaimer
 
 This project is an **unofficial, open-source effort for personal research and learning**, built only from Gausium's public OpenAPI V3 documentation. It is not affiliated with, endorsed by, or supported by Gausium. No warranty of any kind; you are responsible for any robot you command. Always validate on simulators or idle machines first, keep credentials out of version control, and remember that a delivered command (`cmdStatus=6`) is not a completed task.
 
 <div align="center">
 
-*Made for people who would rather ask their robots than click through consoles.* 🤖✨
+*Made for people who would rather ask their robots than click through consoles.*
 
 </div>

@@ -139,7 +139,7 @@ def to_openai_tools() -> list[dict]        # {"type":"function","function":{...}
 - Agent（会话持久化在 SQLite，后端重启后可继续对话，见 §5.2）：
   - `POST /api/v1/agent/sessions` `{ "title"?: str }`（body 可省略）→ `{"session_id": str}`
   - `GET /api/v1/agent/sessions?page=1&page_size=20&include_empty=false` → `{"items":[{"session_id","title","created_at","updated_at","message_count"}],"total","page","page_size"}`，按 `updated_at` 倒序；默认不列出还没有消息的空会话
-  - `GET /api/v1/agent/sessions/{id}` → `{"session_id","title","messages","errors","created_at","updated_at","message_count"}`。`messages` 为中立格式：`user` 的 `content` 是字符串或 `tool_result` 块数组（`tool_use_id`、`content`（JSON 文本）、`is_error`）；`assistant` 的 `content` 是块数组（`text`、`tool_use`（`id`、`name`、`input`），anthropic 还可能有 `thinking`）。`errors` 为本会话 SSE `error` 事件 `[{"message","at","after_message"}]`，`after_message` 是出错时 `messages` 的长度，用于把错误插回时间线
+  - `GET /api/v1/agent/sessions/{id}` → `{"session_id","title","messages","errors","created_at","updated_at","message_count"}`。`messages` 为中立格式：`user` 的 `content` 是字符串或 `tool_result` 块数组（`tool_use_id`、`content`（JSON 文本）、`is_error`）；`assistant` 的 `content` 是块数组（`text`、`tool_use`（`id`、`name`、`input`），anthropic 还可能有 `thinking`）。`errors` 为本会话 SSE `error` 事件 `[{"message","at","after_message","code"?}]`，`after_message` 是出错时 `messages` 的长度，用于把错误插回时间线
   - `DELETE /api/v1/agent/sessions/{id}` → `{"ok":true}`；会话运行中返回 409
   - `POST /api/v1/agent/sessions/{id}/messages` `{ "content": str }` → **SSE**（`text/event-stream`），每行 `data: <json>`，事件类型：
     - `{"type":"text_delta","text":str}`
@@ -147,7 +147,7 @@ def to_openai_tools() -> list[dict]        # {"type":"function","function":{...}
     - `{"type":"tool_result","id":str,"name":str,"output":any,"is_error":bool}`
     - `{"type":"confirm_required","confirm_id":str,"name":str,"input":dict,"summary":str}` —— 流暂停，等待确认（最长 120s，超时视为拒绝）
     - `{"type":"done","message_id":str,"usage":{...}}`
-    - `{"type":"error","message":str}`
+    - `{"type":"error","message":str,"code"?:str}` —— `message` 为英文原文；可选的 `code` 是稳定的机器可读原因，客户端据此本地化，没有 `code` 或码未知时显示 `message`（向后兼容：旧客户端忽略 `code`）。取值：`incomplete_response`（模型未返回完整消息）、`max_turns`（达到 `SAODI_MAX_TURNS`）、`provider_auth` / `provider_rate_limited` / `provider_http` / `provider_connection` / `provider_error`（LLM 后端失败）、`internal_error`（服务端异常）。用户拒绝危险操作不是 `error` 事件：该工具的 `tool_result` 为 `is_error: true`，内容是给模型看的英文说明，由模型按用户语言复述
   - `POST /api/v1/agent/sessions/{id}/confirm` `{ "confirm_id": str, "approve": bool }` → `{"ok": true}`
 - 错误线程（受 `X-API-Key` 保护，见 §5.2）：
   - `GET /api/v1/errors/threads?status=&category=&limit=100` → `{"items":[Thread]}`，按 `last_seen` 倒序

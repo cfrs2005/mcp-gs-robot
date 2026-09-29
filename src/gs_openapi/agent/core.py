@@ -59,10 +59,13 @@ def _neutral_content(content: list[dict] | dict) -> list[dict]:
 
 def _tool_content(output: Any) -> str:
     text = json.dumps(output, ensure_ascii=False, default=str)
-    return text if len(text) <= 20_000 else text[:20_000] + "…[结果已截断]"
+    return text if len(text) <= 20_000 else text[:20_000] + "…[truncated]"
 
 
-INTERRUPTED_RESULT = "上次执行被中断，结果未知"
+INTERRUPTED_RESULT = "The previous run was interrupted; the result is unknown."
+# Shown to the model (it restates it in the user's language), not to the user directly.
+NOT_APPROVED_RESULT = "The user did not approve this dangerous operation; the tool was not run."
+NOT_RUN_RESULT = "Not run."
 
 
 def close_dangling_tool_uses(messages: list[dict]) -> bool:
@@ -109,6 +112,7 @@ class SaodiAgent:
                     session.errors.append({
                         "message": event["message"], "at": time.time(),
                         "after_message": len(session.messages),
+                        **({"code": event["code"]} if event.get("code") else {}),
                     })
                 yield event
 
@@ -133,10 +137,11 @@ class SaodiAgent:
                     elif isinstance(event, MessageEnd):
                         end = event
             except Exception as exc:  # noqa: BLE001 - report provider failures as SSE errors
-                yield {"type": "error", "message": str(exc)}
+                yield {"type": "error", "message": str(exc), "code": getattr(exc, "code", "provider_error")}
                 return
             if end is None:
-                yield {"type": "error", "message": "模型未返回完整消息"}
+                yield {"type": "error", "message": "The model did not return a complete message",
+                       "code": "incomplete_response"}
                 return
             session.messages.append({"role": "assistant", "content": _neutral_content(end.assistant_content)})
             if end.stop_reason == "refusal" or not uses:
@@ -159,7 +164,7 @@ class SaodiAgent:
                     if not await self.confirm_gate.ask(
                         session.session_id, confirm_id, tool.name, tool.input, summary,
                     ):
-                        denied[tool.id] = "用户未批准危险操作，工具未执行。"
+                        denied[tool.id] = NOT_APPROVED_RESULT
                         continue
                 approved.append(tool)
             results = dict(zip(
@@ -168,7 +173,7 @@ class SaodiAgent:
             ))
             blocks = []
             for tool in uses:
-                output, is_error = results.get(tool.id, (denied.get(tool.id, "未执行"), True))
+                output, is_error = results.get(tool.id, (denied.get(tool.id, NOT_RUN_RESULT), True))
                 safe_output = _tool_content(output)
                 if len(safe_output) > 20_000:
                     output = safe_output
@@ -182,7 +187,8 @@ class SaodiAgent:
                 })
             session.messages.append({"role": "user", "content": blocks})
             if turn == self.max_turns - 1:
-                yield {"type": "error", "message": "已达到最大工具轮数"}
+                yield {"type": "error", "message": "Reached the maximum number of tool turns",
+                       "code": "max_turns"}
                 return
 
 

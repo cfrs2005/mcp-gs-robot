@@ -7,7 +7,7 @@ export type AgentEvent =
   | { type: 'tool_result'; id: string; name: string; output: unknown; is_error: boolean }
   | { type: 'confirm_required'; confirm_id: string; name: string; input: Record<string, unknown>; summary: string }
   | { type: 'done'; message_id: string; usage: Record<string, unknown> }
-  | { type: 'error'; message: string }
+  | { type: 'error'; message: string; code?: string }
 
 export async function streamAgentMessage(
   sessionId: string,

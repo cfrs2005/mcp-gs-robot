@@ -1,50 +1,52 @@
 <div align="center">
 
-# 🤖 mcp-gs-robot
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/logo-dark.svg">
+  <img alt="Saodi 扫地僧" src="https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/logo.svg" width="320">
+</picture>
 
-**用自然语言指挥高仙清洁机器人 —— 在 Claude、Cursor、终端，或者手机上。**
+<b>扫地僧</b>
 
-[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/downloads/)
+**面向高仙清洁机器人的开源运维 Agent —— MCP 服务、REST API、命令行与移动端，基于 OpenAPI V3。**
+
+<sub>包名 <code>mcp-gs-robot</code> · <code>pip install mcp-gs-robot</code></sub>
+
 [![PyPI](https://img.shields.io/pypi/v/mcp-gs-robot.svg)](https://pypi.org/project/mcp-gs-robot/)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/cfrs2005/mcp-gs-robot/blob/main/LICENSE)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-blue.svg)](https://www.python.org/downloads/)
 [![CI](https://github.com/cfrs2005/mcp-gs-robot/actions/workflows/ci.yml/badge.svg)](https://github.com/cfrs2005/mcp-gs-robot/actions/workflows/ci.yml)
-[![MCP](https://img.shields.io/badge/MCP-Compatible-purple.svg)](https://modelcontextprotocol.io)
-[![OpenAPI V3](https://img.shields.io/badge/高仙_OpenAPI-V3-orange.svg)](https://developer.gs-robot.com/v3docs/zh_CN/OpenAPI%20V3/Overview)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/cfrs2005/mcp-gs-robot/blob/main/LICENSE)
 
-MCP 服务 · HTTP/REST 服务 · 扫地僧 Saodi（CLI + H5）· Agent Skill<br>
-一套代码、一个工具注册表，基于高仙 OpenAPI V3
-
-[5 分钟上手](#-5-分钟快速启动) · [让 AI Agent 帮你装](#-让-ai-agent-帮你装) · [安全机制](#-安全机制) · [认知与记忆](#-扫地僧的认知与记忆) · [工具](#-工具) · [HTTP API 与 H5](#-http-api-与-h5) · [配置](#-配置) · [排障](#-排障) · [English](https://github.com/cfrs2005/mcp-gs-robot/blob/main/README.md)
+[5 分钟上手](#5-分钟快速启动) · [让 AI Agent 帮你装](#让-ai-agent-帮你装) · [安全机制](#安全机制) · [认知与记忆](#扫地僧的认知与记忆) · [工具](#工具) · [HTTP API 与 H5](#http-api-与-h5) · [配置](#配置) · [排障](#排障) · [English](https://github.com/cfrs2005/mcp-gs-robot/blob/main/README.md)
 
 </div>
 
 > ⚠️ **免责声明** —— 本项目是**非官方、个人研究学习用途的开源项目**，与高仙（Gausium）官方无任何隶属、认可或支持关系，使用风险自负。机器人指令会让实体机器移动，请先在模拟器或空闲机器人上测试。项目仅依据公开的[高仙 OpenAPI V3 文档](https://developer.gs-robot.com/v3docs/zh_CN/OpenAPI%20V3/Overview)实现。
 
-![H5 页面：扫地僧对话、机器人列表、地图与报告](https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/h5-showcase_cn.png)
+![H5 页面：扫地僧对话、历史会话、机器人列表、地图与报告](https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/h5-showcase_cn.png)
 
 <sub>内置 H5 页面截图，连接 mock 上游，数据为演示数据。</sub>
 
-## 🌟 这是什么？
+## 这是什么？
 
 `mcp-gs-robot` 把高仙 OpenAPI **V3**（机器人状态、地图、组合任务、排班、指令、报告）封装成带类型的 Python 客户端，并通过四个入口对外提供，四个入口共用**同一个工具注册表**：
 
-| | 入口 | 命令 | 适用场景 |
-|---|---|---|---|
-| 🔌 | **MCP 服务**（stdio） | `mcp-gs-robot` | 让 Claude Code、Claude Desktop、Cursor、Cherry Studio 等 MCP 客户端直接操作机器人 |
-| 🌐 | **HTTP 服务**（FastAPI） | `gs-robot-server` | 需要 REST 接口、Swagger，以及内置的 **H5 移动端页面** |
-| 🧠 | **扫地僧 Saodi**（CLI + H5 对话） | `saodi` | 需要一个会规划、会执行、执行前会确认、还能记住经验的机器人运维助手 |
-| 📚 | **Agent Skill** | `skills/gs-robot/` | 教 Claude Code / Codex / WorkBuddy 正确的操作流程 |
+| 入口 | 命令 | 适用场景 |
+|---|---|---|
+| **MCP 服务**（stdio） | `mcp-gs-robot` | 让 Claude Code、Claude Desktop、Cursor、Cherry Studio 等 MCP 客户端直接操作机器人 |
+| **HTTP 服务**（FastAPI） | `gs-robot-server` | 需要 REST 接口、Swagger，以及内置的 **H5 移动端页面** |
+| **扫地僧 Saodi**（CLI + H5 对话） | `saodi` | 需要一个会规划、会执行、执行前会确认、还能记住经验的机器人运维助手 |
+| **Agent Skill** | `skills/gs-robot/` | 教 Claude Code / Codex / WorkBuddy 正确的操作流程 |
 
 ![架构图](https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/architecture_cn.svg)
 
 - **42 个工具**：全部 36 个 V3 业务接口、legacy 机器人列表、本地查询（`describe_work_state`、`lookup_error_code`）、本地记忆（`remember`）以及工作流工具（`run_cleaning_task`、`wait_for_command`）
-- **类型化、有测试**：pydantic v2 模型、统一信封解包、六位业务错误码映射为 `GausiumAPIError`；离线测试套件走 mock HTTP transport
+- **类型化、有测试**：pydantic v2 模型、统一信封解包、上游错误（平台码 6 位、机器人任务码 10 位）映射为 `GausiumAPIError`；离线测试套件走 mock HTTP transport
 - **安全优先**：所有会让机器人动起来或写数据的工具都标记为 `dangerous`，在 Agent、CLI、H5 中都必须明确确认
 - **越用越聪明**：会话、工具调用、错误线程保存在本地 SQLite；经证实的经验写入私有记忆文件，每个新会话都会加载
 - **模型无关的 Agent**：默认 Anthropic（`claude-opus-5`），也支持任意 OpenAI 兼容端点（DeepSeek、vLLM、Ollama……）；你用什么语言提问，它就用什么语言回答
 - **严格对照官方文档**：[`docs/apis.md`](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/apis.md) 把每个接口映射到对应官方页面；完整契约见 [`docs/ARCHITECTURE_V3.md`](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/ARCHITECTURE_V3.md)
 
-## 🚀 5 分钟快速启动
+## 5 分钟快速启动
 
 **前置条件**：Python 3.12+、[uv](https://docs.astral.sh/uv/)，以及高仙开放平台凭证（在[高仙开发者中心](https://developer.gs-robot.com/)创建应用并申请 AccessKey）。只有想重新构建 H5 时才需要 Node 18+，仓库里已经提交了生产构建。
 
@@ -73,16 +75,16 @@ uv sync --extra dev
 
 | 入口 | 命令 | 然后 |
 |---|---|---|
-| 🔌 MCP（stdio） | `claude mcp add gs-robot -- uv --directory "$PWD" run mcp-gs-robot` | 在 MCP 客户端里问：*「列出我的机器人，显示电量和工作状态」* |
-| 🌐 REST + H5 | `uv run gs-robot-server` | 打开 `http://localhost:8000/` →「设置」→ 粘贴 `GS_SERVER_API_KEY` → 保存。Swagger：`http://localhost:8000/docs` |
-| 🧠 扫地僧 CLI | `uv run saodi` | 在终端对话；危险步骤会问 `[y/N]` |
-| 📚 Skill | `cp -r skills/gs-robot ~/.claude/skills/gs-robot` | 同时挂上 MCP 服务（第 1 行）；Skill 负责教流程 |
+| MCP（stdio） | `claude mcp add gs-robot -- uv --directory "$PWD" run mcp-gs-robot` | 在 MCP 客户端里问：*「列出我的机器人，显示电量和工作状态」* |
+| REST + H5 | `uv run gs-robot-server` | 打开 `http://localhost:8000/` →「设置」→ 粘贴 `GS_SERVER_API_KEY` → 保存。Swagger：`http://localhost:8000/docs` |
+| 扫地僧 CLI | `uv run saodi` | 在终端对话；危险步骤会问 `[y/N]` |
+| Skill | `cp -r skills/gs-robot ~/.claude/skills/gs-robot` | 同时挂上 MCP 服务（第 1 行）；Skill 负责教流程 |
 
 确认服务已启动：`curl -s http://127.0.0.1:8000/api/v1/health` → `{"status":"ok", …, "auth_required":true}`。`auth_required: true` 表示 H5 必须先填 key 才能用。
 
 `uv run saodi --show-context` 不需要任何 key 就能打印扫地僧完整的系统提示，可以用来快速确认安装是否成功。
 
-## 🤝 让 AI Agent 帮你装
+## 让 AI Agent 帮你装
 
 把下面这段粘贴给 Claude Code、Codex 或 Cursor（agent 模式）。它会完成安装、配置、测试和冒烟检查，**全程只调用只读工具**。同一份提示词（附英文版）见 [`docs/AGENT_SETUP_PROMPT.md`](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/AGENT_SETUP_PROMPT.md)。
 
@@ -125,10 +127,10 @@ uv sync --extra dev
     不要包含任何密钥和 trace ID。
 ```
 
-## 🧭 各入口详解
+## 各入口详解
 
 <details open>
-<summary><b>🔌 MCP 服务 —— Claude Code / Claude Desktop / Cursor</b></summary>
+<summary><b>MCP 服务 —— Claude Code / Claude Desktop / Cursor</b></summary>
 
 从源码目录启动（读取仓库里的 `.env`）：
 
@@ -154,7 +156,7 @@ claude mcp add gs-robot -- uv --directory /path/to/mcp-gs-robot run mcp-gs-robot
 </details>
 
 <details>
-<summary><b>🌐 HTTP 服务 + H5 移动端</b></summary>
+<summary><b>HTTP 服务 + H5 移动端</b></summary>
 
 ```bash
 uv run gs-robot-server              # http://0.0.0.0:8000（GS_SERVER_HOST / GS_SERVER_PORT）
@@ -167,7 +169,7 @@ uv run gs-robot-server              # http://0.0.0.0:8000（GS_SERVER_HOST / GS_
 </details>
 
 <details>
-<summary><b>🧠 扫地僧（Saodi）—— 在终端里对话</b></summary>
+<summary><b>扫地僧（Saodi）—— 在终端里对话</b></summary>
 
 ```bash
 uv run saodi                                   # provider 和 key 来自 .env
@@ -197,12 +199,12 @@ uv run saodi errors show <id>                  # 单个线程及最近的调用
 uv run saodi errors promote <id>               # 把线程提炼为一条记忆
 ```
 
-> 0.2.0 之后由 *Pi Agent* 改名而来：旧命令 `pi-agent` 和 `PI_AGENT_*` 变量在一个版本内仍然可用，并会打印弃用提示。
+> 0.2.0 之后改名：旧命令 `pi-agent` 和 `PI_AGENT_*` 变量在一个版本内仍然可用，并会打印弃用提示。
 
 </details>
 
 <details>
-<summary><b>📚 Agent Skill —— Claude Code / Codex / WorkBuddy</b></summary>
+<summary><b>Agent Skill —— Claude Code / Codex / WorkBuddy</b></summary>
 
 ```bash
 cp -r skills/gs-robot ~/.claude/skills/gs-robot     # Claude Code（用户级）
@@ -213,7 +215,7 @@ Skill 固化了安全的操作流程（状态 → 能力 → 资源 → 任务�
 
 </details>
 
-## 🔒 安全机制
+## 安全机制
 
 会让机器人动起来或写数据的工具都以 `dangerous=True` 注册。扫地僧不会自行执行它们：先发出 `confirm_required` 然后等待 —— 终端里是 `[y/N]`，H5 里是按钮，REST 里是 `POST …/confirm`。被拒绝的调用永远不会到达机器人（或记忆文件）。
 
@@ -226,9 +228,9 @@ Skill 固化了安全的操作流程（状态 → 能力 → 资源 → 任务�
 
 常见的「清扫这几个区域」场景，`run_cleaning_task` 把整个流程打包成一次确认调用：
 
-![run_cleaning_task 流程](https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/cleaning-workflow.svg)
+![run_cleaning_task 流程](https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/cleaning-workflow_cn.svg)
 
-## 🧠 扫地僧的认知与记忆
+## 扫地僧的认知与记忆
 
 每个新会话生成一份系统提示，按下表顺序拼接，并在该会话内固定（`saodi --show-context` 可打印）：
 
@@ -242,6 +244,8 @@ Skill 固化了安全的操作流程（状态 → 能力 → 资源 → 任务�
 
 官方错误码表（`skills/gs-robot/references/error-codes.md`，约 23 KB）**不再常驻**系统提示：扫地僧遇到不认识的码时调用只读工具 `lookup_error_code`，并被要求不要猜。整个提示受 `SAODI_CONTEXT_MAX_CHARS`（默认 60000）约束；超限时**先删本地记忆里最旧的条目**，并打 WARNING 说明删了几条。
 
+![扫地僧记忆闭环：加载栈与学习闭环](https://github.com/cfrs2005/mcp-gs-robot/raw/main/docs/images/memory-loop_cn.svg)
+
 **怎么让它越用越聪明**
 
 1. **对话里 `remember`。** 扫地僧学到经证实、可复用的东西时 —— 某个错误码的真实含义、某台机器人的长期特殊行为、你的偏好 —— 会提议 `remember(lesson)`。它要写文件，所以和其他危险工具一样先征得确认。同意后向 `memory.md` 追加一行 `- [YYYY-MM-DD] lesson`；重复的跳过，看起来像凭证的内容（token / secret / Bearer / 长随机串）一律拒绝。一次性的数据（今天的电量、某次快照）和猜测不记。下一个会话就会加载这一行。
@@ -249,7 +253,7 @@ Skill 固化了安全的操作流程（状态 → 能力 → 资源 → 任务�
 3. **手动。** `saodi memory add "…"` 或 `saodi memory edit`。
 4. **回馈给所有人。** 通用的经验欢迎通过 PR 写进 `experience.md`。写入规则：只写通用现象和处置办法 —— **不写机器人 SN、traceId、requestId、账号、凭证、客户名或站点名**。
 
-## 🧰 工具
+## 工具
 
 42 个工具统一定义在 `gs_openapi/tools/`，以完全相同的方式暴露给 MCP、Agent 和 REST（`POST /api/v1/tools/{name}`）。入参为 `snake_case`，注册表负责映射为 V3 的 `camelCase`。**⚠️ = 危险操作。**
 
@@ -330,7 +334,7 @@ Skill 固化了安全的操作流程（状态 → 能力 → 资源 → 任务�
 uv run python -c "from gs_openapi.tools.registry import REGISTRY; [print(t.category, t.name, '⚠️' if t.dangerous else '') for t in REGISTRY.values()]"
 ```
 
-## 🌐 HTTP API 与 H5
+## HTTP API 与 H5
 
 统一前缀 `/api/v1`。`GET /health` 公开；设置了 `GS_SERVER_API_KEY` 时其余接口都需要 `X-API-Key`。错误统一为 `{"error": {"code", "message", "trace_id"}}`；上游 V3 错误转为 HTTP 502，并带上业务码。
 
@@ -359,13 +363,13 @@ curl -N -XPOST -H "X-API-Key: $KEY" -H 'Content-Type: application/json' \
 
 **H5**（`h5/`，Vue 3 + Vite + Vant）：**对话**（流式 Markdown、HTML 预览、工具调用时间线、确认按钮、历史抽屉）、**机器人**（在线 / 离线 / 不可达三态、电量、工作状态）、**详情**（地图与画布、任务定义、快捷操作、报告；离线机器人显示横幅而不是报错）、**设置**（API 地址、API Key、语言）。服务端要求 key 而本地没填时，H5 会引导你去设置页。生产构建已提交在 `src/gs_openapi/server/static/`，`pip install` 即可带上。
 
-### 🌍 多语言
+### 多语言
 
 - **H5**：支持 English / 中文，在「设置 → 语言」切换（首次访问跟随浏览器语言）。
 - **扫地僧**：用你提问的语言回答；`workState`、`cmdStatus` 等字段名保留英文。
 - **文档**：以英文为主；本文件是 [README.md](https://github.com/cfrs2005/mcp-gs-robot/blob/main/README.md) 的中文对照版。工具描述为中英双语。
 
-## 🔧 配置
+## 配置
 
 | 变量 | 默认值 | 说明 |
 |---|---|---|
@@ -395,7 +399,7 @@ curl -N -XPOST -H "X-API-Key: $KEY" -H 'Content-Type: application/json' \
 | `SAODI_MAX_TURNS` | `PI_AGENT_MAX_TURNS` |
 | `saodi`（命令） | `pi-agent` |
 
-## 🩺 排障
+## 排障
 
 | 现象 | 原因 | 处理 |
 |---|---|---|
@@ -407,7 +411,7 @@ curl -N -XPOST -H "X-API-Key: $KEY" -H 'Content-Type: application/json' \
 | 明明有 `.env` 却提示凭证缺失 | `.env` 从**当前工作目录**读取；真实环境变量优先于 `.env` | 在 `.env` 所在目录执行命令（MCP 用 `uv --directory <repo> run mcp-gs-robot`），或在 MCP 的 `env` 里传变量；用 `env \| grep '^GS_'` 检查有没有残留的旧环境变量 |
 | 出现 `PI_AGENT_* 已弃用` 警告 | `.env` 里还是旧变量名 | 改成 `SAODI_*` |
 
-## 🧑‍💻 开发
+## 开发
 
 ```
 src/gs_openapi/
@@ -437,7 +441,7 @@ uv build                            # wheel 包含 H5 产物和 Skill
 新增 V3 工具：在 `src/gs_openapi/tools/v3_tools.py` 里用 `@tool(...)` 定义入参模型和 handler，MCP、REST、Agent 会自动识别。补测试，并在工具表里加一行。约定见 [`CLAUDE.md`](https://github.com/cfrs2005/mcp-gs-robot/blob/main/CLAUDE.md)；curl 演练和 MCP Inspector 用法见[测试指南](https://github.com/cfrs2005/mcp-gs-robot/blob/main/docs/TESTING_GUIDE.md)。
 
 <details>
-<summary><b>🔁 从 0.1.x 迁移</b></summary>
+<summary><b>从 0.1.x 迁移</b></summary>
 
 | 0.1.x | 0.2.0+ |
 |---|---|
@@ -451,7 +455,7 @@ uv build                            # wheel 包含 H5 产物和 Skill
 
 </details>
 
-## 📖 文档
+## 文档
 
 | 文档 | 用途 |
 |---|---|
@@ -463,20 +467,20 @@ uv build                            # wheel 包含 H5 产物和 Skill
 | [Skill 说明](https://github.com/cfrs2005/mcp-gs-robot/blob/main/skills/gs-robot/README.md) | 在 Claude Code / Codex / WorkBuddy 中安装 Skill |
 | [更新日志](https://github.com/cfrs2005/mcp-gs-robot/blob/main/CHANGELOG.md) | 版本说明 |
 
-## 🤝 参与贡献
+## 参与贡献
 
 Fork 仓库、新建分支、`uv sync --extra dev`，改动附带测试，运行 `uv run pytest -q && uv run ruff check src tests`，改了注册表就同步更新工具表，然后提 Pull Request。欢迎为 `experience.md` 贡献经验 —— 只写通用现象，不写 SN、traceId、账号、凭证、客户名或站点名。
 
-## 📄 许可证
+## 许可证
 
 MIT —— 见 [LICENSE](https://github.com/cfrs2005/mcp-gs-robot/blob/main/LICENSE)。
 
-## ⚠️ 免责声明
+## 免责声明
 
 本项目是**非官方、个人研究学习用途的开源项目**，仅依据高仙公开的 OpenAPI V3 文档实现，与高仙官方无任何隶属、认可或支持关系。不提供任何形式的担保；你需要对自己下发指令的机器人负责。请始终先在模拟器或空闲机器上验证，不要把凭证放进版本控制，并记住：命令已下发（`cmdStatus=6`）不等于任务已完成。
 
 <div align="center">
 
-*献给宁愿直接问机器人、也不想在控制台里点来点去的人。* 🤖✨
+*献给宁愿直接问机器人、也不想在控制台里点来点去的人。*
 
 </div>

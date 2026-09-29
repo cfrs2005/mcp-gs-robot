@@ -164,8 +164,8 @@ async def message(
         except Exception:
             logger.exception("Agent stream failed")
             session.errors.append({"message": "Internal server error", "at": time.time(),
-                                   "after_message": len(session.messages)})
-            yield 'data: {"type":"error","message":"Internal server error"}\n\n'
+                                   "after_message": len(session.messages), "code": "internal_error"})
+            yield 'data: {"type":"error","message":"Internal server error","code":"internal_error"}\n\n'
         finally:
             disconnect.cancel()
             with suppress(asyncio.CancelledError):

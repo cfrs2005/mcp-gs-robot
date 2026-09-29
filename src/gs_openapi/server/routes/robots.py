@@ -36,7 +36,8 @@ async def list_robots(
 # Upstream 230003 "Robot ... routing failed.": the platform cannot route to the robot,
 # i.e. it is offline. The batch snapshot endpoint fails as a whole if any SN is offline.
 ROBOT_UNREACHABLE = 230003
-UNREACHABLE_MESSAGE = "机器人离线或未连接云端"
+# English (the project's primary language); clients localize by error.code, not by this text.
+UNREACHABLE_MESSAGE = "Robot is offline or not connected to the cloud"
 # Upstream rate limit is < 20 requests/second per app; pace the per-robot fallback well below it.
 FALLBACK_INTERVAL_SECONDS = 0.1
 

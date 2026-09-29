@@ -30,7 +30,7 @@ def _warn_legacy_env() -> None:
     for new, old in LEGACY_ENV.items():
         if new not in os.environ and old in os.environ and old not in _warned:
             _warned.add(old)
-            logger.warning("环境变量 %s 已弃用，请改用 %s（下个版本移除旧名）", old, new)
+            logger.warning("%s is deprecated; use %s instead (the old name goes away next release)", old, new)
 
 
 class AgentSettings(BaseSettings):

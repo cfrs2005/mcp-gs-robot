@@ -82,7 +82,8 @@ async def test_batch_with_offline_degrades_only_offline(setup):
         assert by_sn[sn]["onlineStatus"] == "OFFLINE"
         assert by_sn[sn]["reachable"] is False
         assert by_sn[sn]["error"] == {
-            "code": 230003, "message": "机器人离线或未连接云端", "trace_id": "trace-x",
+            "code": 230003, "message": "Robot is offline or not connected to the cloud",
+            "trace_id": "trace-x",
         }
     assert "columbus" not in response.text
     # One failed batch call, then exactly one paced call per robot.
@@ -96,6 +97,10 @@ async def test_single_offline_status_is_200_placeholder(setup):
     assert response.status_code == 200
     assert response.json()["reachable"] is False
     assert response.json()["onlineStatus"] == "OFFLINE"
+    # Clients localize by the structured code; the text is English and carries no CJK.
+    error = response.json()["error"]
+    assert error["code"] == 230003
+    assert error["message"].isascii()
     assert seen == [["OFF-1"]]
     online = await client.get("/api/v1/robots/ON-1/status")
     assert online.status_code == 200 and online.json()["onlineStatus"] == "ONLINE"

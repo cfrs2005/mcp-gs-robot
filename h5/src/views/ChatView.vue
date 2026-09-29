@@ -2,7 +2,7 @@
 import { nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Button, Icon, showConfirmDialog, showFailToast } from 'vant'
-import { AUTH_REQUIRED_EVENT, ApiError, confirmAgent, createAgentSession, getAgentSession, health, type SessionError } from '@/api/client'
+import { AUTH_REQUIRED_EVENT, ApiError, confirmAgent, createAgentSession, getAgentSession, health, messageForCode, type SessionError } from '@/api/client'
 import { useSettingsStore } from '@/stores/settings'
 import { KEYS } from '@/storageKeys'
 import { streamAgentMessage, type AgentEvent } from '@/api/sse'
@@ -66,7 +66,8 @@ function toMessages(stored: { role: string; content: unknown }[], errors: Sessio
     while (pending.length && pending[0].after_message <= upTo) {
       let reply = result[result.length - 1]
       if (reply?.role !== 'assistant') { reply = { role: 'assistant', content: '', parts: [] }; result.push(reply) }
-      reply.parts.push({ kind: 'error', message: pending.shift()!.message })
+      const error = pending.shift()!
+      reply.parts.push({ kind: 'error', message: messageForCode(error.code, error.message) })
     }
   }
   for (const [index, m] of stored.entries()) {
@@ -157,7 +158,7 @@ function handleEvent(ev: AgentEvent, message: Message) {
       break
     }
     case 'confirm_required': message.parts.push({ kind: 'confirm', confirm: { confirmId: ev.confirm_id, name: ev.name, input: ev.input, summary: ev.summary, pending: false } }); break
-    case 'error': message.parts.push({ kind: 'error', message: ev.message }); showFailToast(ev.message); break
+    case 'error': { const text = messageForCode(ev.code, ev.message); message.parts.push({ kind: 'error', message: text }); showFailToast(text); break }
     case 'done': break
   }
   void scroll()

@@ -118,7 +118,8 @@ async def test_max_turns_and_tool_error():
     session = AgentSession()
     agent = SaodiAgent(None, provider, max_turns=1)
     events = [event async for event in agent.run(session, "查询")]
-    assert events[-1] == {"type": "error", "message": "已达到最大工具轮数"}
+    assert events[-1] == {"type": "error", "message": "Reached the maximum number of tool turns",
+                          "code": "max_turns"}
     assert len(provider.messages) == 1
     assert events[2]["type"] == "tool_result" and events[2]["is_error"]
     assert session.messages[2]["content"][0]["is_error"]
@@ -131,7 +132,7 @@ async def test_default_gate_denies_without_invocation():
     assert [event["type"] for event in events] == [
         "text_delta", "tool_call", "confirm_required", "tool_result", "done",
     ]
-    assert events[3]["is_error"] and "未批准" in events[3]["output"]
+    assert events[3]["is_error"] and "did not approve" in events[3]["output"]
 
 
 async def test_large_tool_output_is_truncated(monkeypatch):
@@ -142,7 +143,7 @@ async def test_large_tool_output_is_truncated(monkeypatch):
     provider = FakeProvider(tool_turn(), [end({"type": "text", "text": "完成"})])
     session = AgentSession()
     events = [event async for event in SaodiAgent(None, provider).run(session, "查询")]
-    assert events[2]["output"].endswith("[结果已截断]")
+    assert events[2]["output"].endswith("[truncated]")
     assert len(session.messages[2]["content"][0]["content"]) < 21_000
 
 
@@ -184,3 +185,24 @@ async def test_dangling_tool_use_is_closed_before_next_turn():
     assert close_dangling_tool_uses(session.messages) is False
     assert close_dangling_tool_uses([{"role": "assistant", "content": "text only"}]) is False
     assert close_dangling_tool_uses([]) is False
+
+
+async def test_error_events_carry_codes():
+    from gs_openapi.agent.providers.base import AgentProviderError
+
+    class RateLimited:
+        async def stream(self, **kwargs):
+            raise AgentProviderError("slow down", "provider_rate_limited")
+            yield  # pragma: no cover
+
+    class NoEnd:
+        async def stream(self, **kwargs):
+            if False:  # pragma: no cover
+                yield MessageEnd(None, {}, [])
+
+    session = AgentSession(system_prompt="s")
+    events = [e async for e in SaodiAgent(None, RateLimited()).run(session, "hi")]
+    assert events == [{"type": "error", "message": "slow down", "code": "provider_rate_limited"}]
+    assert session.errors[0]["code"] == "provider_rate_limited"
+    events = [e async for e in SaodiAgent(None, NoEnd()).run(AgentSession(system_prompt="s"), "hi")]
+    assert events[-1]["code"] == "incomplete_response"

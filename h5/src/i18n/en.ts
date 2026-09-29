@@ -24,6 +24,14 @@ const en = {
   'errors.requestFailedStatus': 'Request failed ({status})',
   'errors.robotUnreachable': 'Robot is offline or not connected to the cloud',
   'errors.noStream': 'The server did not return a stream',
+  'errors.robotNotBound': 'These open-platform credentials are not bound to this robot. This is not "no data": check the robot binding on the open platform.',
+  'errors.rateLimited': 'Too many requests. Please try again in a moment.',
+  'errors.agentIncomplete': 'The model did not return a complete reply. Please try again.',
+  'errors.agentMaxTurns': 'Stopped after the maximum number of tool steps. Ask again to continue.',
+  'errors.agentProviderAuth': 'The LLM provider rejected the credentials. Check the model API key on the server.',
+  'errors.agentProviderRateLimited': 'The LLM provider is rate limiting. Please try again later.',
+  'errors.agentProviderUnavailable': 'The LLM provider could not be reached or returned an error. Please try again later.',
+  'errors.internal': 'Internal server error',
 
   'time.justNow': 'just now',
 

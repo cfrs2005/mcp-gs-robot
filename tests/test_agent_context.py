@@ -90,7 +90,7 @@ def test_missing_skill_dir_keeps_soul(monkeypatch, tmp_path, caplog):
     with caplog.at_level(logging.WARNING, logger="gs_openapi.agent.prompts"):
         prompt = prompts.build_system_prompt()
     assert markers(prompt) == ["<!-- soul: soul.md -->"]
-    assert "Knowledge/Memory 未加载" in caplog.text
+    assert "Knowledge/Memory not loaded" in caplog.text
 
 
 def test_installed_skill_dir_takes_precedence(monkeypatch, tmp_path):
@@ -143,7 +143,7 @@ def test_pi_agent_alias_warns_then_behaves_like_saodi(monkeypatch, capsys):
     monkeypatch.setattr("sys.argv", ["pi-agent", "--show-context"])
     legacy_main()
     captured = capsys.readouterr()
-    assert "pi-agent 已弃用，请改用 saodi" in captured.err
+    assert "pi-agent is deprecated; use saodi" in captured.err
     assert captured.out.startswith("<!-- soul: soul.md -->")
 
 

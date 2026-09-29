@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { PullRefresh, Tag, Progress, Loading, showFailToast } from 'vant'
-import { batchRobotStatus, listRobots, pageItems, robotErrorMessage, type Robot, type RobotStatus } from '@/api/client'
+import { ApiError, batchRobotStatus, listRobots, messageForCode, pageItems, robotErrorMessage, type Robot, type RobotStatus } from '@/api/client'
 import { workStateName } from '@/workStates'
 import { t } from '@/i18n'
 
@@ -23,7 +23,7 @@ async function liveStatuses(sns: string[]): Promise<Map<string, Partial<RobotSta
   const bySn = new Map<string, Partial<RobotStatus>>()
   settled.forEach((result, i) => {
     if (result.status === 'fulfilled') pageItems(result.value).forEach(item => bySn.set(item.robotSn, item))
-    else chunks[i].forEach(sn => bySn.set(sn, { reachable: false, error: { message: robotErrorMessage(result.reason) } }))
+    else chunks[i].forEach(sn => bySn.set(sn, { reachable: false, error: { code: result.reason instanceof ApiError ? result.reason.code : undefined, message: robotErrorMessage(result.reason) } }))
   })
   return bySn
 }
@@ -36,7 +36,8 @@ function tagText(robot: Card): string {
 }
 function statusText(robot: Card): string {
   if (reachable(robot)) return workStateName(robot)
-  if (robot.reachable === false) return t('robots.statusUnreachable', { message: robot.error?.message || t('errors.robotUnreachable') })
+  // Localize by error.code; the server's message is only a fallback for codes the UI does not know.
+  if (robot.reachable === false) return t('robots.statusUnreachable', { message: messageForCode(robot.error?.code ?? 230003, robot.error?.message) })
   return t('robots.statusOffline')
 }
 async function load() {

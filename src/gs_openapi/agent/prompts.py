@@ -43,7 +43,7 @@ def _read(layer: str, label: str, path: Path) -> _Part | None:
     try:
         text = path.read_text(encoding="utf-8")
     except OSError:
-        logger.warning("saodi context: %s 文件不可读，已跳过：%s", layer, label)
+        logger.warning("saodi context: %s file unreadable, skipped: %s", layer, label)
         return None
     return _Part(layer, label, _FRONTMATTER.sub("", text).strip())
 
@@ -78,7 +78,7 @@ def collect_parts(context_dir: str | Path | None = None) -> list[_Part]:
     parts = [_read("soul", "soul.md", SOUL_FILE)]
     skill_dir = find_skill_dir()
     if skill_dir is None:
-        logger.warning("saodi context: 找不到 gs-robot skill 目录，Knowledge/Memory 未加载")
+        logger.warning("saodi context: gs-robot skill directory not found; Knowledge/Memory not loaded")
     else:
         for layer, names in (("knowledge", KNOWLEDGE_FILES), ("memory", MEMORY_FILES)):
             parts += [_read(layer, name, skill_dir / name) for name in names]
@@ -86,7 +86,7 @@ def collect_parts(context_dir: str | Path | None = None) -> list[_Part]:
     if context_dir:
         root = Path(context_dir).expanduser()
         if not root.is_dir():
-            logger.warning("saodi context: SAODI_CONTEXT_DIR 不是目录，已忽略")
+            logger.warning("saodi context: SAODI_CONTEXT_DIR is not a directory; ignored")
         else:
             parts += [_read("private", path.name, path) for path in sorted(root.glob("*.md"))]
     return [part for part in parts if part is not None]
@@ -119,13 +119,13 @@ def build_system_prompt(
             if room > 0:
                 chunks.append(chunk[:room])
             logger.warning(
-                "saodi context: 超过上限 %d 字符，截断 %s:%s（保留 %d/%d 字符），丢弃 %s",
-                max_chars, part.layer, part.label, max(room, 0), len(chunk), dropped or "无",
+                "saodi context: over the %d-char cap, truncated %s:%s (kept %d/%d chars), dropped %s",
+                max_chars, part.layer, part.label, max(room, 0), len(chunk), dropped or "none",
             )
             loaded.append(f"{part.layer}:{part.label}({max(room, 0)}/{len(chunk)} chars, truncated)")
             break
         chunks.append(chunk)
         loaded.append(f"{part.layer}:{part.label}({len(part.text.encode())} bytes)")
     prompt = sep.join(chunks)
-    logger.info("saodi context: 加载 %s，合计 %d 字符", ", ".join(loaded), len(prompt))
+    logger.info("saodi context: loaded %s, %d chars in total", ", ".join(loaded), len(prompt))
     return prompt

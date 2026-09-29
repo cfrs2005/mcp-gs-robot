@@ -1,5 +1,5 @@
 import { useSettingsStore } from '@/stores/settings'
-import { t } from '@/i18n'
+import { t, type MessageKey } from '@/i18n'
 
 export class ApiError extends Error {
   constructor(message: string, public code: string | number, public traceId: string | null = null) {
@@ -60,7 +60,7 @@ export interface Page<T> {
   pagesize?: number
 }
 /** SSE error events persisted with the session; after_message = messages.length when it happened. */
-export interface SessionError { message: string; at: number; after_message: number }
+export interface SessionError { message: string; at: number; after_message: number; code?: string }
 export interface AgentSession {
   session_id: string
   title?: string | null
@@ -86,6 +86,30 @@ export function apiHeaders(): Headers {
 
 export const AUTH_REQUIRED_EVENT = 'saodi:auth-required'
 
+/** Business / HTTP codes the UI explains in its own language. Server text is shown only for codes not listed here. */
+const CODE_MESSAGES: Record<string, MessageKey> = {
+  // upstream business codes / HTTP
+  110003: 'errors.robotNotBound',
+  100026: 'errors.rateLimited',
+  230003: 'errors.robotUnreachable',
+  401: 'auth.message',
+  // SSE `error.code` from the agent (docs/ARCHITECTURE_V3.md §4)
+  incomplete_response: 'errors.agentIncomplete',
+  max_turns: 'errors.agentMaxTurns',
+  provider_auth: 'errors.agentProviderAuth',
+  provider_rate_limited: 'errors.agentProviderRateLimited',
+  provider_http: 'errors.agentProviderUnavailable',
+  provider_connection: 'errors.agentProviderUnavailable',
+  provider_error: 'errors.agentProviderUnavailable',
+  internal_error: 'errors.internal',
+}
+
+/** Localized text for a structured error code; falls back to the server message, then to a generic one. */
+export function messageForCode(code: string | number | null | undefined, fallback?: string | null): string {
+  const key = code == null ? undefined : CODE_MESSAGES[String(code)]
+  return key ? t(key) : fallback || t('errors.requestFailed')
+}
+
 export async function parseResponse<T>(response: Response): Promise<T> {
   const body: unknown = await response.json().catch(() => null)
   if (response.status === 401) {
@@ -95,7 +119,8 @@ export async function parseResponse<T>(response: Response): Promise<T> {
   }
   if (!response.ok) {
     const envelope = body as { error?: { code?: string | number; message?: string; trace_id?: string | null } } | null
-    throw new ApiError(envelope?.error?.message ?? t('errors.requestFailedStatus', { status: response.status }), envelope?.error?.code ?? response.status, envelope?.error?.trace_id ?? null)
+    const code = envelope?.error?.code ?? response.status
+    throw new ApiError(messageForCode(code, envelope?.error?.message ?? t('errors.requestFailedStatus', { status: response.status })), code, envelope?.error?.trace_id ?? null)
   }
   return body as T
 }

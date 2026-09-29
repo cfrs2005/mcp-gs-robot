@@ -25,6 +25,14 @@ const zh: Messages = {
   'errors.requestFailedStatus': '请求失败 ({status})',
   'errors.robotUnreachable': '机器人离线或未连接云端',
   'errors.noStream': '服务端未返回流',
+  'errors.robotNotBound': '当前开放平台凭证未绑定这台机器人。这不代表「没有数据」，请到开放平台检查机器人绑定。',
+  'errors.rateLimited': '请求过于频繁，请稍后再试。',
+  'errors.agentIncomplete': '模型没有返回完整回复，请重试。',
+  'errors.agentMaxTurns': '已达到工具调用步数上限，继续提问即可接着处理。',
+  'errors.agentProviderAuth': '大模型服务拒绝了凭证，请检查服务端的模型 API Key。',
+  'errors.agentProviderRateLimited': '大模型服务限流中，请稍后再试。',
+  'errors.agentProviderUnavailable': '大模型服务连接失败或返回错误，请稍后再试。',
+  'errors.internal': '服务端内部错误',
 
   'time.justNow': '刚刚',
 

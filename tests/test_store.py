@@ -342,8 +342,9 @@ async def test_agent_error_events_are_kept_on_session():
 
     session = AgentSession(system_prompt="s")
     events = [e async for e in SaodiAgent(None, Broken()).run(session, "hi")]
-    assert events == [{"type": "error", "message": "provider down"}]
+    assert events == [{"type": "error", "message": "provider down", "code": "provider_error"}]
     assert session.errors[0]["message"] == "provider down"
+    assert session.errors[0]["code"] == "provider_error"
     assert session.errors[0]["after_message"] == 1
 
 
