@@ -9,6 +9,18 @@ HTTP timeout.
 
 import os
 
+from dotenv import find_dotenv, load_dotenv
+
+
+def load_env() -> None:
+    """Load ``.env`` from the current working directory (not the package location, which is
+    site-packages for a wheel install). Variables already set in the environment win."""
+    load_dotenv(find_dotenv(usecwd=True))
+
+
+# Read before any GS_* constant below, so every entry point sees the same .env.
+load_env()
+
 # Base URL for Gausium OpenAPI (ensure trailing slash for urljoin).
 # Allow override via the GS_BASE_URL environment variable (V3).
 GAUSIUM_BASE_URL = os.getenv("GS_BASE_URL", "https://openapi.gs-robot.com/")

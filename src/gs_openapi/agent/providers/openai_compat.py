@@ -107,7 +107,7 @@ class OpenAICompatProvider:
                 assistant["tool_calls"] = openai_calls
             yield MessageEnd(stop_reason=stop_reason, usage=usage, assistant_content=assistant)
         except (httpx.HTTPError, ValueError) as exc:
-            raise AgentProviderError(f"OpenAI 兼容服务请求失败: {exc}") from exc
+            raise AgentProviderError(f"OpenAI-compatible request failed: {exc}") from exc
         finally:
             if self.client is None:
                 await client.aclose()

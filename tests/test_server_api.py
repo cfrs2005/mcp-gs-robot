@@ -58,6 +58,44 @@ async def test_health_open_and_key_required(client, monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_health_reports_auth_required_without_leaking_key(client, monkeypatch):
+    monkeypatch.setenv("GS_SERVER_API_KEY", "s3cr3t-value")
+    health = await client.get("/api/v1/health")
+    assert health.json()["auth_required"] is True
+    assert "s3cr3t-value" not in health.text
+    assert (await client.get("/api/v1/auth/check")).status_code == 401
+    bad = await client.get("/api/v1/auth/check", headers={"X-API-Key": "wrong"})
+    assert bad.status_code == 401
+    ok = await client.get("/api/v1/auth/check", headers={"X-API-Key": "s3cr3t-value"})
+    assert ok.status_code == 200 and ok.json() == {"ok": True}
+    monkeypatch.delenv("GS_SERVER_API_KEY")
+    assert (await client.get("/api/v1/health")).json()["auth_required"] is False
+    assert (await client.get("/api/v1/auth/check")).status_code == 200
+
+
+@pytest.mark.asyncio
+async def test_list_robot_maps_without_map_id(client, app, monkeypatch):
+    """Test-env upstream omits mapId; parsing must not 422 and mapId falls back to robotMapUuid."""
+    monkeypatch.delenv("GS_SERVER_API_KEY", raising=False)
+
+    def handler(request):
+        return httpx.Response(200, json={"code": 0, "data": [
+            {"displayName": "Roof", "mapVersionId": "v1", "robotMapUuid": "uuid-1"},
+        ]})
+
+    app.dependency_overrides[deps.get_v3] = lambda: mock_v3(handler)
+    result = await client.post("/api/v1/tools/list_robot_maps", json={"robot_sn": "SN"})
+    assert result.status_code == 200
+    item = result.json()["result"][0]
+    assert item["mapId"] == "uuid-1"
+    assert item["robotMapUuid"] == "uuid-1"
+    assert item["displayName"] == "Roof"
+    friendly = await client.get("/api/v1/robots/SN/maps")
+    assert friendly.status_code == 200
+    assert friendly.json()[0]["mapId"] == "uuid-1"
+
+
+@pytest.mark.asyncio
 async def test_tools_and_friendly_status(client, app, monkeypatch):
     monkeypatch.delenv("GS_SERVER_API_KEY", raising=False)
     seen = []

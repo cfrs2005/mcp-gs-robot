@@ -34,7 +34,7 @@ Use snake_case inputs and current names from the [registry-derived 40-tool table
 3. With explicit approval, `create_task_definition` then `start_task`; poll `get_command_status` or `wait_for_command`. `run_cleaning_task` combines these steps and is also dangerous.
 4. `list_task_reports`, `list_schedules`, `list_command_history` are read-only. `pause_task`, `stop_task`, `navigate_home`, schedule and definition mutations are dangerous and must be confirmed before use.
 
-Command delivery is not proof of task completion; robot status can lag. Test commands on simulators/idle robots first. `GS_ENABLE_LEGACY_TOOLS=1` exposes old 0.1.x tools with `legacy_` prefixes only if needed for migration. Avoid `PI_AGENT_AUTO_APPROVE=1` during testing.
+Command delivery is not proof of task completion; robot status can lag. Test commands on simulators/idle robots first. `GS_ENABLE_LEGACY_TOOLS=1` exposes old 0.1.x tools with `legacy_` prefixes only if needed for migration. Avoid `SAODI_AUTO_APPROVE=1` during testing.
 
 ## Troubleshooting
 

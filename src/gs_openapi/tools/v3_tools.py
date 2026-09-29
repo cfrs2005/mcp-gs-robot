@@ -70,7 +70,7 @@ class WorkState(Input):
     work_state: int
 
 
-@tool(name="describe_work_state", description="解释工作状态 / Describe robot work state")
+@tool(name="describe_work_state", description="解释工作状态 / Describe robot work state", local=True)
 async def describe_work_state(v3, args: WorkState):
     state = describe_state(args.work_state)
     return {"work_state": args.work_state, "name": state[0] if state else None,

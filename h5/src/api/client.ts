@@ -1,4 +1,5 @@
 import { useSettingsStore } from '@/stores/settings'
+import { t, type MessageKey } from '@/i18n'
 
 export class ApiError extends Error {
   constructor(message: string, public code: string | number, public traceId: string | null = null) {
@@ -7,8 +8,17 @@ export class ApiError extends Error {
   }
 }
 
-export interface Health { status: string; version: string; agent_provider: string; tools: number }
-export interface Robot { robotSn: string; [key: string]: unknown }
+export interface Health { status: string; version: string; agent_provider: string; tools: number; auth_required?: boolean }
+export interface Robot {
+  robotSn: string
+  /** Online flag returned by list_robots; the list page relies on it alone to split online/offline. */
+  online?: boolean
+  displayName?: string
+  modelTypeCode?: string
+  softwareVersion?: string
+  hardwareVersion?: string
+  [key: string]: unknown
+}
 export interface RobotStatus {
   robotSn: string
   onlineStatus?: string
@@ -21,6 +31,9 @@ export interface RobotStatus {
   work_state_desc?: string
   taskName?: string
   observedMsTimestamp?: number
+  /** Backend fallback placeholder: false on upstream 230003, with `error` (including trace_id). */
+  reachable?: boolean
+  error?: { code?: string | number; message?: string; trace_id?: string | null }
   [key: string]: unknown
 }
 export interface RobotMap { mapId: string; displayName: string; mapVersionId?: string }
@@ -46,11 +59,19 @@ export interface Page<T> {
   page?: number
   pagesize?: number
 }
+/** SSE error events persisted with the session; after_message = messages.length when it happened. */
+export interface SessionError { message: string; at: number; after_message: number; code?: string }
 export interface AgentSession {
   session_id: string
+  title?: string | null
   messages: { role: string; content: unknown; tool_calls?: unknown[] }[]
+  errors?: SessionError[]
   created_at: number
+  updated_at?: number
+  message_count?: number
 }
+export interface SessionSummary { session_id: string; title: string | null; created_at: number; updated_at: number; message_count: number }
+export interface SessionPage { items: SessionSummary[]; total: number; page: number; page_size: number }
 
 export function apiUrl(path: string): string {
   return `${useSettingsStore().apiBase}${path}`
@@ -63,11 +84,43 @@ export function apiHeaders(): Headers {
   return headers
 }
 
+export const AUTH_REQUIRED_EVENT = 'saodi:auth-required'
+
+/** Business / HTTP codes the UI explains in its own language. Server text is shown only for codes not listed here. */
+const CODE_MESSAGES: Record<string, MessageKey> = {
+  // upstream business codes / HTTP
+  110003: 'errors.robotNotBound',
+  100026: 'errors.rateLimited',
+  230003: 'errors.robotUnreachable',
+  401: 'auth.message',
+  // SSE `error.code` from the agent (docs/ARCHITECTURE_V3.md §4)
+  incomplete_response: 'errors.agentIncomplete',
+  max_turns: 'errors.agentMaxTurns',
+  provider_auth: 'errors.agentProviderAuth',
+  provider_rate_limited: 'errors.agentProviderRateLimited',
+  provider_http: 'errors.agentProviderUnavailable',
+  provider_connection: 'errors.agentProviderUnavailable',
+  provider_error: 'errors.agentProviderUnavailable',
+  internal_error: 'errors.internal',
+}
+
+/** Localized text for a structured error code; falls back to the server message, then to a generic one. */
+export function messageForCode(code: string | number | null | undefined, fallback?: string | null): string {
+  const key = code == null ? undefined : CODE_MESSAGES[String(code)]
+  return key ? t(key) : fallback || t('errors.requestFailed')
+}
+
 export async function parseResponse<T>(response: Response): Promise<T> {
   const body: unknown = await response.json().catch(() => null)
+  if (response.status === 401) {
+    // Never surface the raw envelope; App.vue listens and guides the user to #/settings.
+    window.dispatchEvent(new Event(AUTH_REQUIRED_EVENT))
+    throw new ApiError(t('auth.message'), 401)
+  }
   if (!response.ok) {
     const envelope = body as { error?: { code?: string | number; message?: string; trace_id?: string | null } } | null
-    throw new ApiError(envelope?.error?.message ?? `请求失败 (${response.status})`, envelope?.error?.code ?? response.status, envelope?.error?.trace_id ?? null)
+    const code = envelope?.error?.code ?? response.status
+    throw new ApiError(messageForCode(code, envelope?.error?.message ?? t('errors.requestFailedStatus', { status: response.status })), code, envelope?.error?.trace_id ?? null)
   }
   return body as T
 }
@@ -85,6 +138,7 @@ const sessionPath = (id: string) => `${root}/agent/sessions/${encodeURIComponent
 const post = <T>(path: string, data: unknown = {}) => apiFetch<T>(path, { method: 'POST', body: JSON.stringify(data) })
 
 export const health = () => apiFetch<Health>(`${root}/health`)
+export const authCheck = () => apiFetch<{ ok: boolean }>(`${root}/auth/check`)
 export const listRobots = (page = 1) => apiFetch<Robot[] | Page<Robot>>(`${root}/robots?page=${page}&page_size=100`)
 export const batchRobotStatus = (robot_sn_list: string[]) => post<RobotStatus[] | Page<RobotStatus>>(`${root}/robots/status`, { robot_sn_list })
 export const getRobotStatus = (sn: string) => apiFetch<RobotStatus>(`${robotPath(sn)}/status`)
@@ -100,8 +154,22 @@ export const navigateHome = (sn: string, mapId: string, mapResourceId?: string) 
 export const listReports = (sn: string, page = 1) => apiFetch<TaskReport[] | Page<TaskReport>>(`${robotPath(sn)}/reports?page=${page}&pagesize=20`)
 export const createAgentSession = () => post<{ session_id: string }>(`${root}/agent/sessions`)
 export const getAgentSession = (id: string) => apiFetch<AgentSession>(sessionPath(id))
+export const listAgentSessions = (page = 1, pageSize = 50) => apiFetch<SessionPage>(`${root}/agent/sessions?page=${page}&page_size=${pageSize}`)
 export const deleteAgentSession = (id: string) => apiFetch<void>(sessionPath(id), { method: 'DELETE' })
 export const confirmAgent = (id: string, confirmId: string, approve: boolean) => post<{ ok: boolean }>(`${sessionPath(id)}/confirm`, { confirm_id: confirmId, approve })
+
+/** Upstream 230003: the platform cannot route to the robot, i.e. it is offline or has not reached the cloud for a while. */
+export const ROBOT_UNREACHABLE = 230003
+
+export function isRobotUnreachable(e: unknown): boolean {
+  return e instanceof ApiError && Number(e.code) === ROBOT_UNREACHABLE
+}
+
+/** Shared localized error text for robot pages; traceId is shown separately in the detail view, never in toasts. */
+export function robotErrorMessage(e: unknown): string {
+  if (isRobotUnreachable(e)) return t('errors.robotUnreachable')
+  return e instanceof Error ? e.message : t('errors.requestFailed')
+}
 
 export function pageItems<T>(data: T[] | Page<T>): T[] {
   return Array.isArray(data) ? data : (data.list ?? data.robotTaskReports ?? [])

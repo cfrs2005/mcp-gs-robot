@@ -27,14 +27,14 @@ EXPECTED = [
     "get_schedule_calendar", "list_schedule_pre_tasks", "get_command_status",
     "list_command_history", "navigate_home", "pause_navigation", "resume_navigation",
     "stop_navigation", "list_task_reports", "get_task_report_map_images",
-    "run_cleaning_task", "wait_for_command",
+    "run_cleaning_task", "wait_for_command", "lookup_error_code", "remember",
 ]
 MUTATIONS = {
     "create_task_definition", "update_task_definition", "delete_task_definition", "start_task",
     "pause_task", "resume_task", "stop_task", "skip_task_item",
     "create_simple_schedule", "update_simple_schedule", "delete_simple_schedule",
     "create_schedule", "update_schedule", "delete_schedule", "navigate_home",
-    "pause_navigation", "resume_navigation", "stop_navigation", "run_cleaning_task",
+    "pause_navigation", "resume_navigation", "stop_navigation", "run_cleaning_task", "remember",
 }
 
 

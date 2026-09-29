@@ -2,17 +2,47 @@
 
 All notable changes to this project are documented here.
 
+## [0.3.0] - 2026-09-29
+
+### 🚀 Added
+- **Saodi cognition layers**: each session's system prompt is Soul (`agent/soul.md`) → Knowledge (the `skills/gs-robot` skill: `references/domain.md`, `SKILL.md`, `references/work-states.md`) → Memory (`references/experience.md`) → **local memory** (`$SAODI_DATA_DIR/memory.md`) → optional private `$SAODI_CONTEXT_DIR/*.md`, capped by `SAODI_CONTEXT_MAX_CHARS` (default 60000; oldest local memory entries are dropped first). `saodi --show-context` prints the final prompt without an LLM key. The wheel ships the skill as `gs_openapi/_skills/gs-robot`.
+- **`remember` tool** (dangerous, confirmation required): appends one verified lesson to the local memory file as `- [YYYY-MM-DD] lesson`, de-duplicates normalised text and refuses credential-looking content (token/secret key=value, Bearer, `sk-…`, JWTs, long random strings).
+- **`lookup_error_code` tool** (read-only, local): returns matching rows from `references/error-codes.md` (with table headers) and entries from `references/experience.md`; a "do not guess" hint when nothing matches.
+- `ToolSpec.local` marks tools that need no upstream client (`describe_work_state`, `lookup_error_code`, `remember`).
+- **SQLite persistence** (`gs_openapi.store`, `$SAODI_DATA_DIR/saodi.sqlite`): agent sessions survive restarts; `GET /api/v1/agent/sessions` lists history; dangling `tool_use` from an interrupted stream is closed before the next turn.
+- **Tool-call log and error threads**: every `registry.invoke` (agent / REST / MCP) is recorded with redacted args; failures are folded by fingerprint into threads with auto-classification (110003 → account_permission, 230003 → robot_offline, response-model mismatches → our_bug) and regression reopening. `GET/PATCH /api/v1/errors/threads…`.
+- **CLI**: `saodi errors [list|show <id>|promote <id>]` and `saodi memory [show|add "<lesson>"|edit]`.
+- `GET /api/v1/health` returns `auth_required`; new `GET /api/v1/auth/check` validates the API key without calling upstream.
+- **H5**: Markdown rendering (marked + DOMPurify), sandboxed HTML preview, an ordered tool-call timeline, a history drawer, English / 中文 switch (follows the browser on first visit), and a 401 prompt that leads to Settings.
+- Docs: 5-minute quick start, a copy-paste [agent setup prompt](docs/AGENT_SETUP_PROMPT.md), cognition & memory guide, troubleshooting table.
+
+### 🔧 Changed
+- The agent is renamed to **Saodi (扫地僧)**: command `saodi`, class `SaodiAgent`, variables `SAODI_PROVIDER` / `SAODI_MODEL` / `SAODI_AUTO_APPROVE` / `SAODI_MAX_TURNS`.
+- Soul, `domain.md`, `experience.md` and `SKILL.md` are now written in English; Saodi **replies in the user's language** (key field names stay in English). Terminal prompts are in English.
+- The ~23 KB error-code table is no longer resident in the system prompt (looked up on demand): `saodi --show-context` shrinks from 51,685 to 32,028 bytes.
+- `.env` is loaded from the current working directory by every entry point (`gs_openapi.config.load_env`), so a wheel install finds it too and `GS_SERVER_HOST` / `GS_SERVER_PORT` from `.env` apply.
+- Tool-call args are additionally scrubbed for `key=value` secrets typed into free-text fields.
+- Robot list degrades gracefully when some robots are offline: a batch that fails with 230003 is re-queried per robot (0.1 s apart, respecting the 100026 rate limit); the H5 renders online / offline / unreachable states and an offline banner on the detail page.
+
+### 🐛 Fixed
+- `TaskReport`: percentage fields are floats upstream (`completionPercentage`, battery and consumables percentages), which caused HTTP 422; five missing int fields were added.
+- `RobotMap`: all fields optional; `map_id` falls back to `robotMapUuid` when the upstream omits `mapId`.
+- H5 chat: streaming render, dangerous-operation confirmation no longer hangs; robot list fills `robotSn`; session creation body is optional.
+
+### ⚠️ Deprecated
+- `pi-agent` command, `PiAgent` class alias and `PI_AGENT_*` variables still work for one release and emit a deprecation warning; they will be removed in the next release.
+
 ## [0.2.0] - 2026-09-28
 
 ### 🚀 Added
 - OpenAPI V3 client covering 36 robot/task endpoint tools plus OAuth token operations, with typed models and reference tables (38 archived endpoint pages).
-- Shared 40-tool registry: 36 V3 endpoint tools, legacy robot listing, local work-state lookup, and two workflow tools; MCP, Pi Agent, and REST share the definitions.
-- Pi Agent CLI and HTTP chat with Anthropic and OpenAI-compatible providers, streaming SSE and confirmation gates.
+- Shared 40-tool registry: 36 V3 endpoint tools, legacy robot listing, local work-state lookup, and two workflow tools; MCP, the agent, and REST share the definitions.
+- Agent CLI and HTTP chat with Anthropic and OpenAI-compatible providers, streaming SSE and confirmation gates.
 - FastAPI REST server, robot routes, API-key option, and Vue/Vite H5 interface.
 - Cross-client gs-robot Skill, V3 endpoint index (`docs/apis.md`) linking to the official documentation, automated tests, CI, and container packaging.
 
 ### 🔧 Changed
-- V3 tools are the MCP default; package now exposes `mcp-gs-robot`, `gs-robot-server`, and `pi-agent`.
+- V3 tools are the MCP default; package now exposes `mcp-gs-robot`, `gs-robot-server`, and the agent CLI.
 - Tool inputs use snake_case; agent dangerous operations require explicit confirmation by default.
 
 ### 🐛 Fixed

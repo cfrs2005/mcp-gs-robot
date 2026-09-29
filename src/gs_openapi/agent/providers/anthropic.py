@@ -30,7 +30,7 @@ class AnthropicProvider:
                 message = await stream.get_final_message()
             content = [block.model_dump(mode="json") for block in message.content]
             if message.stop_reason == "refusal":
-                explanation = "模型拒绝了该请求。"
+                explanation = "The model declined this request."
                 yield TextDelta(explanation)
                 content.append({"type": "text", "text": explanation})
             else:
@@ -43,10 +43,14 @@ class AnthropicProvider:
                 assistant_content=content,
             )
         except anthropic.AuthenticationError as exc:
-            raise AgentProviderError("Anthropic 认证失败，请检查 ANTHROPIC_API_KEY") from exc
+            raise AgentProviderError(
+                "Anthropic authentication failed; check ANTHROPIC_API_KEY", "provider_auth") from exc
         except anthropic.RateLimitError as exc:
-            raise AgentProviderError("Anthropic 请求频率超限，请稍后重试") from exc
+            raise AgentProviderError(
+                "Anthropic rate limit exceeded; try again later", "provider_rate_limited") from exc
         except anthropic.APIStatusError as exc:
-            raise AgentProviderError(f"Anthropic API 错误 (HTTP {exc.status_code}): {exc}") from exc
+            raise AgentProviderError(
+                f"Anthropic API error (HTTP {exc.status_code}): {exc}", "provider_http") from exc
         except anthropic.APIConnectionError as exc:
-            raise AgentProviderError(f"Anthropic 连接失败: {exc}") from exc
+            raise AgentProviderError(
+                f"Anthropic connection failed: {exc}", "provider_connection") from exc

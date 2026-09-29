@@ -1,4 +1,5 @@
 import { apiHeaders, apiUrl, parseResponse } from './client'
+import { t } from '@/i18n'
 
 export type AgentEvent =
   | { type: 'text_delta'; text: string }
@@ -6,7 +7,7 @@ export type AgentEvent =
   | { type: 'tool_result'; id: string; name: string; output: unknown; is_error: boolean }
   | { type: 'confirm_required'; confirm_id: string; name: string; input: Record<string, unknown>; summary: string }
   | { type: 'done'; message_id: string; usage: Record<string, unknown> }
-  | { type: 'error'; message: string }
+  | { type: 'error'; message: string; code?: string }
 
 export async function streamAgentMessage(
   sessionId: string,
@@ -20,7 +21,7 @@ export async function streamAgentMessage(
     method: 'POST', headers, body: JSON.stringify({ content }), signal,
   })
   if (!response.ok) await parseResponse(response)
-  if (!response.body) throw new Error('服务端未返回流')
+  if (!response.body) throw new Error(t('errors.noStream'))
 
   const reader = response.body.getReader()
   const decoder = new TextDecoder()

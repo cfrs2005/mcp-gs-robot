@@ -25,3 +25,10 @@ def dummy_credentials():
         "client_secret": "test-client-secret",
         "open_access_key": "test-open-access-key",
     }
+
+
+@pytest.fixture(autouse=True)
+def isolated_data_dir(tmp_path, monkeypatch):
+    """Keep sessions / tool-call logs written during tests out of ~/.saodi."""
+    monkeypatch.setenv("SAODI_DATA_DIR", str(tmp_path / "saodi-data"))
+    return tmp_path / "saodi-data"

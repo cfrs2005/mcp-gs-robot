@@ -5,11 +5,14 @@ import os
 
 import uvicorn
 
+from ..config import load_env
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run the GS Robot HTTP server")
     parser.add_argument("--reload", action="store_true", help="Reload on code changes")
     args = parser.parse_args()
+    load_env()  # GS_SERVER_HOST / GS_SERVER_PORT may come from .env
     uvicorn.run(
         "gs_openapi.server.app:app",
         host=os.getenv("GS_SERVER_HOST", "0.0.0.0"),

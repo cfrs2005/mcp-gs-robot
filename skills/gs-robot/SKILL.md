@@ -3,114 +3,121 @@ name: gs-robot
 description: Operate and monitor Gausium cleaning robots (OpenAPI V3) through the mcp-gs-robot MCP tools — check status, inspect maps/resources, create and start combined tasks, manage schedules, navigate home, read task reports. Use when the user mentions Gausium/高仙 robots, robot serial numbers like GS…-…, cleaning tasks, or the mcp-gs-robot server.
 ---
 
-# gs-robot — Gausium 机器人运维 Agent Skill
+# gs-robot — Agent Skill for operating Gausium robots
 
-本 Skill 教会 AI 助手通过 `mcp-gs-robot` MCP 工具（OpenAPI V3）运维高仙（Gausium）清洁机器人。工具名与 `ARCHITECTURE_V3.md §3` 注册表一致；输入字段一律 snake_case，handler 内部映射为文档的 camelCase。
+This skill teaches an AI assistant to operate Gausium cleaning robots through the `mcp-gs-robot` MCP tools (OpenAPI V3). Tool names match the registry in `ARCHITECTURE_V3.md §3`; inputs are always snake_case and the handlers map them to the documented camelCase.
 
-## 何时使用
+## When to use
 
-- 用户提到高仙 / Gausium 机器人、形如 `GS…-…` 或 `TEST00-0000-000-S014` 的机器人序列号（robot_sn）。
-- 用户要求：查状态、看地图/资源、建任务定义、启动/暂停/继续/停止任务、排班计划、回充导航、读任务报告。
-- 用户提到 `mcp-gs-robot` 服务、Pi Agent、或本仓库的 MCP/HTTP 入口。
+- The user mentions Gausium / 高仙 robots, or a robot serial number (robot_sn) shaped like `GS…-…` or `TEST00-0000-000-X014`.
+- The user asks to: check status, look at maps/resources, create task definitions, start/pause/resume/stop tasks, plan schedules, send a robot home, read task reports.
+- The user mentions the `mcp-gs-robot` server, the Saodi (扫地僧) agent, or this repository's MCP/HTTP entry points.
 
-不适用：仅查询开放平台账号申请、OAuth 凭据获取流程（引导用户看 https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/Quick%20Start）。
+Not for: applying for an open-platform account or obtaining OAuth credentials (point the user to https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/Quick%20Start).
 
-## 前置条件
+## Prerequisites
 
-### MCP 配置
-宿主（Claude Code / Codex / WorkBuddy）需挂载 `mcp-gs-robot` MCP server（stdio 入口 `gs_openapi.main` / `mcp-gs-robot`）。启动后工具以 `name` 注册，可直接调用。REST / Agent SSE 入口为 `gs-robot-server`（`/api/v1/...`），本 Skill 默认走 MCP 工具调用。
+### MCP configuration
+The host (Claude Code / Codex / WorkBuddy) must mount the `mcp-gs-robot` MCP server (stdio entry `gs_openapi.main` / `mcp-gs-robot`). Once started, tools are registered by `name` and can be called directly. The REST / agent SSE entry is `gs-robot-server` (`/api/v1/...`); this skill uses MCP tool calls by default.
 
-### 环境变量（ARCHITECTURE_V3.md §2）
-| 变量 | 必填 | 说明 |
+### Environment variables (ARCHITECTURE_V3.md §2)
+| Variable | Required | Description |
 |---|---|---|
-| `GS_CLIENT_ID` / `GS_CLIENT_SECRET` / `GS_OPEN_ACCESS_KEY` | 是 | 开放平台凭据（AccessKeySecret 作 `GS_OPEN_ACCESS_KEY`） |
-| `GS_BASE_URL` | 否 | 默认 `https://openapi.gs-robot.com/` |
-| `GS_HTTP_TIMEOUT` | 否 | 秒，默认 30 |
-| `GS_SERVER_API_KEY` | 否 | 设则 HTTP Server 校验 `X-API-Key` |
-| `PI_AGENT_AUTO_APPROVE` | 否 | `1` 时危险操作免二次确认（默认需确认） |
+| `GS_CLIENT_ID` / `GS_CLIENT_SECRET` / `GS_OPEN_ACCESS_KEY` | yes | Open-platform credentials (the AccessKeySecret goes into `GS_OPEN_ACCESS_KEY`) |
+| `GS_BASE_URL` | no | Default `https://openapi.gs-robot.com/` |
+| `GS_HTTP_TIMEOUT` | no | Seconds, default 30 |
+| `GS_SERVER_API_KEY` | no | When set, the HTTP server checks `X-API-Key` |
+| `SAODI_AUTO_APPROVE` | no | `1` skips the second confirmation for dangerous tools (confirmation is on by default) |
 
-token 自动刷新由 `gs_openapi.auth.token_manager` 处理；调用方无需手动 refresh。
+Tokens are refreshed automatically by `gs_openapi.auth.token_manager`; callers never refresh by hand.
 
-## 标准工作流
+## Standard workflow
 
-核心顺序：**状态 → 能力 → 资源 → 任务定义 → 启动 → 轮询命令状态**。每一步都给出工具名与关键参数；危险工具（dangerous ✔）见下一节安全规则。
+Core order: **status → capabilities → resources → task definition → start → poll the command status**. Each step lists the tool and its key parameters; dangerous tools (dangerous ✔) follow the safety rules in the next section.
 
-### 1. 查机器人状态
-- `list_robots`（page=1, page_size=20）→ 拿到 robot_sn 列表（legacy `GET v1alpha1/robots`，V3 无列表接口）。
-- `get_robot_status`（robot_sn_list: ["<SN>", ...]，≤100）→ 返回 `workState`、`onlineStatus`、`batteryPercent`、`currentMapName` 等，附带 `work_state_name` / `work_state_desc`。
-- 状态码含义用 `describe_work_state`（work_state: <int>）查本地参考表，或见 `references/work-states.md`。
-- 注意：状态快照非实时，最大延迟约 30s；离线机器人的电量/地图/位置等运行时字段可能为空。
+### 1. Robot status
+- `list_robots` (page=1, page_size=20) → the robot_sn list (legacy `GET v1alpha1/robots`; V3 has no list endpoint).
+- `get_robot_status` (robot_sn_list: ["<SN>", ...], ≤100) → `workState`, `onlineStatus`, `batteryPercent`, `currentMapName`, …, plus `work_state_name` / `work_state_desc`.
+- Look up a state code with `describe_work_state` (work_state: <int>) or in `references/work-states.md`.
+- Note: snapshots are not real time (up to ~30 s lag); runtime fields such as battery, map and position may be empty for offline robots.
 
-### 2. 查能力与工作模式
-- `get_robot_capabilities`（robot_sn）→ 该机器人支持的组合任务能力（`tasks/fusion/robot-capabilities/get`）。
-- `list_work_modes`（robot_sn）→ 工作模式列表（mode/subType/type/configType/strengthOptions）。详见 https://developer.gs-robot.com/v3docs/en_US/Task%20Work%20Mode%20Reference。
+### 2. Capabilities and work modes
+- `get_robot_capabilities` (robot_sn) → the combined-task capabilities of the robot (`tasks/fusion/robot-capabilities/get`).
+- `list_work_modes` (robot_sn) → work modes (mode/subType/type/configType/strengthOptions). See https://developer.gs-robot.com/v3docs/en_US/Task%20Work%20Mode%20Reference.
 
-### 3. 查地图与任务资源
-- `list_robot_maps`（robot_sn）→ 地图列表，拿 `map_id`。
-- `get_map_canvas`（robot_sn, map_id）→ 地图画布图（`robots/maps/canvas/get`）。
-- `list_charging_positions`（robot_sn, map_id?）→ 充电桩位（`maps/charging-positions/list`）。
-- `list_map_resources`（robot_sn, map_id_list）→ 不含 work_modes 的纯地图资源（`maps/map-resources/list`）。
-- `list_task_resources`（robot_sn, map_id_list, include_paths=True, include_regions=True, include_positions=False）→ **建任务/排班前必查**，返回 `workModes` + `maps`（regions/paths/positions 与各自的 `mapResourceId`、`mapResourceType`、`supportedActions`）。来源端点 `maps/schedule-resources/list`。
+### 3. Maps and task resources
+- `list_robot_maps` (robot_sn) → maps; take `map_id`.
+- `get_map_canvas` (robot_sn, map_id) → the map canvas image (`robots/maps/canvas/get`).
+- `list_charging_positions` (robot_sn, map_id?) → charging positions (`maps/charging-positions/list`).
+- `list_map_resources` (robot_sn, map_id_list) → map resources without work_modes (`maps/map-resources/list`).
+- `list_task_resources` (robot_sn, map_id_list, include_paths=True, include_regions=True, include_positions=False) → **always query before creating tasks/schedules**; returns `workModes` + `maps` (regions/paths/positions with their `mapResourceId`, `mapResourceType`, `supportedActions`). Source endpoint `maps/schedule-resources/list`.
 
-### 4. 建任务定义（dangerous ✔）
-- `create_task_definition`（robot_sn, task_name, work_mode: dict, map_resource_list: list[dict], loop_count?, site_id?, task_advance_config?）→ 返回成功即可，内部字段不回显。端点 `tasks/persistence/create`。
-  - `work_mode` 至少含 `mode`；`strength` 省略用默认档；固定配置模式（inspect/strong_wash）不接受 `strength`。
-  - `map_resource_list` 每项至少 `map_id` + `map_resource_id` + `map_resource_type`（region/path/position）。
-- 可用 `list_task_definitions` / `get_task_definition` / `update_task_definition` / `delete_task_definition` 管理。
+### 4. Create a task definition (dangerous ✔)
+- `create_task_definition` (robot_sn, task_name, work_mode: dict, map_resource_list: list[dict], loop_count?, site_id?, task_advance_config?) → success only; internal fields are not echoed. Endpoint `tasks/persistence/create`.
+  - `work_mode` needs at least `mode`; omit `strength` for the default level; fixed-configuration modes (inspect/strong_wash) do not accept `strength`.
+  - Each `map_resource_list` item needs at least `map_id` + `map_resource_id` + `map_resource_type` (region/path/position).
+- Manage them with `list_task_definitions` / `get_task_definition` / `update_task_definition` / `delete_task_definition`.
 
-### 5. 启动任务（dangerous ✔）
-- `start_task`（robot_sn, fusion_task_id, loop_count?）→ 端点 `robots/commands/tasks/start`。返回 `data.requestId`、`cmdStatus`、`taskInstanceId`。
-- 运行中控制：`pause_task` / `resume_task` / `stop_task` / `skip_task_item`（均 dangerous ✔，参数 robot_sn）。
+### 5. Start a task (dangerous ✔)
+- `start_task` (robot_sn, fusion_task_id, loop_count?) → endpoint `robots/commands/tasks/start`. Returns `data.requestId`, `cmdStatus`, `taskInstanceId`.
+- While running: `pause_task` / `resume_task` / `stop_task` / `skip_task_item` (all dangerous ✔, parameter robot_sn).
 
-### 6. 轮询命令状态
-- `get_command_status`（robot_sn, request_id）→ `cmdStatus`、`cmdResultCode`、`commandType`。端点 `robots/commands/status/get`。
-- `list_command_history`（robot_sn, page=1, pagesize=20）→ 历史记录页。
-- 便捷封装：`wait_for_command`（robot_sn, request_id, timeout_seconds=60）轮询至终态。
-- 组合封装：`run_cleaning_task`（robot_sn, task_name, map_id, resource_ids, mode="sweep", strength?, loop_count=1, wait_seconds=30）→ 自动跑 capabilities→task_resources→create_task_definition→start_task→轮询。
+### 6. Poll the command status
+- `get_command_status` (robot_sn, request_id) → `cmdStatus`, `cmdResultCode`, `commandType`. Endpoint `robots/commands/status/get`.
+- `list_command_history` (robot_sn, page=1, pagesize=20) → history page.
+- Convenience: `wait_for_command` (robot_sn, request_id, timeout_seconds=60) polls until a terminal state.
+- Combined: `run_cleaning_task` (robot_sn, task_name, map_id, resource_ids, mode="sweep", strength?, loop_count=1, wait_seconds=30) → runs capabilities→task_resources→create_task_definition→start_task→poll.
 
-### 7. 排班计划（dangerous ✔）
-- 简易排班：`create_simple_schedule` / `update_simple_schedule` / `delete_simple_schedule`（+ plan_uuid）。端点 `schedules/plans/simple/{create,update,delete}`。
-- 标准排班：`create_schedule` / `update_schedule` / `delete_schedule` / `list_schedules` / `get_schedule`。
-- 查询：`get_schedule_calendar`（robot_sn, year_month）、`list_schedule_pre_tasks`（robot_sn, date）。
-- 简易排班关键字段：`plan_execute_type`（1=定时 TIMED_SCHEDULING_TASK / 2=定量 QUANTITATIVE_SCH_TASK）、`plan_repeat_type`（0=单次 / 2=每周）、`plan_repeat_weekly`（0-6=周日…周六）、`plan_start_date` yyyy-MM-dd、`plan_start_time` HH:mm 24h、`site_mode`（0=全区禁 site_id / 1=指定 site_id 必填）。`map_resource_list` 每项只需 `map_id` + `map_resource_id` + `map_resource_type`（region/path）。
+### 7. Schedules (dangerous ✔)
+- Simple schedules: `create_simple_schedule` / `update_simple_schedule` / `delete_simple_schedule` (+ plan_uuid). Endpoints `schedules/plans/simple/{create,update,delete}`.
+- Standard schedules: `create_schedule` / `update_schedule` / `delete_schedule` / `list_schedules` / `get_schedule`.
+- Queries: `get_schedule_calendar` (robot_sn, year_month), `list_schedule_pre_tasks` (robot_sn, date).
+- Key simple-schedule fields: `plan_execute_type` (1=timed TIMED_SCHEDULING_TASK / 2=quantitative QUANTITATIVE_SCH_TASK), `plan_repeat_type` (0=once / 2=weekly), `plan_repeat_weekly` (0-6 = Sunday…Saturday), `plan_start_date` yyyy-MM-dd, `plan_start_time` HH:mm 24h, `site_mode` (0=whole area, no site_id / 1=specific site, site_id required). Each `map_resource_list` item only needs `map_id` + `map_resource_id` + `map_resource_type` (region/path).
 
-### 8. 导航与报告
-- `navigate_home`（robot_sn, …）dangerous ✔ → `robots/commands/navigation/go-home`；配套 `pause_navigation` / `resume_navigation` / `stop_navigation`（均 dangerous ✔）。
-- `list_task_reports`（robot_sn, page=1, pagesize=20, end_time_min?, end_time_max?）→ `taskreports/page`。
-- `get_task_report_map_images`（按文档字段）→ `taskreports/map-images/query`。
+### 8. Navigation and reports
+- `navigate_home` (robot_sn, …) dangerous ✔ → `robots/commands/navigation/go-home`; with `pause_navigation` / `resume_navigation` / `stop_navigation` (all dangerous ✔).
+- `list_task_reports` (robot_sn, page=1, pagesize=20, end_time_min?, end_time_max?) → `taskreports/page`.
+- `get_task_report_map_images` (documented fields) → `taskreports/map-images/query`.
 
-## 安全规则
+### 9. Reference and memory (local, no upstream call)
+- `lookup_error_code` (code) → matching rows from `references/error-codes.md` and entries in `references/experience.md`. Use it for any code you do not recognise; do not guess.
+- `remember` (lesson, scope?) dangerous ✔ → appends one verified, reusable lesson to the local memory file `$SAODI_DATA_DIR/memory.md` (`- [YYYY-MM-DD] lesson`, de-duplicated, credential-looking text refused).
 
-1. **dangerous 工具必须先复述并确认**：凡 §3 标记 dangerous ✔ 的工具（create/update/delete_task_definition、start_task/pause_task/resume_task/stop_task/skip_task_item、schedule 增改删、navigate_home 及导航控制、run_cleaning_task），调用前必须向用户复述「将对机器人 <SN> 执行 <动作>，参数 <关键字段>」并等待明确同意；`PI_AGENT_AUTO_APPROVE=1` 时可免确认，但仍应在输出中说明已执行。
-2. **状态快照≤30s 延迟**：`get_robot_status` 的 `workState`、电量、位置等非实时；离线机器人运行时字段可能为空，不得据此判定机器人「在原点」或「无任务」。
-3. **cmdStatus=6 仅代表下发成功**：`start_task` 等异步命令返回 `cmdStatus=6`（`cmdResultCode=6880`）只表示命令已下发，**不代表机器人已开始执行**。需用 `get_command_status` 或 `wait_for_command` 跟踪到终态，或用 `get_robot_status` 看 `workState` 变化确认。
-4. **凭据安全**：不得在对话中输出 `GS_CLIENT_SECRET` / `GS_OPEN_ACCESS_KEY` 明文；调试时只显示前 4 位 + `***`。
-5. **建任务前必查资源**：`work_mode` 与 `map_resource_list` 必须来自 `list_task_resources` 的真实返回，不得凭记忆编造 ID。
+## Safety rules
 
-## 常见错误处理
+1. **Restate and confirm before any dangerous tool**: before calling a tool marked dangerous ✔ in §3 (create/update/delete_task_definition, start_task/pause_task/resume_task/stop_task/skip_task_item, schedule create/update/delete, navigate_home and navigation control, run_cleaning_task, remember), restate "I will run <action> on robot <SN> with <key fields>" and wait for clear consent. With `SAODI_AUTO_APPROVE=1` confirmation may be skipped, but still say in the output what was executed.
+2. **Status snapshots lag ≤30 s**: `workState`, battery, position etc. from `get_robot_status` are not real time; runtime fields of offline robots may be empty, so never conclude from them that the robot is "at its origin" or "has no task".
+3. **cmdStatus=6 only means delivered**: asynchronous commands such as `start_task` return `cmdStatus=6` (`cmdResultCode=6880`) when the command reached the robot — **not that the robot started executing**. Track to a terminal state with `get_command_status` or `wait_for_command`, or confirm the workState change with `get_robot_status`.
+4. **Credential safety**: never print `GS_CLIENT_SECRET` / `GS_OPEN_ACCESS_KEY` in plain text; when debugging show only the first 4 characters + `***`.
+5. **Query resources before creating tasks**: `work_mode` and `map_resource_list` must come from a real `list_task_resources` response; never make up IDs from memory.
 
-- **六位错误码**：业务响应 `code != 0` 为六位错误码，`msg` 为描述。任务启动失败码见 `references/error-codes.md`（源 `task-startup-failure-error-codes.md`）。常见高频：
-  - `2010100007` 任务区域不可达 → 检查地图资源是否仍有效、机器人是否在线。
-  - `2010100017` 任务名重复 → 换名或先删旧定义。
-  - `2010100018` 版本冲突，机器人数据已更新 → 重新查 `list_task_resources` 再建。
-  - `2020100003` 按 ID 找不到地图 → 核对 `map_id` 来源。
-  - `2050104001` 有其他操作进行中 → 稍后重试。
-  - `2100101001` 机器人丢失定位 → 提示用户确认机器人位置/重新建图。
-- **401 鉴权失败**：token 过期，由 `token_manager` 自动用 refresh_token 刷新；若 refresh 也失败，提示用户检查 `GS_CLIENT_ID/SECRET/OPEN_ACCESS_KEY`。
-- **422/400 参数错误**：检查必填字段、snake_case 拼写、`map_resource_type` 取值（region/path/position）。
-- **任务启动失败码表**：完整列表见 `references/error-codes.md` 与 https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/Task%20Startup%20Failure%20Error%20Codes。
+## Handling common errors
 
-## 输出规范
+- **Business error codes**: a business response has `code != 0` and a descriptive `msg`. Platform business codes have six digits (e.g. 110003, 230003; handling in `references/experience.md`); robot task codes have ten digits (e.g. 2010100007). Task-start failure codes are in `references/error-codes.md` (source: the official Task Startup Failure Error Codes page); look them up with `lookup_error_code`. Frequent ones:
+  - `2010100007` task area unreachable → check the map resources are still valid and the robot is online.
+  - `2010100017` duplicate task name → choose another name or delete the old definition first.
+  - `2010100018` version conflict, robot data has been updated → query `list_task_resources` again and recreate.
+  - `2020100003` map not found by ID → check where the `map_id` came from.
+  - `2050104001` another operation is in progress → retry later.
+  - `2100101001` robot lost its localisation → ask the user to check the robot's position on site / remap.
+- **401 authentication failure**: the token expired; `token_manager` refreshes it with the refresh_token automatically. If the refresh also fails, ask the user to check `GS_CLIENT_ID/SECRET/OPEN_ACCESS_KEY`.
+- **422/400 parameter errors**: check required fields, snake_case spelling and `map_resource_type` values (region/path/position).
+- **Task-start failure code table**: full list in `references/error-codes.md` and https://developer.gs-robot.com/v3docs/en_US/OpenAPI%20V3/Task%20Startup%20Failure%20Error%20Codes.
 
-- 简洁中文为主，关键术语保留英文（workState、fusion_task_id、cmdStatus 等）。
-- 多机器人状态用表格展示：`robot_sn | online | workState(名) | 电量 | 当前地图 | 任务`。
-- 工具调用前用一句话说明意图；危险工具调用前必须复述确认。
-- 错误码输出格式：`<六位码> <msg> → <建议动作>`。
-- 不输出真实凭据；SN 与 ID 在示例中用占位符。
+## Output conventions
 
-## 参考文件索引
-- `references/tools.md` — 全工具速查表（名称/用途/必填参数/dangerous/V3 端点）。
-- `references/work-states.md` — workState 码表 + 运维含义/建议动作。
-- `references/error-codes.md` — 任务启动失败错误码 + 常见 HTTP/OAuth 错误。
-- `references/workflows.md` — 3 个端到端示例对话脚本。
-- 源文档：`docs/ARCHITECTURE_V3.md`（契约）、高仙 OpenAPI V3 官方文档（端点参考，索引见 `docs/apis.md`）。
+- Reply in the user's language; keep key terms in English (workState, fusion_task_id, cmdStatus, …).
+- Several robots' status as a table: `robot_sn | online | workState (name) | battery | current map | task`.
+- Before a tool call, say its purpose in one sentence; before a dangerous tool, always restate and confirm.
+- Error codes as: `<code> <msg> → <next action>`.
+- Never print real credentials; use placeholders for SNs and IDs in examples.
+
+## Reference files
+- `references/tools.md` — quick reference of all tools (name / purpose / required parameters / dangerous / V3 endpoint).
+- `references/work-states.md` — workState code table + operational meaning / next actions.
+- `references/error-codes.md` — task-start failure codes + common HTTP/OAuth errors (official table, kept verbatim).
+- `references/workflows.md` — 3 end-to-end example conversations.
+- `references/domain.md` — domain model: cleaning robot basics, how robots/maps/resources/tasks/schedules/commands relate, error-code layers.
+- `references/experience.md` — field-tested call experience (open source; no SN/traceId/account/secret/customer site names).
+- The Saodi (扫地僧) agent loads `domain.md`, this file, `work-states.md` and `experience.md` as the system prompt of every session (see `docs/ARCHITECTURE_V3.md` §5.1); `error-codes.md` is looked up on demand with `lookup_error_code`. Editing these files changes both the skill and the agent.
+- Sources: `docs/ARCHITECTURE_V3.md` (contract) and the official Gausium OpenAPI V3 documentation (endpoint reference, indexed in `docs/apis.md`).

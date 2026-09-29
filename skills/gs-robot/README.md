@@ -80,10 +80,13 @@ skills/gs-robot/
     ├── tools.md              # 全工具速查表（名称/用途/必填参数/dangerous/V3 端点）
     ├── work-states.md        # workState 码表 + 运维含义/建议动作
     ├── error-codes.md        # 任务启动失败错误码 + 常见 HTTP/OAuth 错误
-    └── workflows.md          # 3 个端到端示例对话脚本
+    ├── workflows.md          # 3 个端到端示例对话脚本
+    ├── domain.md             # 领域模型（机器人/地图/资源/任务/排班/命令/错误码分层）
+    └── experience.md         # 实测调用经验（Memory，开源；禁止写 SN/traceId/账号/密钥/客户站点名）
 ```
 
 ## 维护
 - 工具名与端点契约唯一来源为 `docs/ARCHITECTURE_V3.md §3`；若仓库升级工具集，先更新该文件，再同步 `references/tools.md`。
 - workState / 错误码表分别跟随 https://developer.gs-robot.com/v3docs/en_US/Robot%20Work%20State%20Reference 与 `task-startup-failure-error-codes.md`。
 - 不要在 Skill 文件中写入真实凭据；示例一律用占位符。
+- 本目录同时是扫地僧（Saodi）Agent 的 Knowledge / Memory 来源，wheel 打包时整体打进 `gs_openapi/_skills/gs-robot/`。

@@ -6,7 +6,15 @@ from typing import Any, Protocol
 
 
 class AgentProviderError(Exception):
-    """An LLM backend could not complete a request."""
+    """An LLM backend could not complete a request.
+
+    ``code`` is a stable machine-readable reason that clients localize (SSE ``error.code``):
+    ``provider_auth`` | ``provider_rate_limited`` | ``provider_http`` | ``provider_connection`` | ``provider_error``.
+    """
+
+    def __init__(self, message: str, code: str = "provider_error"):
+        super().__init__(message)
+        self.code = code
 
 
 @dataclass

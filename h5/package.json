@@ -1,15 +1,18 @@
 {
-  "name": "pi-agent-h5",
-  "version": "0.2.0",
+  "name": "saodi-h5",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "i18n:check": "node scripts/i18n-check.mjs",
+    "build": "npm run i18n:check && vite build",
     "preview": "vite preview",
     "typecheck": "vue-tsc --noEmit"
   },
   "dependencies": {
+    "dompurify": "^3.4.16",
+    "marked": "^14.1.4",
     "pinia": "^2.1.7",
     "vant": "^4.9.1",
     "vue": "^3.4.27",
@@ -17,6 +20,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.4",
+    "esbuild": "^0.21.5",
     "typescript": "^5.4.5",
     "vite": "^5.2.11",
     "vue-tsc": "^2.0.19"

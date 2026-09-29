@@ -1,4 +1,4 @@
-"""Gausium OpenAPI V3 toolkit: MCP server, HTTP server, Pi Agent."""
+"""Gausium OpenAPI V3 toolkit: MCP server, HTTP server, Saodi (扫地僧) agent."""
 
 from importlib.metadata import PackageNotFoundError, version
 
