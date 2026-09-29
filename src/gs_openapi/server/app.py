@@ -7,10 +7,16 @@ from fastapi import APIRouter, Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 from gs_openapi import __version__
+from gs_openapi.config import load_env
+
+load_env()
+
+from gs_openapi.store import install_call_log
+from gs_openapi.tools.registry import call_context
 
 from .deps import require_api_key
 from .errors import register_error_handlers
-from .routes import agent, health, robots, tools
+from .routes import agent, errors, health, robots, tools
 from .static import mount_static
 
 logger = logging.getLogger(__name__)
@@ -27,7 +33,9 @@ def create_app() -> FastAPI:
         start = time.perf_counter()
         status = 500
         try:
-            response = await call_next(request)
+            # Tool calls made while serving HTTP are "rest"; the agent re-tags its own as "agent".
+            with call_context("rest"):
+                response = await call_next(request)
             status = response.status_code
             return response
         finally:
@@ -36,14 +44,17 @@ def create_app() -> FastAPI:
                 status, (time.perf_counter() - start) * 1000,
             )
 
+    install_call_log()
     register_error_handlers(application)
     public = APIRouter(prefix="/api/v1")
     public.include_router(health.router)
     application.include_router(public)
     protected = APIRouter(prefix="/api/v1", dependencies=[Depends(require_api_key)])
+    protected.include_router(health.protected_router)
     protected.include_router(tools.router)
     protected.include_router(robots.router)
     protected.include_router(agent.router)
+    protected.include_router(errors.router)
     application.include_router(protected)
     mount_static(application)
     return application

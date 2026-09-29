@@ -6,6 +6,7 @@ for RobotStatusSnapshot, MapResourceBundle, and TaskReportPage.
 
 from gs_openapi.v3.models import (
     MapResourceBundle,
+    RobotMap,
     RobotStatusPage,
     RobotStatusSnapshot,
     TaskReportPage,
@@ -35,7 +36,7 @@ ROBOT_STATUS_EXAMPLE = {
                     "position": {"x": -3.408, "y": -3.841, "z": 0},
                 },
             },
-            "robotSn": "TEST00-0000-000-S096",
+            "robotSn": "TEST00-0000-000-X096",
             "taskInstanceId": "eeca9fe6-281f-41f8-8d03-6824d922ebf3",
             "taskName": "每日清扫任务",
             "workState": 230,
@@ -49,7 +50,7 @@ ROBOT_STATUS_EXAMPLE = {
             "robotSn": "SIM00-0000-000-B011",
             "workState": 100,
         },
-        {"onlineStatus": "OFFLINE", "robotSn": "TEST00-0000-000-S014"},
+        {"onlineStatus": "OFFLINE", "robotSn": "TEST00-0000-000-X014"},
     ]
 }
 
@@ -58,7 +59,7 @@ def test_robot_status_snapshot_parsing():
     page = RobotStatusPage.model_validate(ROBOT_STATUS_EXAMPLE)
     assert len(page.list) == 3
     s0 = page.list[0]
-    assert s0.robot_sn == "TEST00-0000-000-S096"
+    assert s0.robot_sn == "TEST00-0000-000-X096"
     assert s0.battery_percent == 27
     assert s0.work_state == 230
     assert s0.position is not None
@@ -70,7 +71,7 @@ def test_robot_status_snapshot_parsing():
     assert s0.position.world_position.position.x == -3.408
     # Sparse snapshot parses with optionals as None.
     s2 = page.list[2]
-    assert s2.robot_sn == "TEST00-0000-000-S014"
+    assert s2.robot_sn == "TEST00-0000-000-X014"
     assert s2.online_status == "OFFLINE"
     assert s2.position is None
     assert s2.work_state is None
@@ -113,13 +114,13 @@ MAP_RESOURCE_BUNDLE_EXAMPLE = {
             "robotMapUuid": "0d33e11c-f29c-4294-b56b-e8829f2e2286",
         }
     ],
-    "robotSn": "TEST00-0000-000-S014",
+    "robotSn": "TEST00-0000-000-X014",
     "workModes": [
         {
             "configType": "strength",
             "defaultStrength": "middle",
             "hasStrength": True,
-            "id": "09f32e0e25154338ad149cbff97f8c4b",
+            "id": "a0000000000000000000000000000001",
             "mode": "sweep",
             "recommended": True,
             "strengthOptions": ["low", "middle", "high"],
@@ -133,7 +134,7 @@ MAP_RESOURCE_BUNDLE_EXAMPLE = {
 
 def test_map_resource_bundle_parsing():
     bundle = MapResourceBundle.model_validate(MAP_RESOURCE_BUNDLE_EXAMPLE)
-    assert bundle.robot_sn == "TEST00-0000-000-S014"
+    assert bundle.robot_sn == "TEST00-0000-000-X014"
     assert len(bundle.maps) == 1
     m = bundle.maps[0]
     assert m.map_id == "0d33e11c-f29c-4294-b56b-e8829f2e2286"
@@ -208,3 +209,51 @@ def test_extra_fields_allowed():
     assert snap.robot_sn == "R1"
     # Extra fields are retained on the model instance.
     assert snap.model_dump().get("futureField") == 42 or "futureField" in snap.__pydantic_extra__
+
+
+def test_robot_map_without_map_id_parses():
+    # Shape observed on the test environment: no mapId key at all.
+    m = RobotMap.model_validate({
+        "displayName": "天台", "mapVersionId": "ver-1",
+        "robotMapUuid": "00000000-1111-4222-8333-444444444444",
+    })
+    assert m.map_id == "00000000-1111-4222-8333-444444444444"
+    assert m.display_name == "天台"
+    # Documented shape keeps an explicit mapId; an empty item still parses.
+    assert RobotMap.model_validate({"mapId": "m1", "robotMapUuid": "u1"}).map_id == "m1"
+    assert RobotMap.model_validate({}).map_id is None
+
+
+# Shape captured from a live taskreports/page response (identifiers replaced by placeholders):
+# percentages come back fractional, and several undocumented int fields are present.
+LIVE_TASK_REPORT = {
+    "actualCleaningAreaSquareMeter": 15.523, "actualPolishingAreaSquareMeter": None,
+    "areaNameList": "区域A", "cleaningMode": "清扫", "completionPercentage": 0.91,
+    "consumablesResidualPercentage": {"brush": 100.0, "filter": 87.5, "suctionBlade": 99.99},
+    "displayName": "任务A", "durationSeconds": 187, "efficiencySquareMeterPerHour": 298.326,
+    "endBatteryPercentage": 33.0, "endTime": 1790667236000, "id": "report-1", "loopCount": 1,
+    "mainTaskType": 0, "operator": "operator", "planId": "plan-1", "planRunningTime": 81,
+    "plannedCleaningAreaSquareMeter": 24.425, "plannedPolishingAreaSquareMeter": None,
+    "robot": "robot", "robotSerialNumber": "TEST00-0000-000-X000",
+    "startBatteryPercentage": 34.5, "startTime": 1790667032000,
+    "subTasks": [{"actualCleaningAreaSquareMeter": 15.523, "mapId": "map-1", "mapName": "map",
+                  "taskId": "task-1"}],
+    "taskEndStatus": 0, "taskId": "task-1", "taskInstanceId": "inst-1",
+    "taskReportPngUri": "https://example.invalid/r.png", "taskStartType": 1,
+    "taskTriggerSource": 3, "timeZone": 480, "waterConsumptionLiter": 0.0,
+}
+
+
+def test_task_report_accepts_live_fractional_percentages():
+    page = TaskReportPage.model_validate(
+        {"count": 2, "page": 1, "pagesize": 20,
+         "robotTaskReports": [LIVE_TASK_REPORT, {"id": "sparse"}]})
+    rep, sparse = page.robot_task_reports
+    assert rep.completion_percentage == 0.91
+    assert rep.start_battery_percentage == 34.5 and rep.end_battery_percentage == 33.0
+    assert rep.consumables_residual_percentage.filter == 87.5
+    assert rep.consumables_residual_percentage.suction_blade == 99.99
+    assert (rep.loop_count, rep.time_zone, rep.task_trigger_source) == (1, 480, 3)
+    assert sparse.completion_percentage is None and sparse.sub_tasks == []
+    dumped = page.model_dump(mode="json", by_alias=True)["robotTaskReports"][0]
+    assert dumped["completionPercentage"] == 0.91 and dumped["timeZone"] == 480

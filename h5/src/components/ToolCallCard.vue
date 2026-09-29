@@ -1,29 +1,39 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { t } from '@/i18n'
 
 const props = defineProps<{ name: string; input: unknown; output?: unknown; isError?: boolean }>()
 const open = ref(false)
 const prettyInput = computed(() => JSON.stringify(props.input, null, 2))
-const prettyOutput = computed(() => JSON.stringify(props.output, null, 2) ?? '')
+const prettyOutput = computed(() => typeof props.output === 'string' ? props.output : JSON.stringify(props.output, null, 2) ?? '')
+const state = computed(() => props.output === undefined ? 'run' : props.isError ? 'err' : 'ok')
 </script>
 
 <template>
   <div class="tool-card">
     <button class="tool-title" type="button" :aria-expanded="open" @click="open = !open">
-      <span>{{ isError ? '调用失败' : '工具调用' }} · {{ name }}</span><span>{{ open ? '收起' : '展开' }}</span>
+      <span class="dot" :class="state" /><span class="tool-name">{{ isError ? t('tool.callFailed') : t('tool.call') }} · {{ name }}</span><span class="tool-toggle">{{ open ? t('tool.collapse') : t('tool.expand') }}</span>
     </button>
     <div v-if="open" class="tool-content">
-      <small>输入</small><pre>{{ prettyInput }}</pre>
-      <template v-if="output !== undefined"><small>{{ isError ? '错误' : '结果' }}</small><pre>{{ prettyOutput }}</pre></template>
-      <small v-else>执行中…</small>
+      <small>{{ t('tool.input') }}</small><pre>{{ prettyInput }}</pre>
+      <template v-if="output !== undefined"><small>{{ isError ? t('tool.error') : t('tool.result') }}</small><pre>{{ prettyOutput }}</pre></template>
+      <small v-else>{{ t('tool.running') }}</small>
     </div>
   </div>
 </template>
 
 <style scoped>
-.tool-card { margin-top: 8px; border: 1px solid #d6e4f4; border-radius: 10px; background: #f8fbff; overflow: hidden; }
-.tool-title { display: flex; justify-content: space-between; gap: 12px; width: 100%; padding: 9px; border: 0; background: transparent; color: #286caf; text-align: left; font-size: 12px; cursor: pointer; }
-.tool-title span:first-child { overflow-wrap: anywhere; }
-.tool-content { padding: 0 9px 9px; }
-pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; }
+.tool-card { border: 1px solid #dde7f2; border-radius: 9px; background: #fff; overflow: hidden; }
+.tool-card + .tool-card { margin-top: 6px; }
+.tool-title { display: flex; align-items: center; gap: 8px; width: 100%; padding: 7px 10px; border: 0; background: transparent; color: #33506e; text-align: left; font-size: 12.5px; cursor: pointer; }
+.tool-name { flex: 1; overflow-wrap: anywhere; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+.tool-toggle { color: #1f6fbf; flex: none; }
+.dot { width: 7px; height: 7px; border-radius: 50%; flex: none; background: #9fb3c8; }
+.dot.ok { background: #2fa36b; }
+.dot.err { background: #d9534f; }
+.dot.run { background: #e0a82e; animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .35; } }
+.tool-content { padding: 0 10px 10px; }
+.tool-content small { color: #7d8998; }
+pre { margin: 4px 0 8px; padding: 8px 10px; border-radius: 7px; background: #f4f7fb; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 12px; line-height: 1.5; }
 </style>

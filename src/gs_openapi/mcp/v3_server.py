@@ -9,7 +9,7 @@ from mcp.server.fastmcp import FastMCP
 
 from ..core.client import GausiumAPIClient
 from ..core.errors import GausiumAPIError
-from ..tools.registry import REGISTRY, invoke
+from ..tools.registry import REGISTRY, call_context, invoke
 from ..v3.api import GausiumV3
 
 
@@ -20,12 +20,14 @@ def build_mcp(name: str = "gs-robot") -> FastMCP:
     for spec in REGISTRY.values():
         # FastMCP discovers field names/types/defaults from inspect.signature.
         # Bind the tool name as a closure (not an MCP parameter).
-        async def call(*, _tool_name: str = spec.name, **kwargs: Any) -> Any:
+        async def call(*, _tool_name: str = spec.name, _local: bool = spec.local,
+                       **kwargs: Any) -> Any:
             nonlocal v3
-            if v3 is None and _tool_name != "describe_work_state":
+            if v3 is None and not _local:
                 v3 = GausiumV3(GausiumAPIClient())
             try:
-                return await invoke(_tool_name, kwargs, v3)
+                with call_context("mcp"):
+                    return await invoke(_tool_name, kwargs, v3)
             except GausiumAPIError as exc:
                 return {"error": {"code": exc.code, "message": exc.msg,
                                   "trace_id": exc.trace_id}}

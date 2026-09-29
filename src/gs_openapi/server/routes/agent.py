@@ -3,10 +3,12 @@
 import asyncio
 import json
 import logging
+import time
 from collections.abc import AsyncIterator
 from contextlib import suppress
 
-from fastapi import APIRouter, HTTPException, Request
+import anyio
+from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
@@ -84,6 +86,15 @@ async def create_session(sessions: deps.SessionsDep, body: SessionInput | None =
     return {"session_id": session.session_id}
 
 
+@router.get("")
+async def list_sessions(
+    sessions: deps.SessionsDep, page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100), include_empty: bool = False,
+) -> dict:
+    items, total = await sessions.page(page, page_size, include_empty)
+    return {"items": items, "total": total, "page": page, "page_size": page_size}
+
+
 @router.get("/{session_id}")
 async def get_session(session_id: str, sessions: deps.SessionsDep) -> dict:
     session = await sessions.get(session_id)
@@ -91,8 +102,12 @@ async def get_session(session_id: str, sessions: deps.SessionsDep) -> dict:
         raise HTTPException(status_code=404, detail="Session not found")
     return {
         "session_id": session.session_id,
+        "title": session.title,
         "messages": session.messages,
+        "errors": session.errors,
         "created_at": session.created_at,
+        "updated_at": session.updated_at,
+        "message_count": len(session.messages),
     }
 
 
@@ -148,6 +163,8 @@ async def message(
             raise
         except Exception:
             logger.exception("Agent stream failed")
+            session.errors.append({"message": "Internal server error", "at": time.time(),
+                                   "after_message": len(session.messages)})
             yield 'data: {"type":"error","message":"Internal server error"}\n\n'
         finally:
             disconnect.cancel()
@@ -159,7 +176,14 @@ async def message(
             try:
                 await iterator.aclose()
             finally:
-                confirms.clear(session_id)
+                try:
+                    # Persist even when the client disconnected (the stream is being cancelled).
+                    with anyio.CancelScope(shield=True):
+                        await sessions.save(session)
+                except Exception:
+                    logger.exception("Saving session failed")
+                finally:
+                    confirms.clear(session_id)
 
     return StreamingResponse(
         events(), media_type="text/event-stream",

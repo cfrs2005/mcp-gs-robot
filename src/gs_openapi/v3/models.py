@@ -12,7 +12,7 @@ from __future__ import annotations
 import builtins
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class _V3Model(BaseModel):
@@ -86,10 +86,21 @@ class RobotStatusPage(_V3Model):
 # Robot maps (robot-maps--list-robot-maps.md)
 # ---------------------------------------------------------------------------
 class RobotMap(_V3Model):
+    """All fields optional: some upstream environments omit ``mapId`` and only
+    return ``displayName`` / ``mapVersionId`` / ``robotMapUuid``. There
+    ``robotMapUuid`` carries the same value other endpoints report as ``mapId``
+    (e.g. map-resource bundles), so ``map_id`` falls back to it."""
+
     display_name: str | None = Field(default=None, alias="displayName")
-    map_id: str = Field(alias="mapId")
+    map_id: str | None = Field(default=None, alias="mapId")
     map_version_id: str | None = Field(default=None, alias="mapVersionId")
     robot_map_uuid: str | None = Field(default=None, alias="robotMapUuid")
+
+    @model_validator(mode="after")
+    def _default_map_id(self) -> RobotMap:
+        if self.map_id is None:
+            self.map_id = self.robot_map_uuid
+        return self
 
 
 # ---------------------------------------------------------------------------
@@ -231,9 +242,10 @@ class CommandRecordPage(_V3Model):
 # Task reports (task-capability--page-task-reports.md)
 # ---------------------------------------------------------------------------
 class ConsumablesResidual(_V3Model):
-    brush: int | None = Field(default=None, alias="brush")
-    filter: int | None = Field(default=None, alias="filter")
-    suction_blade: int | None = Field(default=None, alias="suctionBlade")
+    # Measured upstream: fractional percentages (e.g. 87.5), so float not int.
+    brush: float | None = Field(default=None, alias="brush")
+    filter: float | None = Field(default=None, alias="filter")
+    suction_blade: float | None = Field(default=None, alias="suctionBlade")
 
 
 class SubTask(_V3Model):
@@ -263,18 +275,24 @@ class TaskReport(_V3Model):
     cleaning_mode: str | None = Field(default=None, alias="cleaningMode")
     start_time: int | None = Field(default=None, alias="startTime")
     end_time: int | None = Field(default=None, alias="endTime")
-    start_battery_percentage: int | None = Field(
+    # Percentages arrive as floats upstream (battery 81.0, completion 0.812 = ratio).
+    start_battery_percentage: float | None = Field(
         default=None, alias="startBatteryPercentage"
     )
-    end_battery_percentage: int | None = Field(
+    end_battery_percentage: float | None = Field(
         default=None, alias="endBatteryPercentage"
     )
     duration_seconds: int | None = Field(default=None, alias="durationSeconds")
     plan_running_time: int | None = Field(default=None, alias="planRunningTime")
-    completion_percentage: int | None = Field(
+    completion_percentage: float | None = Field(
         default=None, alias="completionPercentage"
     )
     task_end_status: int | None = Field(default=None, alias="taskEndStatus")
+    loop_count: int | None = Field(default=None, alias="loopCount")
+    main_task_type: int | None = Field(default=None, alias="mainTaskType")
+    task_start_type: int | None = Field(default=None, alias="taskStartType")
+    task_trigger_source: int | None = Field(default=None, alias="taskTriggerSource")
+    time_zone: int | None = Field(default=None, alias="timeZone")
     water_consumption_liter: float | None = Field(
         default=None, alias="waterConsumptionLiter"
     )

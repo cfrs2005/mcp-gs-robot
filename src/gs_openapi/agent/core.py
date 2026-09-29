@@ -1,12 +1,14 @@
-"""Provider-neutral Pi Agent tool loop and confirmation boundary."""
+"""Provider-neutral Saodi (扫地僧) agent tool loop and confirmation boundary."""
 
 import asyncio
 import json
+import time
 from collections.abc import AsyncIterator
+from contextlib import aclosing
 from typing import Any, Protocol, TypedDict
 from uuid import uuid4
 
-from ..tools.registry import REGISTRY, invoke, to_anthropic_tools, to_openai_tools
+from ..tools.registry import REGISTRY, call_context, invoke, to_anthropic_tools, to_openai_tools
 from ..v3.api import GausiumV3
 from .prompts import build_system_prompt
 from .providers.base import LLMProvider, MessageEnd, TextDelta, ToolUse
@@ -60,7 +62,26 @@ def _tool_content(output: Any) -> str:
     return text if len(text) <= 20_000 else text[:20_000] + "…[结果已截断]"
 
 
-class PiAgent:
+INTERRUPTED_RESULT = "上次执行被中断，结果未知"
+
+
+def close_dangling_tool_uses(messages: list[dict]) -> bool:
+    """If the history ends in an assistant tool_use with no tool_result (client disconnected
+    mid-run), append an ``is_error`` result for each so providers accept the next turn."""
+    if not messages or messages[-1].get("role") != "assistant":
+        return False
+    content = messages[-1].get("content")
+    ids = [b["id"] for b in content if isinstance(b, dict) and b.get("type") == "tool_use"] \
+        if isinstance(content, list) else []
+    if not ids:
+        return False
+    messages.append({"role": "user", "content": [
+        {"type": "tool_result", "tool_use_id": tool_id, "content": INTERRUPTED_RESULT,
+         "is_error": True} for tool_id in ids]})
+    return True
+
+
+class SaodiAgent:
     def __init__(
         self, v3: GausiumV3, provider: LLMProvider, *, auto_approve: bool = False,
         max_turns: int = 12, confirm_gate: ConfirmGate | None = None,
@@ -73,13 +94,28 @@ class PiAgent:
         self.max_turns = max_turns
         self.confirm_gate = confirm_gate or _DenyGate()
 
-    async def _execute(self, tool: ToolUse) -> tuple[Any, bool]:
+    async def _execute(self, tool: ToolUse, session_id: str) -> tuple[Any, bool]:
         try:
-            return await invoke(tool.name, tool.input, self.v3), False
+            with call_context("agent", session_id):
+                return await invoke(tool.name, tool.input, self.v3), False
         except Exception as exc:  # noqa: BLE001 - tool handlers are untrusted boundaries
             return str(exc), True
 
     async def run(self, session: AgentSession, user_text: str) -> AsyncIterator[AgentEvent]:
+        """Run one user turn; ``error`` events are also kept on ``session.errors``."""
+        async with aclosing(self._run(session, user_text)) as events:
+            async for event in events:
+                if event["type"] == "error":
+                    session.errors.append({
+                        "message": event["message"], "at": time.time(),
+                        "after_message": len(session.messages),
+                    })
+                yield event
+
+    async def _run(self, session: AgentSession, user_text: str) -> AsyncIterator[AgentEvent]:
+        if session.system_prompt is None:
+            session.system_prompt = build_system_prompt()
+        close_dangling_tool_uses(session.messages)
         session.messages.append({"role": "user", "content": user_text})
         tools = (to_openai_tools() if getattr(self.provider, "tool_format", "anthropic") == "openai"
                  else to_anthropic_tools())
@@ -88,7 +124,7 @@ class PiAgent:
             end: MessageEnd | None = None
             try:
                 async for event in self.provider.stream(
-                    system=build_system_prompt(), messages=session.messages, tools=tools,
+                    system=session.system_prompt, messages=session.messages, tools=tools,
                 ):
                     if isinstance(event, TextDelta):
                         yield {"type": "text_delta", "text": event.text}
@@ -128,7 +164,7 @@ class PiAgent:
                 approved.append(tool)
             results = dict(zip(
                 (tool.id for tool in approved),
-                await asyncio.gather(*(self._execute(tool) for tool in approved)),
+                await asyncio.gather(*(self._execute(tool, session.session_id) for tool in approved)),
             ))
             blocks = []
             for tool in uses:
@@ -148,3 +184,7 @@ class PiAgent:
             if turn == self.max_turns - 1:
                 yield {"type": "error", "message": "已达到最大工具轮数"}
                 return
+
+
+# Deprecated alias kept for one release; use SaodiAgent.
+PiAgent = SaodiAgent

@@ -18,12 +18,12 @@ For a local manual walkthrough, run your own mock HTTP server implementing the e
 export GS_BASE_URL="http://127.0.0.1:<mock-port>/"
 export GS_CLIENT_ID="dummy" GS_CLIENT_SECRET="dummy" GS_OPEN_ACCESS_KEY="dummy"
 export GS_SERVER_API_KEY="local-test-key"
-export PI_AGENT_PROVIDER="anthropic"
+export SAODI_PROVIDER="anthropic"
 export ANTHROPIC_API_KEY="dummy"  # only for health/session setup; no live chat with this value
 uv run gs-robot-server
 ```
 
-`GET /api/v1/health` is public. Other `/api/v1/` routes require `X-API-Key` when `GS_SERVER_API_KEY` is set. To test **chat SSE** without calling a real model, override `deps.get_agent` with a fake event generator as in `test_agent_sse_and_confirm` in the test file; `GS_BASE_URL` alone mocks only the robot API, not the LLM provider. For manual live Agent chat, supply your own valid LLM key; never send robot-motion requests on live equipment while testing.
+`GET /api/v1/health` is public. Other `/api/v1/` routes require `X-API-Key` when `GS_SERVER_API_KEY` is set. To test **chat SSE** without calling a real model, override `deps.get_agent` with a fake event generator as in `test_agent_sse_and_confirm` in the test file; `GS_BASE_URL` alone mocks only the robot API, not the LLM provider. To review the Saodi system prompt (Soul/Knowledge/Memory) without any key, run `uv run saodi --show-context`. For manual live Agent chat, supply your own valid LLM key; never send robot-motion requests on live equipment while testing.
 
 ## curl walkthrough
 

@@ -70,5 +70,11 @@
 | `run_cleaning_task` | 组合封装：capabilities→task_resources→create_task_definition→start_task→轮询 | robot_sn, task_name, map_id, resource_ids: list[str], mode="sweep", strength?, loop_count=1, wait_seconds=30 | ✔ | 组合（见左侧） |
 | `wait_for_command` | 轮询 commands/status/get 至终态 | robot_sn, request_id, timeout_seconds=60 | | 轮询 `robots/commands/status/get` |
 
+## reference / memory（本地，不调上游）
+| 工具名 | 用途 | 必填参数 | dangerous | V3 端点 |
+|---|---|---|---|---|
+| `lookup_error_code` | 按错误码检索 `error-codes.md` 与 `experience.md` 的匹配段落；不认识的码先查它，不要猜 | code: str（3–10 位数字） | | 本地参考表（无端点） |
+| `remember` | 把一条经证实的可复用经验写入本地 `$SAODI_DATA_DIR/memory.md`（去重、拒绝密钥形态） | lesson: str, scope? | ✔ | 本地文件（无端点） |
+
 ### 命令类型对照（commandType，源 command-type-reference.md）
 START_FUSION_TASK / SKIP_TASK / PAUSE_TASK / RESUME_TASK / STOP_TASK / CROSS_NAVIGATE / PAUSE_NAVIGATE / RESUME_NAVIGATE / STOP_NAVIGATE。

@@ -16,11 +16,11 @@ def get_v3() -> GausiumV3:
     return GausiumV3(GausiumAPIClient())
 
 
-@lru_cache
 def get_sessions():
-    from gs_openapi.agent.session import InMemorySessionStore
+    """SQLite-backed so sessions survive a restart; the DB path is resolved per request."""
+    from gs_openapi.store import SqliteSessionStore, get_database
 
-    return InMemorySessionStore()
+    return SqliteSessionStore(get_database())
 
 
 @lru_cache
@@ -32,14 +32,14 @@ def get_confirms():
 
 @lru_cache
 def get_agent():
-    from gs_openapi.agent.core import PiAgent
+    from gs_openapi.agent.core import SaodiAgent
     from gs_openapi.agent.settings import AgentSettings, build_provider
 
     settings = AgentSettings()
-    return PiAgent(
+    return SaodiAgent(
         get_v3(), build_provider(settings),
-        auto_approve=settings.pi_agent_auto_approve,
-        max_turns=settings.pi_agent_max_turns,
+        auto_approve=settings.saodi_auto_approve,
+        max_turns=settings.saodi_max_turns,
         confirm_gate=get_confirms(),
     )
 

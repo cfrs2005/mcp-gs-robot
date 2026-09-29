@@ -1,20 +1,34 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Tabbar, TabbarItem, Icon } from 'vant'
+import { Tabbar, TabbarItem, Icon, showConfirmDialog } from 'vant'
+import { AUTH_REQUIRED_EVENT } from '@/api/client'
+import { t } from '@/i18n'
 
 const route = useRoute()
 const router = useRouter()
 const active = computed(() => route.path.startsWith('/robots') ? '/robots' : route.path)
+let prompting = false
+async function onAuthRequired() {
+  // The settings page reports key validity itself; elsewhere guide the user there once.
+  if (prompting || route.path === '/settings') return
+  prompting = true
+  try {
+    await showConfirmDialog({ title: t('auth.title'), message: t('auth.message'), confirmButtonText: t('auth.goSettings') })
+    await router.push('/settings')
+  } catch { /* cancelled */ } finally { prompting = false }
+}
+onMounted(() => window.addEventListener(AUTH_REQUIRED_EVENT, onAuthRequired))
+onUnmounted(() => window.removeEventListener(AUTH_REQUIRED_EVENT, onAuthRequired))
 </script>
 
 <template>
   <div class="app-shell">
     <main class="app-content"><router-view /></main>
     <Tabbar :model-value="active" :safe-area-inset-bottom="true" @change="(path: string) => router.push(path)">
-      <TabbarItem name="/chat"><template #icon><Icon name="chat-o" /></template>对话</TabbarItem>
-      <TabbarItem name="/robots"><template #icon><Icon name="apps-o" /></template>机器人</TabbarItem>
-      <TabbarItem name="/settings"><template #icon><Icon name="setting-o" /></template>设置</TabbarItem>
+      <TabbarItem name="/chat"><template #icon><Icon name="chat-o" /></template>{{ t('nav.chat') }}</TabbarItem>
+      <TabbarItem name="/robots"><template #icon><Icon name="apps-o" /></template>{{ t('nav.robots') }}</TabbarItem>
+      <TabbarItem name="/settings"><template #icon><Icon name="setting-o" /></template>{{ t('nav.settings') }}</TabbarItem>
     </Tabbar>
   </div>
 </template>

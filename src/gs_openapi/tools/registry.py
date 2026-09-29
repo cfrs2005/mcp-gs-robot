@@ -2,13 +2,20 @@
 
 from __future__ import annotations
 
-from collections.abc import Awaitable, Callable
+import inspect
+import logging
+import time
+from collections.abc import Awaitable, Callable, Iterator
+from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass
 from typing import Any, get_type_hints
 
 from pydantic import BaseModel, ValidationError
 
 from ..v3.api import GausiumV3
+
+logger = logging.getLogger(__name__)
 
 
 class ToolInputError(ValueError):
@@ -23,6 +30,7 @@ class ToolSpec:
     handler: Callable[[GausiumV3, BaseModel], Awaitable[Any]]
     dangerous: bool = False
     category: str = "robots"
+    local: bool = False  # answers from local files only; needs no upstream client
 
 
 REGISTRY: dict[str, ToolSpec] = {}
@@ -35,11 +43,12 @@ def register(spec: ToolSpec) -> ToolSpec:
     return spec
 
 
-def tool(*, name: str, description: str, dangerous: bool = False, category: str = "robots"):
+def tool(*, name: str, description: str, dangerous: bool = False, category: str = "robots",
+         local: bool = False):
     """Register an async handler; its second argument's annotation is its input model."""
     def decorate(handler):
         model = get_type_hints(handler)["args"]
-        register(ToolSpec(name, description, model, handler, dangerous, category))
+        register(ToolSpec(name, description, model, handler, dangerous, category, local))
         return handler
     return decorate
 
@@ -62,13 +71,75 @@ def _jsonable(value: Any) -> Any:
     return value
 
 
-async def invoke(name: str, args: dict, v3: GausiumV3) -> Any:
-    spec = get_tool(name)
+@dataclass
+class ToolCall:
+    """What call observers receive once per ``invoke`` (success or failure)."""
+
+    tool: str
+    args: dict
+    source: str
+    session_id: str | None
+    started_at: float
+    duration_ms: float
+    error: BaseException | None = None
+
+
+CallObserver = Callable[[ToolCall], Awaitable[None] | None]
+_observers: list[CallObserver] = []
+_context: ContextVar[tuple[str, str | None]] = ContextVar("tool_call_context", default=("unknown", None))
+
+
+def add_call_observer(fn: CallObserver) -> None:
+    if fn not in _observers:
+        _observers.append(fn)
+
+
+def remove_call_observer(fn: CallObserver) -> None:
+    if fn in _observers:
+        _observers.remove(fn)
+
+
+@contextmanager
+def call_context(source: str, session_id: str | None = None) -> Iterator[None]:
+    """Tag tool calls made inside this block with their entry point (agent/rest/mcp)."""
+    token = _context.set((source, session_id))
     try:
-        validated = spec.input_model.model_validate(args)
-    except ValidationError as exc:
-        raise ToolInputError(f"Invalid input for {name}: {exc}") from exc
-    return _jsonable(await spec.handler(v3, validated))
+        yield
+    finally:
+        _context.reset(token)
+
+
+async def _notify(call: ToolCall) -> None:
+    for observer in _observers:
+        try:
+            result = observer(call)
+            if inspect.isawaitable(result):
+                await result
+        except Exception:
+            logger.warning("tool call observer failed for %s", call.tool, exc_info=True)
+
+
+async def invoke(name: str, args: dict, v3: GausiumV3) -> Any:
+    """Validate and run one tool; the single choke point every entry point goes through."""
+    source, session_id = _context.get()
+    started_at, start = time.time(), time.perf_counter()
+    error: BaseException | None = None
+    try:
+        spec = get_tool(name)
+        try:
+            validated = spec.input_model.model_validate(args)
+        except ValidationError as exc:
+            raise ToolInputError(f"Invalid input for {name}: {exc}") from exc
+        return _jsonable(await spec.handler(v3, validated))
+    except BaseException as exc:
+        error = exc
+        raise
+    finally:
+        # Cancellation/interpreter exit is not a tool outcome; awaiting here would re-raise anyway.
+        if _observers and (error is None or isinstance(error, Exception)):
+            await _notify(ToolCall(name, args if isinstance(args, dict) else {"_": args},
+                                   source, session_id, started_at,
+                                   (time.perf_counter() - start) * 1000, error))
 
 
 def _strip_titles(schema: Any) -> Any:
@@ -97,4 +168,4 @@ def to_openai_tools() -> list[dict]:
 
 
 # Populate the registry when importing it directly as well as through the package.
-from . import v3_tools, workflow_tools  # noqa: F401
+from . import knowledge_tools, v3_tools, workflow_tools  # noqa: F401

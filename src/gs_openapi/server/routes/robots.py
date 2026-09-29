@@ -1,9 +1,11 @@
 """H5-friendly robot REST endpoints backed exclusively by the tool registry."""
 
+import asyncio
 from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Body, HTTPException, Query
 
+from gs_openapi.core.errors import GausiumAPIError
 from gs_openapi.tools import registry
 from gs_openapi.v3.api import GausiumV3
 
@@ -31,16 +33,50 @@ async def list_robots(
     return result
 
 
+# Upstream 230003 "Robot ... routing failed.": the platform cannot route to the robot,
+# i.e. it is offline. The batch snapshot endpoint fails as a whole if any SN is offline.
+ROBOT_UNREACHABLE = 230003
+UNREACHABLE_MESSAGE = "机器人离线或未连接云端"
+# Upstream rate limit is < 20 requests/second per app; pace the per-robot fallback well below it.
+FALLBACK_INTERVAL_SECONDS = 0.1
+
+
+def unreachable(sn: str, exc: GausiumAPIError) -> dict[str, Any]:
+    """Status placeholder for an unroutable robot; same shape as a snapshot plus error."""
+    return {
+        "robotSn": sn, "onlineStatus": "OFFLINE", "reachable": False,
+        "error": {"code": exc.code, "message": UNREACHABLE_MESSAGE, "trace_id": exc.trace_id},
+    }
+
+
+async def status_list(sns: list[str], v3: GausiumV3) -> list[dict[str, Any]]:
+    """Batch status; on 230003 re-query one by one so only offline robots are degraded."""
+    try:
+        return (await call("get_robot_status", v3, robot_sn_list=sns))["list"]
+    except GausiumAPIError as exc:
+        if exc.code != ROBOT_UNREACHABLE:
+            raise
+        if len(sns) == 1:
+            return [unreachable(sns[0], exc)]
+
+    async def one(index: int, sn: str) -> list[dict[str, Any]]:
+        await asyncio.sleep(index * FALLBACK_INTERVAL_SECONDS)
+        return await status_list([sn], v3)
+
+    results = await asyncio.gather(*(one(i, sn) for i, sn in enumerate(sns)))
+    return [item for items in results for item in items]
+
+
 @router.post("/status")
 async def batch_status(body: dict[str, Any], v3: deps.V3Dep) -> Any:
-    result = await registry.invoke("get_robot_status", body, v3)
-    return result["list"]
+    # Validate through the registry model (1..100 SNs) before any upstream call.
+    args = registry.get_tool("get_robot_status").input_model.model_validate(body)
+    return await status_list(args.robot_sn_list, v3)
 
 
 @router.get("/{sn}/status")
 async def robot_status(sn: str, v3: deps.V3Dep) -> Any:
-    result = await call("get_robot_status", v3, robot_sn_list=[sn])
-    for item in result["list"]:
+    for item in await status_list([sn], v3):
         if item["robotSn"] == sn:
             return item
     raise HTTPException(status_code=404, detail="Robot status not found")

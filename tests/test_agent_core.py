@@ -1,11 +1,11 @@
-"""Pi Agent event, confirmation, and history contract tests."""
+"""Saodi agent event, confirmation, and history contract tests."""
 
 import json
 
 import httpx
 import pytest
 
-from gs_openapi.agent.core import PiAgent
+from gs_openapi.agent.core import SaodiAgent
 from gs_openapi.agent.providers.base import MessageEnd, TextDelta, ToolUse
 from gs_openapi.agent.session import AgentSession, InMemorySessionStore
 from gs_openapi.agent.settings import AgentSettings
@@ -56,7 +56,7 @@ async def test_tool_loop_and_neutral_history():
     provider = FakeProvider(tool_turn(), [TextDelta("完成"), end({"type": "text", "text": "完成"})])
     session = AgentSession()
     try:
-        events = [event async for event in PiAgent(v3, provider).run(session, "查询 R1")]
+        events = [event async for event in SaodiAgent(v3, provider).run(session, "查询 R1")]
         assert [event["type"] for event in events] == [
             "text_delta", "tool_call", "tool_result", "text_delta", "done",
         ]
@@ -98,7 +98,7 @@ async def test_confirmation(approved):
     provider = FakeProvider(tool_turn("start_task", args), [end({"type": "text", "text": "收到"})])
     gate = Gate(approved)
     try:
-        events = [event async for event in PiAgent(v3, provider, confirm_gate=gate).run(
+        events = [event async for event in SaodiAgent(v3, provider, confirm_gate=gate).run(
             AgentSession(), "启动 R1 的 F1"
         )]
         assert [event["type"] for event in events[:4]] == [
@@ -116,7 +116,7 @@ async def test_confirmation(approved):
 async def test_max_turns_and_tool_error():
     provider = FakeProvider(tool_turn(), tool_turn())
     session = AgentSession()
-    agent = PiAgent(None, provider, max_turns=1)
+    agent = SaodiAgent(None, provider, max_turns=1)
     events = [event async for event in agent.run(session, "查询")]
     assert events[-1] == {"type": "error", "message": "已达到最大工具轮数"}
     assert len(provider.messages) == 1
@@ -127,7 +127,7 @@ async def test_max_turns_and_tool_error():
 async def test_default_gate_denies_without_invocation():
     args = {"robot_sn": "R1", "fusion_task_id": "F1"}
     provider = FakeProvider(tool_turn("start_task", args), [end({"type": "text", "text": "取消"})])
-    events = [event async for event in PiAgent(None, provider).run(AgentSession(), "启动 R1")]
+    events = [event async for event in SaodiAgent(None, provider).run(AgentSession(), "启动 R1")]
     assert [event["type"] for event in events] == [
         "text_delta", "tool_call", "confirm_required", "tool_result", "done",
     ]
@@ -141,18 +141,46 @@ async def test_large_tool_output_is_truncated(monkeypatch):
     monkeypatch.setattr("gs_openapi.agent.core.invoke", large_result)
     provider = FakeProvider(tool_turn(), [end({"type": "text", "text": "完成"})])
     session = AgentSession()
-    events = [event async for event in PiAgent(None, provider).run(session, "查询")]
+    events = [event async for event in SaodiAgent(None, provider).run(session, "查询")]
     assert events[2]["output"].endswith("[结果已截断]")
     assert len(session.messages[2]["content"][0]["content"]) < 21_000
 
 
 async def test_store_and_provider_defaults(monkeypatch):
-    monkeypatch.setenv("PI_AGENT_PROVIDER", "openai")
+    monkeypatch.setenv("SAODI_PROVIDER", "openai")
+    # app.py calls load_dotenv() at import, so a local .env can leak model settings in.
+    for name in ("SAODI_MODEL", "PI_AGENT_MODEL", "PI_AGENT_PROVIDER"):
+        monkeypatch.delenv(name, raising=False)
     settings = AgentSettings()
-    assert settings.pi_agent_model == "deepseek-chat"
+    assert settings.saodi_model == "deepseek-chat"
     store = InMemorySessionStore()
     created = await store.create("test")
     assert (await store.get(created.session_id)) is created
     assert await store.list() == [created]
     await store.delete(created.session_id)
     assert await store.get(created.session_id) is None
+
+
+async def test_dangling_tool_use_is_closed_before_next_turn():
+    from gs_openapi.agent.core import INTERRUPTED_RESULT, close_dangling_tool_uses
+
+    session = AgentSession(system_prompt="s", messages=[
+        {"role": "user", "content": "停一下"},
+        {"role": "assistant", "content": [
+            {"type": "text", "text": "好的"},
+            {"type": "tool_use", "id": "a", "name": "get_robot_status", "input": {}},
+            {"type": "tool_use", "id": "b", "name": "list_robots", "input": {}}]},
+    ])
+    provider = FakeProvider([TextDelta("继续"), end({"type": "text", "text": "继续"})])
+    events = [e async for e in SaodiAgent(None, provider).run(session, "继续")]
+    assert events[-1]["type"] == "done"
+    sent = provider.messages[0]
+    assert sent[2] == {"role": "user", "content": [
+        {"type": "tool_result", "tool_use_id": "a", "content": INTERRUPTED_RESULT, "is_error": True},
+        {"type": "tool_result", "tool_use_id": "b", "content": INTERRUPTED_RESULT, "is_error": True},
+    ]}
+    assert sent[3] == {"role": "user", "content": "继续"}
+    # Well-formed histories are left alone.
+    assert close_dangling_tool_uses(session.messages) is False
+    assert close_dangling_tool_uses([{"role": "assistant", "content": "text only"}]) is False
+    assert close_dangling_tool_uses([]) is False

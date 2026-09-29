@@ -10,6 +10,8 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
+    // Pin ambient types: otherwise tsc also picks up any stray ancestor node_modules/@types (e.g. a Vue 1 @types/vue in ~) and it shadows "vue".
+    "types": ["vite/client"],
     "jsx": "preserve",
     "strict": true,
     "noUnusedLocals": false,
