@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here.
 
+## [0.4.1] - 2026-09-29
+
+### 🔧 Changed
+- README showcase images (`docs/images/h5-showcase.png`, `h5-showcase_cn.png`) now show the 0.4.0 interface: home, result cards, execution pipeline, robots and current location; the H5 feature description in `README.md` / `README_CN.md` is updated to match.
+- Deprecation notices now state that `pi-agent`, `PiAgent` and `PI_AGENT_*` are removed in 0.5.0.
+
 ## [0.4.0] - 2026-09-29
 
 ### 🚀 Added

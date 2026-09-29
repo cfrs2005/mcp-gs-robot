@@ -122,7 +122,7 @@ def to_openai_tools() -> list[dict]        # {"type":"function","function":{...}
 - 启动：`gs-robot-server`（entry point）或 `uvicorn gs_openapi.server.app:app`。
 - 前缀 `/api/v1`；所有响应 JSON；错误统一 `{"error": {"code": <int|str>, "message": str, "trace_id": str|null}}`。上游 `GausiumAPIError` → HTTP 502（code 为六位业务码），参数错误 → 422/400，鉴权失败 → 401。
 - CORS：默认允许所有来源（H5 同源部署时无影响）。
-- `GET /api/v1/health`（公开）→ `{"status":"ok","version":"0.4.0","agent_provider":"anthropic","tools":<int>,"auth_required":<bool>}`；`auth_required` 仅表示服务端是否设置了 `GS_SERVER_API_KEY`，绝不返回 key 本身
+- `GET /api/v1/health`（公开）→ `{"status":"ok","version":"0.4.1","agent_provider":"anthropic","tools":<int>,"auth_required":<bool>}`；`auth_required` 仅表示服务端是否设置了 `GS_SERVER_API_KEY`，绝不返回 key 本身
 - `GET /api/v1/auth/check`（受 `X-API-Key` 保护、无副作用、不打上游）→ `{"ok":true}`；key 缺失或错误时 401。H5 设置页用它校验 key
 - 通用工具调用（REST 与工具注册表一一对应）：`POST /api/v1/tools/{tool_name}`，body = 工具输入 JSON，返回 `{"result": ...}`。危险工具在 REST 下直接执行（调用方即已确认）。
 - 友好路由（内部也走注册表）：
