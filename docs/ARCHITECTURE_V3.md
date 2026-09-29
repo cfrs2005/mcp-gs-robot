@@ -122,7 +122,7 @@ def to_openai_tools() -> list[dict]        # {"type":"function","function":{...}
 - 启动：`gs-robot-server`（entry point）或 `uvicorn gs_openapi.server.app:app`。
 - 前缀 `/api/v1`；所有响应 JSON；错误统一 `{"error": {"code": <int|str>, "message": str, "trace_id": str|null}}`。上游 `GausiumAPIError` → HTTP 502（code 为六位业务码），参数错误 → 422/400，鉴权失败 → 401。
 - CORS：默认允许所有来源（H5 同源部署时无影响）。
-- `GET /api/v1/health`（公开）→ `{"status":"ok","version":"0.3.0","agent_provider":"anthropic","tools":<int>,"auth_required":<bool>}`；`auth_required` 仅表示服务端是否设置了 `GS_SERVER_API_KEY`，绝不返回 key 本身
+- `GET /api/v1/health`（公开）→ `{"status":"ok","version":"0.4.0","agent_provider":"anthropic","tools":<int>,"auth_required":<bool>}`；`auth_required` 仅表示服务端是否设置了 `GS_SERVER_API_KEY`，绝不返回 key 本身
 - `GET /api/v1/auth/check`（受 `X-API-Key` 保护、无副作用、不打上游）→ `{"ok":true}`；key 缺失或错误时 401。H5 设置页用它校验 key
 - 通用工具调用（REST 与工具注册表一一对应）：`POST /api/v1/tools/{tool_name}`，body = 工具输入 JSON，返回 `{"result": ...}`。危险工具在 REST 下直接执行（调用方即已确认）。
 - 友好路由（内部也走注册表）：
@@ -259,6 +259,6 @@ Agent Skill（Claude Code / Codex / WorkBuddy 通用格式：YAML frontmatter `n
 
 ## 8. 版本与兼容
 
-- 版本 `0.3.0`（契约自 0.2.0 起向后兼容：新增工具、字段与 CLI 子命令，未删除任何接口）。V3 为默认工具集；旧版工具保留在 `gs_openapi/mcp/legacy_tools.py`，通过 `GS_ENABLE_LEGACY_TOOLS=1` 注册（名称加 `legacy_` 前缀），避免与 V3 工具名冲突。
+- 版本 `0.4.0`（契约自 0.2.0 起向后兼容，未删除任何接口。0.4.0 只做增量：会话 JSON 新增 `confirmations`，SSE `confirm_required` 新增 `tool_use_id`，超预算的工具结果带 `_truncated` 元数据且永远是合法 JSON；本地库 schema 升到 v2，打开时自动迁移（§5.2），旧库与旧会话照常可读）。V3 为默认工具集；旧版工具保留在 `gs_openapi/mcp/legacy_tools.py`，通过 `GS_ENABLE_LEGACY_TOOLS=1` 注册（名称加 `legacy_` 前缀），避免与 V3 工具名冲突。
 - `python -m gs_openapi.main` / `mcp-gs-robot` 仍为 MCP stdio 入口。
-- Agent 改名（Pi Agent → 扫地僧 / Saodi）的兼容层保留一个版本：`pi-agent` 命令、`PiAgent` 类别名、`PI_AGENT_*` 环境变量回落（见 §2、§5）。`GET /api/v1/health` 字段不变（`agent_provider` 语义不变）。
+- Agent 改名（Pi Agent → 扫地僧 / Saodi）的兼容层在 0.4.0 仍保留，移除推迟到 0.5.0：`pi-agent` 命令、`PiAgent` 类别名、`PI_AGENT_*` 环境变量回落（见 §2、§5）。`GET /api/v1/health` 字段不变（`agent_provider` 语义不变）。
